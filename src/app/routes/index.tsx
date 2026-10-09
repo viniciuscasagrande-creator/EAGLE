@@ -18,6 +18,8 @@ import { VendasPedidosPage } from '@/modules/eventos/VendasPedidosPage';
 import { CortesiasPage } from '@/modules/eventos/CortesiasPage';
 import { NovoEventoPage } from '@/modules/eventos/NovoEventoPage';
 import { CompararEventosPage } from '@/modules/eventos/CompararEventosPage';
+import { ModoTelaoPage } from '@/modules/eventos/ModoTelaoPage';
+import { PortariaCheckinPage } from '@/modules/eventos/PortariaCheckinPage';
 
 // Module 3: Comercial & CRM
 import { DashboardComercialPage } from '@/modules/comercial/DashboardComercialPage';
@@ -97,6 +99,10 @@ export const AppRoutes: React.FC = () => {
           <Route path="/eventos/:id/mapa" element={<MapaOcupacaoPage />} />
           <Route path="/eventos/:id/vendas" element={<VendasPedidosPage />} />
           <Route path="/eventos/:id/cortesias" element={<CortesiasPage />} />
+          <Route path="/eventos/:id/telao" element={<ModoTelaoPage />} />
+          <Route path="/eventos/telao" element={<ModoTelaoPage />} />
+          <Route path="/eventos/:id/portaria" element={<PortariaCheckinPage />} />
+          <Route path="/eventos/portaria" element={<PortariaCheckinPage />} />
           <Route path="/eventos/:id/financeiro" element={<DashboardFinanceiroPage />} />
           <Route path="/eventos/:id/comercial" element={<DashboardComercialPage />} />
           <Route path="/eventos/:id/marketing" element={<DashboardMarketingPage />} />

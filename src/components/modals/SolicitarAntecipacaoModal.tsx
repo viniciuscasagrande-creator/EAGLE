@@ -8,6 +8,8 @@ interface SolicitarAntecipacaoModalProps {
   onClose: () => void;
   wallets: EventWalletPosition[];
   onConfirm: (payload: { eventId: string; requestedAmount: number }) => Promise<void>;
+  initialAmount?: number;
+  initialEventId?: string;
 }
 
 export const SolicitarAntecipacaoModal: React.FC<SolicitarAntecipacaoModalProps> = ({
@@ -15,11 +17,20 @@ export const SolicitarAntecipacaoModal: React.FC<SolicitarAntecipacaoModalProps>
   onClose,
   wallets,
   onConfirm,
+  initialAmount,
+  initialEventId,
 }) => {
-  const [selectedEventId, setSelectedEventId] = useState(wallets[0]?.eventId || 'ev-101');
-  const [amount, setAmount] = useState(30000);
+  const [selectedEventId, setSelectedEventId] = useState(initialEventId || wallets[0]?.eventId || 'ev-101');
+  const [amount, setAmount] = useState(initialAmount || 30000);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      if (initialEventId) setSelectedEventId(initialEventId);
+      if (initialAmount) setAmount(initialAmount);
+    }
+  }, [isOpen, initialAmount, initialEventId]);
 
   if (!isOpen) return null;
 

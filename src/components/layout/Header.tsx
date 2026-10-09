@@ -14,6 +14,7 @@ import {
   Megaphone,
   Repeat,
 } from 'lucide-react';
+import { NotificationsPopover } from './NotificationsPopover';
 
 export const Header: React.FC = () => {
   const { user, producer, isKeeperConnected, logout } = useAuth();
@@ -182,13 +183,7 @@ export const Header: React.FC = () => {
         )}
 
         {/* Notifications */}
-        <button
-          className="relative p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition"
-          title="Notificações"
-        >
-          <Bell className="w-4 h-4" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-500" />
-        </button>
+        <NotificationsPopover />
 
         {/* Help Center */}
         <button

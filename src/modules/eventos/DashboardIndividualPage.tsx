@@ -14,6 +14,8 @@ import {
   ArrowUpRight,
   ShieldCheck,
   CheckCircle,
+  Tv,
+  ScanLine,
 } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/utils/formatters';
 
@@ -48,16 +50,40 @@ export const DashboardIndividualPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Top Header */}
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-xl font-bold text-white">
-          {currentEvent.name} — Dashboard
-        </h1>
-        <button
-          onClick={() => navigate('/eventos')}
-          className="text-sm text-blue-400 hover:underline cursor-pointer"
-        >
-          Voltar aos eventos
-        </button>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-white">
+            {currentEvent.name} — Dashboard
+          </h1>
+          <p className="text-xs text-slate-400 mt-0.5">
+            {currentEvent.venue} • {currentEvent.dateStart}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => navigate(`/eventos/${currentEvent.id}/telao`)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-700 to-blue-600 hover:from-blue-600 hover:to-blue-500 text-white text-xs font-bold shadow-md shadow-blue-600/20 transition cursor-pointer"
+          >
+            <Tv className="w-3.5 h-3.5" />
+            <span>Modo Telão (Live)</span>
+          </button>
+
+          <button
+            onClick={() => navigate(`/eventos/${currentEvent.id}/portaria`)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2c2d33] hover:bg-[#35363c] text-indigo-300 border border-indigo-500/30 text-xs font-semibold transition cursor-pointer"
+          >
+            <ScanLine className="w-3.5 h-3.5" />
+            <span>Portaria & Check-in</span>
+          </button>
+
+          <button
+            onClick={() => navigate('/eventos')}
+            className="text-xs text-slate-400 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-slate-800 transition cursor-pointer"
+          >
+            Voltar aos eventos
+          </button>
+        </div>
       </div>
 
       {/* Print 2: Top 4 KPI Indicators */}

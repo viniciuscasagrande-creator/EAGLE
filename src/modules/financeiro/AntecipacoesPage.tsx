@@ -5,11 +5,14 @@ import { CheckCircle, Clock, ShieldCheck, AlertTriangle, Plus } from 'lucide-rea
 import { formatCurrency, formatDateTime } from '@/utils/formatters';
 import { keeperAdapter } from '@/services/api/keeperAdapter';
 import { SolicitarAntecipacaoModal } from '@/components/modals/SolicitarAntecipacaoModal';
+import { SimuladorAntecipacaoCard } from '@/components/financeiro/SimuladorAntecipacaoCard';
 
 export const AntecipacoesPage: React.FC = () => {
   const [advances, setAdvances] = useState<AdvanceRequest[]>(mockAdvanceRequests);
   const [wallets, setWallets] = useState<EventWalletPosition[]>(mockWallets);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalInitialAmount, setModalInitialAmount] = useState<number | undefined>(undefined);
+  const [modalInitialEventId, setModalInitialEventId] = useState<string | undefined>(undefined);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -17,6 +20,12 @@ export const AntecipacoesPage: React.FC = () => {
       if (w && w.length > 0) setWallets(w);
     }).catch(() => {});
   }, []);
+
+  const handleOpenSolicitacao = (eventId?: string, amount?: number) => {
+    setModalInitialEventId(eventId);
+    setModalInitialAmount(amount);
+    setIsModalOpen(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -36,7 +45,7 @@ export const AntecipacoesPage: React.FC = () => {
         </div>
 
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => handleOpenSolicitacao()}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
@@ -51,10 +60,18 @@ export const AntecipacoesPage: React.FC = () => {
         </div>
       )}
 
+      {/* Simulador Inteligente de Antecipação */}
+      <SimuladorAntecipacaoCard
+        wallets={wallets}
+        onOpenSolicitacao={(eventId, amount) => handleOpenSolicitacao(eventId, amount)}
+      />
+
       <SolicitarAntecipacaoModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         wallets={wallets}
+        initialAmount={modalInitialAmount}
+        initialEventId={modalInitialEventId}
         onConfirm={async (payload) => {
           const res = await keeperAdapter.requestAdvance('prod-01', payload.eventId, {
             requestedAmount: payload.requestedAmount,

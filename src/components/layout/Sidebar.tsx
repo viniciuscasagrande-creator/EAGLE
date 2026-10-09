@@ -24,6 +24,8 @@ import {
   Target,
   FileText,
   Percent,
+  Tv,
+  ScanLine,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -174,6 +176,29 @@ export const Sidebar: React.FC = () => {
           >
             <Gift className="w-4 h-4 flex-shrink-0 text-purple-400" />
             {!collapsed && <span>Cortesias Emitidas</span>}
+          </NavLink>
+
+          <NavLink
+            to={`/eventos/${selectedEvent.id}/portaria`}
+            className={({ isActive }) => getLevel2LinkClass(isActive)}
+          >
+            <ScanLine className="w-4 h-4 flex-shrink-0 text-indigo-400" />
+            {!collapsed && <span>Portaria & Check-in</span>}
+          </NavLink>
+
+          <NavLink
+            to={`/eventos/${selectedEvent.id}/telao`}
+            className={({ isActive }) => getLevel2LinkClass(isActive)}
+          >
+            <Tv className="w-4 h-4 flex-shrink-0 text-amber-400" />
+            {!collapsed && (
+              <span className="flex items-center justify-between w-full">
+                <span>Modo Telão</span>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                  LIVE
+                </span>
+              </span>
+            )}
           </NavLink>
 
           <div className="pt-2 border-t border-[#2b2c31]" />
