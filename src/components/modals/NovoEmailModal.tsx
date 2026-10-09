@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, Mail, Send, CheckCircle2 } from 'lucide-react';
+import { X, Mail, Send, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { keeperAdapter } from '@/services/api/keeperAdapter';
 
 interface NovoEmailModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export const NovoEmailModal: React.FC<NovoEmailModalProps> = ({
   onClose,
   onConfirm,
 }) => {
+  const isSmtp = keeperAdapter.isSmtpConfigured();
   const [subject, setSubject] = useState('Últimas Vagas para o Festival de Verão Curitiba 2026!');
   const [template, setTemplate] = useState('VIRADA_LOTE');
   const [event, setEvent] = useState('Festival de Verão Curitiba 2026');
@@ -132,6 +134,16 @@ export const NovoEmailModal: React.FC<NovoEmailModalProps> = ({
             />
           </div>
 
+          {!isSmtp && (
+            <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-300 text-[11px] flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold block">Servidor de Envio em Homologação:</span>
+                Provedor SMTP/SendGrid não autenticado para disparos em massa. A mensagem será salva como <strong>RASCUNHO</strong> e não realizará envios reais até a validação do serviço.
+              </div>
+            </div>
+          )}
+
           <div className="pt-3 border-t border-[#37393e] flex items-center justify-end gap-2">
             <button
               type="button"
@@ -146,7 +158,7 @@ export const NovoEmailModal: React.FC<NovoEmailModalProps> = ({
               className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg shadow transition flex items-center gap-1.5"
             >
               <Send className="w-4 h-4" />
-              <span>{submitting ? 'Agendando...' : 'Iniciar Disparo'}</span>
+              <span>{submitting ? 'Processando...' : isSmtp ? 'Iniciar Disparo SMTP' : 'Salvar como Rascunho'}</span>
             </button>
           </div>
         </form>

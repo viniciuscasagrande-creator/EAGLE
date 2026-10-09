@@ -57,49 +57,76 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // Restaurar sessão persistida legítima do localStorage
-    try {
-      const token = getAuthToken();
-      const storedUser = localStorage.getItem('producer_user');
-      const storedProducer = localStorage.getItem('producer_data');
+    // Restaurar sessão persistida legítima se houver token válido
+    const restoreSession = async () => {
+      try {
+        const token = getAuthToken();
+        const storedUser = localStorage.getItem('producer_user');
+        const storedProducer = localStorage.getItem('producer_data');
 
-      if (token && storedUser) {
-        setUser(JSON.parse(storedUser));
-        setProducer(storedProducer ? JSON.parse(storedProducer) : mockProducer);
-        setIsAuthenticated(true);
-      } else {
-        // Garantir acesso direto aos módulos no ambiente do portal
-        const sessionToken = `ey-disk-produtor-auto-${Date.now()}`;
-        saveAuthSession({
-          token: sessionToken,
-          user: defaultUserProfile,
-          producer: mockProducer,
-          tenantId: '00000000-0000-0000-0000-000000000001',
-          companyId: '00000000-0000-0000-0000-000000000001',
-        });
-        setUser(defaultUserProfile);
-        setProducer(mockProducer);
-        setIsAuthenticated(true);
+        if (token && storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          const parsedProducer = storedProducer ? JSON.parse(storedProducer) : mockProducer;
+
+          // Valida sessão com o backend se disponível
+          try {
+            const apiUrl = getKeeperApiUrl();
+            const res = await fetch(`${apiUrl}/auth/me`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: 'application/json',
+              },
+              signal: AbortSignal.timeout(3000),
+            });
+
+            if (res.status === 401 || res.status === 403) {
+              // Sessão expirada ou token revogado
+              clearAuthSession();
+              setUser(null);
+              setProducer(null);
+              setIsAuthenticated(false);
+              return;
+            }
+          } catch {
+            // Backend offline - mantém sessão persistida válida do dispositivo
+          }
+
+          setUser(parsedUser);
+          setProducer(parsedProducer);
+          setIsAuthenticated(true);
+        } else {
+          // NUNCA autenticar automaticamente sem credenciais reais!
+          clearAuthSession();
+          setUser(null);
+          setProducer(null);
+          setIsAuthenticated(false);
+        }
+      } catch {
+        clearAuthSession();
+        setUser(null);
+        setProducer(null);
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
       }
-    } catch {
-      setUser(defaultUserProfile);
-      setProducer(mockProducer);
-      setIsAuthenticated(true);
-    } finally {
-      setIsLoading(false);
-    }
+    };
 
+    restoreSession();
     checkKeeperConnection();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // 1. Tenta autenticar no Keeper Core API
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPass = password.trim();
+
+    // 1. Autenticação via Servidor Central Keeper API
     try {
       const apiUrl = getKeeperApiUrl();
-      const res = await fetch(`${apiUrl}/auth/producer-login`, {
+      const res = await fetch(`${apiUrl}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: cleanEmail, password: cleanPass }),
+        signal: AbortSignal.timeout(5000),
       });
 
       if (res.ok) {
@@ -107,8 +134,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const sessionToken = authData.token || authData.accessToken;
         const loggedUser: UserProfile = authData.user || {
           id: authData.userId || 'usr-01',
-          name: authData.userName || email.split('@')[0],
-          email,
+          name: authData.userName || cleanEmail.split('@')[0],
+          email: cleanEmail,
           role: authData.role || 'PRODUCER_ADMIN',
           producerId: authData.producerId || 'prod-01',
           producerName: authData.producerName || 'DiskIngressos Produtor',
@@ -120,8 +147,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           token: sessionToken,
           user: loggedUser,
           producer: producerData,
-          tenantId: authData.tenantId,
-          companyId: authData.companyId,
+          tenantId: authData.tenantId || '00000000-0000-0000-0000-000000000001',
+          companyId: authData.companyId || '00000000-0000-0000-0000-000000000001',
         });
 
         setUser(loggedUser);
@@ -129,25 +156,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsAuthenticated(true);
         setIsKeeperConnected(true);
         return true;
+      } else if (res.status === 401 || res.status === 403) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.message || errJson.detail || 'E-mail ou senha incorretos.');
       }
-    } catch {
-      // Keeper API offline / não disponível
+    } catch (err: any) {
+      // Se foi erro de credencial explicitamente rejeitada pelo servidor, repassa
+      if (err.message && !err.message.includes('fetch') && !err.message.includes('timeout') && !err.message.includes('Network')) {
+        throw err;
+      }
     }
 
-    // 2. Se o backend Keeper estiver offline/standby, validar credenciais legítimas de produtor DiskIngressos
-    if (
-      email.includes('@') &&
-      password.length >= 6
-    ) {
+    // 2. Se o servidor central estiver inacessível (ambiente offline de teste),
+    // SOMENTE credenciais homologadas oficiais de Produtor DiskIngressos são autorizadas.
+    // NUNCA aceitar e-mails ou senhas arbitrárias!
+    const isAuthorizedProducer =
+      cleanEmail === 'produtor@diskingressos.com.br' && cleanPass === 'disk@produtor2026';
+
+    if (isAuthorizedProducer) {
       const sessionToken = `ey-disk-produtor-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       const loggedUser: UserProfile = {
         ...defaultUserProfile,
-        email,
-        name: email.startsWith('produtor') ? 'Vinicius Casagrande' : email.split('@')[0],
+        email: cleanEmail,
+        name: 'Vinicius Casagrande',
       };
       const producerData: Producer = {
         ...mockProducer,
-        email,
+        email: cleanEmail,
       };
 
       saveAuthSession({
@@ -164,7 +199,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return true;
     }
 
-    return false;
+    throw new Error('Credenciais não autorizadas. Verifique seu e-mail e senha cadastrados na DiskIngressos.');
   };
 
   const logout = () => {

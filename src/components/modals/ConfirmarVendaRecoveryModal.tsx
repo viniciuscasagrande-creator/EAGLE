@@ -3,6 +3,8 @@ import { RecoveryOpportunity } from '@/types/remarketing';
 import { formatCurrency } from '@/utils/formatters';
 import { X, CheckCircle2, ShieldCheck, AlertTriangle } from 'lucide-react';
 
+import { keeperAdapter } from '@/services/api/keeperAdapter';
+
 interface ConfirmarVendaRecoveryModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -23,30 +25,47 @@ export const ConfirmarVendaRecoveryModal: React.FC<ConfirmarVendaRecoveryModalPr
   );
   const [isValidating, setIsValidating] = useState(false);
   const [validationSuccess, setValidationSuccess] = useState<boolean | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleValidateAndConfirm = (e: React.FormEvent) => {
+  const handleValidateAndConfirm = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!txId.trim()) return;
 
-    setIsValidating(true);
+    if (txId.trim().length < 12) {
+      setErrorMessage('O identificador de transação PIX deve conter ao menos 12 caracteres.');
+      return;
+    }
 
-    // Simulação com validação de formato bancário estrito (regra de integridade)
-    setTimeout(() => {
-      setIsValidating(false);
+    setIsValidating(true);
+    setErrorMessage(null);
+
+    try {
+      // Conciliação oficial com o Ledger do Keeper ERP
+      await keeperAdapter.confirmRecoveryLedger(opportunity.id, {
+        amount: opportunity.cartValue,
+        eventId: opportunity.eventId,
+      });
+
       setValidationSuccess(true);
 
       const updated: RecoveryOpportunity = {
         ...opportunity,
         status: 'RECUPERADO',
-        verifiedTransactionId: txId,
-        lastActionNote: `Pagamento PIX liquidado e conferido no Ledger: ${txId}`,
+        verifiedTransactionId: txId.trim(),
+        lastActionNote: `Pagamento PIX liquidado e conferido no Ledger: ${txId.trim()}`,
       };
 
       setTimeout(() => {
         onConfirmed(updated);
         onClose();
       }, 700);
-    }, 900);
+    } catch (err: any) {
+      setErrorMessage(
+        err.message || 'Falha ao conciliar a transação no Keeper ERP. Operação não autorizada.'
+      );
+    } finally {
+      setIsValidating(false);
+    }
   };
 
   return (
@@ -112,6 +131,13 @@ export const ConfirmarVendaRecoveryModal: React.FC<ConfirmarVendaRecoveryModalPr
               className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-emerald-500"
             />
           </div>
+
+          {errorMessage && (
+            <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 font-semibold flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
 
           {validationSuccess && (
             <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-semibold flex items-center gap-2">

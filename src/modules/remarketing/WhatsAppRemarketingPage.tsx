@@ -19,6 +19,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
+import { keeperAdapter } from '@/services/api/keeperAdapter';
 
 export const WhatsAppRemarketingPage: React.FC = () => {
   const [opportunities, setOpportunities] = useState<RecoveryOpportunity[]>(mockRecoveryOpportunities);
@@ -54,38 +55,86 @@ export const WhatsAppRemarketingPage: React.FC = () => {
     return o.status === activeFilter;
   });
 
-  // Action: Resgatar (Send personalized recovery WhatsApp)
-  const handleRescueSingle = (opp: RecoveryOpportunity) => {
-    setOpportunities((prev) =>
-      prev.map((item) =>
-        item.id === opp.id
-          ? {
-              ...item,
-              status: 'EM_RESGATE',
-              lastActionNote: `Mensagem enviada às ${new Date().toLocaleTimeString().slice(0, 5)}`,
-              timeAgo: 'agora mesmo',
-            }
-          : item
-      )
-    );
-    showToast(`Mensagem de recuperação enviada com sucesso para ${opp.customerName}!`);
+  // Action: Resgatar (Send personalized recovery WhatsApp via keeperAdapter)
+  const handleRescueSingle = async (opp: RecoveryOpportunity) => {
+    try {
+      await keeperAdapter.triggerWhatsAppRecovery(opp.id, {
+        customerPhone: opp.customerPhone,
+        cartValue: opp.cartValue,
+        customerName: opp.customerName,
+      });
+
+      const isConfigured = keeperAdapter.isMetaCloudApiConfigured();
+      const actionNote = isConfigured
+        ? `Mensagem enviada via Meta API às ${new Date().toLocaleTimeString().slice(0, 5)}`
+        : `Disparo registrado (Aguardando token Meta Cloud API)`;
+
+      setOpportunities((prev) =>
+        prev.map((item) =>
+          item.id === opp.id
+            ? {
+                ...item,
+                status: 'EM_RESGATE',
+                lastActionNote: actionNote,
+                timeAgo: 'agora mesmo',
+              }
+            : item
+        )
+      );
+
+      showToast(
+        isConfigured
+          ? `Mensagem de recuperação enviada via WhatsApp para ${opp.customerName}!`
+          : `Disparo registrado para ${opp.customerName}. Requer token oficial da Meta para entrega real ao destinatário.`
+      );
+    } catch (err: any) {
+      showToast(err.message || 'Falha ao acionar recuperação via WhatsApp.');
+    }
   };
 
   // Action: Batch process queue (Processar Fila de Resgate)
-  const handleProcessQueue = () => {
-    setOpportunities((prev) =>
-      prev.map((item) =>
-        item.status === 'ABERTO'
-          ? {
-              ...item,
-              status: 'EM_RESGATE',
-              lastActionNote: `Disparo em lote às ${new Date().toLocaleTimeString().slice(0, 5)}`,
-              timeAgo: 'agora mesmo',
-            }
-          : item
-      )
-    );
-    showToast('Fila de resgate processada! Todas as oportunidades abertas receberam a mensagem com link oficial.');
+  const handleProcessQueue = async () => {
+    const isConfigured = keeperAdapter.isMetaCloudApiConfigured();
+    const openOpps = opportunities.filter((o) => o.status === 'ABERTO');
+
+    if (openOpps.length === 0) {
+      showToast('Nenhuma oportunidade aberta pendente na fila.');
+      return;
+    }
+
+    try {
+      await Promise.all(
+        openOpps.map((opp) =>
+          keeperAdapter.triggerWhatsAppRecovery(opp.id, {
+            customerPhone: opp.customerPhone,
+            cartValue: opp.cartValue,
+          })
+        )
+      );
+
+      setOpportunities((prev) =>
+        prev.map((item) =>
+          item.status === 'ABERTO'
+            ? {
+                ...item,
+                status: 'EM_RESGATE',
+                lastActionNote: isConfigured
+                  ? `Disparo em lote via Meta API às ${new Date().toLocaleTimeString().slice(0, 5)}`
+                  : `Disparo em lote registrado (Aguardando homologação de token)`,
+                timeAgo: 'agora mesmo',
+              }
+            : item
+        )
+      );
+
+      showToast(
+        isConfigured
+          ? 'Fila de resgate processada e transmitida à Meta Cloud API com sucesso!'
+          : 'Fila de resgate registrada. Para envio real, vincule seu Token da Meta Cloud API em Tokens & Integrações.'
+      );
+    } catch (err: any) {
+      showToast(err.message || 'Erro ao processar fila de resgate.');
+    }
   };
 
   // Action: Open PIX Key Modal

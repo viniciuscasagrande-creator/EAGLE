@@ -17,6 +17,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/utils/formatters';
+import { keeperAdapter } from '@/services/api/keeperAdapter';
 
 export const EmailMarketingPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'CAMPAIGNS' | 'TEMPLATES' | 'LGPD'>('CAMPAIGNS');
@@ -67,20 +68,16 @@ export const EmailMarketingPage: React.FC = () => {
     audience: string;
     message: string;
   }) => {
-    const newCamp = {
-      id: `em-${Date.now()}`,
-      subject: payload.subject,
-      event: payload.event,
-      sent: payload.audience === 'TODOS_COMPRADORES' ? 18450 : 4200,
-      openRate: '0,0%',
-      clickRate: '0,0%',
-      tickets: 0,
-      revenue: 0,
-      status: 'Disparando...',
-    };
-    setCampaigns((prev) => [newCamp, ...prev]);
-    setBannerMessage(`Disparo de e-mail "${payload.subject}" iniciado com sucesso para o público selecionado!`);
-    setTimeout(() => setBannerMessage(null), 6000);
+    try {
+      const res = await keeperAdapter.createEmailCampaign(payload);
+      setCampaigns((prev) => [res.campaign, ...prev]);
+      setBannerMessage(res.message);
+    } catch (err: any) {
+      setBannerMessage(err.message || 'Falha ao processar campanha de e-mail.');
+    } finally {
+      setIsNovoEmailOpen(false);
+      setTimeout(() => setBannerMessage(null), 6000);
+    }
   };
 
   return (
