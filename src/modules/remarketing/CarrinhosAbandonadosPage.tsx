@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { mockAbandonedCarts } from '@/services/api/mockSeedData';
+import { mockAbandonedCarts, mockEvents } from '@/services/api/mockSeedData';
 import { AbandonedCart } from '@/types/marketing';
+import { useEventContext } from '@/contexts/EventContext';
 import {
   ShoppingCart,
   Send,
@@ -13,23 +14,30 @@ import {
   Download,
   CheckCircle2,
   X,
+  AlertCircle,
+  RotateCcw,
 } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '@/utils/formatters';
 import { downloadCsv } from '@/utils/csvExport';
 
 export const CarrinhosAbandonadosPage: React.FC = () => {
+  const { selectedEvent, selectEventById } = useEventContext();
+  const [selectedEventId, setSelectedEventId] = useState<string>(selectedEvent?.id || 'ev-101');
   const [carts, setCarts] = useState<AbandonedCart[]>(mockAbandonedCarts);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const activeEvent = mockEvents.find((e) => e.id === selectedEventId);
+
   const filteredCarts = carts.filter((c) => {
+    const matchesEvent = selectedEventId === 'ALL' || c.eventId === selectedEventId;
     const matchesSearch =
       c.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.customerEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.eventName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'ALL' || c.recoveryStatus === statusFilter;
-    return matchesSearch && matchesStatus;
+    return matchesEvent && matchesSearch && matchesStatus;
   });
 
   const totalAbandonedAmount = carts.reduce((acc, c) => acc + c.cartValue, 0);
@@ -203,32 +211,68 @@ export const CarrinhosAbandonadosPage: React.FC = () => {
       </div>
 
       {/* Filter and Search */}
-      <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-3 flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div className="relative w-full sm:w-80">
+      <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-3 flex flex-col md:flex-row items-center justify-between gap-3">
+        <div className="relative w-full md:w-72">
           <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Buscar por comprador, e-mail ou evento..."
+            placeholder="Buscar por comprador, e-mail..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-[#202124] text-xs text-white pl-8 pr-3 py-2 rounded-md border border-[#37393e] focus:outline-none focus:border-blue-500"
+            className="w-full bg-[#202124] text-xs text-white pl-8 pr-3 py-2 rounded-md border border-[#37393e] focus:outline-none focus:border-pink-500"
           />
         </div>
 
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="bg-[#202124] text-xs text-white px-3 py-2 rounded-md border border-[#37393e] focus:outline-none"
-        >
-          <option value="ALL">Todos os Status</option>
-          <option value="PENDING">Pendentes de Disparo</option>
-          <option value="RECOVERY_SENT">Disparo Realizado</option>
-          <option value="RECOVERED">Recuperados com Sucesso</option>
-          <option value="EXPIRED">Expirados</option>
-        </select>
+        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+          {/* Event Filter */}
+          <select
+            value={selectedEventId}
+            onChange={(e) => {
+              setSelectedEventId(e.target.value);
+              if (e.target.value !== 'ALL') {
+                selectEventById(e.target.value);
+              }
+            }}
+            className="bg-[#202124] text-xs text-white px-3 py-2 rounded-md border border-[#37393e] focus:outline-none focus:border-pink-500 font-medium"
+          >
+            <option value="ALL">Todos os Eventos</option>
+            {mockEvents.map((evt) => (
+              <option key={evt.id} value={evt.id}>
+                {evt.name}
+              </option>
+            ))}
+          </select>
+
+          {/* Status Filter */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="bg-[#202124] text-xs text-white px-3 py-2 rounded-md border border-[#37393e] focus:outline-none focus:border-pink-500"
+          >
+            <option value="ALL">Todos os Status</option>
+            <option value="PENDING">Pendentes de Disparo</option>
+            <option value="RECOVERY_SENT">Disparo Realizado</option>
+            <option value="RECOVERED">Recuperados com Sucesso</option>
+            <option value="EXPIRED">Expirados</option>
+          </select>
+
+          {(searchTerm || statusFilter !== 'ALL' || selectedEventId !== 'ALL') && (
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                setStatusFilter('ALL');
+                setSelectedEventId('ALL');
+              }}
+              className="p-2 text-slate-400 hover:text-white hover:bg-[#202124] rounded-md transition"
+              title="Limpar filtros"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Abandoned Carts Table */}
+      {/* Abandoned Carts Table or Empty State */}
       <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg overflow-hidden shadow-md">
         <table className="w-full text-left text-xs">
           <thead>
@@ -243,55 +287,85 @@ export const CarrinhosAbandonadosPage: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-[#37393e]">
-            {filteredCarts.map((cart) => (
-              <tr key={cart.id} className="hover:bg-[#25262c] transition">
-                <td className="p-3.5">
-                  <div className="font-bold text-white">{cart.customerName}</div>
-                  <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
-                    <span className="flex items-center gap-1 text-emerald-400 font-mono">
-                      <MessageCircle className="w-3 h-3" />
-                      {cart.customerPhone}
-                    </span>
-                    <span>•</span>
-                    <span className="flex items-center gap-1">
-                      <Mail className="w-3 h-3" />
-                      {cart.customerEmail}
-                    </span>
+            {filteredCarts.length > 0 ? (
+              filteredCarts.map((cart) => (
+                <tr key={cart.id} className="hover:bg-[#25262c] transition">
+                  <td className="p-3.5">
+                    <div className="font-bold text-white">{cart.customerName}</div>
+                    <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
+                      <span className="flex items-center gap-1 text-emerald-400 font-mono">
+                        <MessageCircle className="w-3 h-3" />
+                        {cart.customerPhone}
+                      </span>
+                      <span>•</span>
+                      <span className="flex items-center gap-1">
+                        <Mail className="w-3 h-3" />
+                        {cart.customerEmail}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="p-3.5">
+                    <div className="font-semibold text-white">{cart.eventName}</div>
+                    <div className="text-[11px] text-slate-400">{cart.sectorName}</div>
+                  </td>
+                  <td className="p-3.5 text-center font-bold text-blue-400">
+                    {cart.ticketsCount} un
+                  </td>
+                  <td className="p-3.5 text-right font-extrabold text-rose-400 text-sm">
+                    {formatCurrency(cart.cartValue)}
+                  </td>
+                  <td className="p-3.5 text-slate-400">
+                    {formatDateTime(cart.abandonedAt)}
+                  </td>
+                  <td className="p-3.5 text-center">
+                    {getRecoveryBadge(cart.recoveryStatus)}
+                  </td>
+                  <td className="p-3.5 text-right">
+                    {cart.recoveryStatus !== 'RECOVERED' ? (
+                      <button
+                        onClick={() => handleSendRecovery(cart)}
+                        className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow transition flex items-center gap-1.5 ml-auto cursor-pointer"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" />
+                        <span>WhatsApp</span>
+                      </button>
+                    ) : (
+                      <span className="text-[11px] text-emerald-400 font-semibold">
+                        Convertido ✓
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={7} className="p-12 text-center">
+                  <div className="flex flex-col items-center justify-center space-y-3">
+                    <div className="w-12 h-12 rounded-full bg-slate-800/80 text-slate-400 flex items-center justify-center border border-slate-700">
+                      <ShoppingCart className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white text-sm">Nenhum carrinho abandonado encontrado</h4>
+                      <p className="text-xs text-slate-400 max-w-sm mt-1">
+                        {activeEvent
+                          ? `Não constam checkouts abandonados pendentes para "${activeEvent.name}" nos critérios selecionados.`
+                          : 'Nenhum checkout pendente atende aos filtros de busca atuais.'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setSearchTerm('');
+                        setStatusFilter('ALL');
+                        setSelectedEventId('ALL');
+                      }}
+                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700 transition"
+                    >
+                      Exibir Todos os Eventos
+                    </button>
                   </div>
                 </td>
-                <td className="p-3.5">
-                  <div className="font-semibold text-white">{cart.eventName}</div>
-                  <div className="text-[11px] text-slate-400">{cart.sectorName}</div>
-                </td>
-                <td className="p-3.5 text-center font-bold text-blue-400">
-                  {cart.ticketsCount} un
-                </td>
-                <td className="p-3.5 text-right font-extrabold text-rose-400 text-sm">
-                  {formatCurrency(cart.cartValue)}
-                </td>
-                <td className="p-3.5 text-slate-400">
-                  {formatDateTime(cart.abandonedAt)}
-                </td>
-                <td className="p-3.5 text-center">
-                  {getRecoveryBadge(cart.recoveryStatus)}
-                </td>
-                <td className="p-3.5 text-right">
-                  {cart.recoveryStatus !== 'RECOVERED' ? (
-                    <button
-                      onClick={() => handleSendRecovery(cart)}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow transition flex items-center gap-1.5 ml-auto cursor-pointer"
-                    >
-                      <MessageCircle className="w-3.5 h-3.5" />
-                      <span>WhatsApp</span>
-                    </button>
-                  ) : (
-                    <span className="text-[11px] text-emerald-400 font-semibold">
-                      Convertido ✓
-                    </span>
-                  )}
-                </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
