@@ -31,30 +31,58 @@ export class ApiError extends Error {
   }
 }
 
+export function getAuthToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('producer_token');
+}
+
+export function saveAuthSession(session: {
+  token: string;
+  user: any;
+  producer: any;
+  tenantId?: string;
+  companyId?: string;
+}) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('producer_token', session.token);
+  localStorage.setItem('producer_user', JSON.stringify(session.user));
+  localStorage.setItem('producer_data', JSON.stringify(session.producer));
+  if (session.producer?.id) {
+    localStorage.setItem('producer_id', session.producer.id);
+  }
+  if (session.tenantId) {
+    localStorage.setItem('tenant_id', session.tenantId);
+  }
+  if (session.companyId) {
+    localStorage.setItem('company_id', session.companyId);
+  }
+}
+
+export function clearAuthSession() {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem('producer_token');
+  localStorage.removeItem('producer_user');
+  localStorage.removeItem('producer_data');
+  localStorage.removeItem('producer_id');
+  localStorage.removeItem('tenant_id');
+  localStorage.removeItem('company_id');
+}
+
 export async function keeperRequest<T>(
   endpoint: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const token = localStorage.getItem('producer_token') || 'demo-producer-token';
-  const tenantId =
-    options.tenantId ||
-    localStorage.getItem('tenant_id') ||
-    '00000000-0000-0000-0000-000000000001';
-  const companyId =
-    options.companyId ||
-    localStorage.getItem('company_id') ||
-    '00000000-0000-0000-0000-000000000001';
-  const producerId =
-    options.producerId ||
-    localStorage.getItem('producer_id') ||
-    'prod-01';
+  const token = getAuthToken();
+  const tenantId = options.tenantId || (typeof window !== 'undefined' ? localStorage.getItem('tenant_id') : null);
+  const companyId = options.companyId || (typeof window !== 'undefined' ? localStorage.getItem('company_id') : null);
+  const producerId = options.producerId || (typeof window !== 'undefined' ? localStorage.getItem('producer_id') : null);
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`,
-    'x-tenant-id': tenantId,
-    'x-company-id': companyId,
-    'x-producer-id': producerId,
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(tenantId ? { 'x-tenant-id': tenantId } : {}),
+    ...(companyId ? { 'x-company-id': companyId } : {}),
+    ...(producerId ? { 'x-producer-id': producerId } : {}),
     ...(options.idempotencyKey ? { 'Idempotency-Key': options.idempotencyKey } : {}),
     ...((options.headers as Record<string, string>) || {}),
   };
@@ -86,8 +114,9 @@ export async function keeperRequest<T>(
     if (err instanceof ApiError) {
       throw err;
     }
-    // Network / offline error - log informative message for debugging
-    console.warn(`[Keeper Core API Adapter] Requisição offline para ${url}. Usando fallback local resiliente.`);
-    throw err;
+    // Network / offline error
+    const msg = err.message || 'Falha de conexão com o Keeper ERP';
+    console.error(`[Keeper Core API] Erro ao comunicar com ${url}:`, msg);
+    throw new ApiError(msg, 0, { endpoint, originalError: err.message });
   }
 }

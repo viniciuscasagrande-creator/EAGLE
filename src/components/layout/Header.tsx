@@ -188,15 +188,15 @@ export const Header: React.FC = () => {
             className="flex items-center gap-2.5 p-1.5 rounded-lg hover:bg-slate-800/80 transition cursor-pointer"
           >
             <img
-              src={user.avatarUrl}
-              alt={user.name}
+              src={user?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'}
+              alt={user?.name || 'Produtor'}
               className="w-8 h-8 rounded-full object-cover ring-2 ring-blue-500/30"
             />
             <div className="text-left hidden lg:block">
               <div className="text-xs font-semibold text-slate-200 leading-tight">
-                {producer.tradeName || producer.name}
+                {producer?.tradeName || producer?.name || 'Produtor Disk'}
               </div>
-              <div className="text-[11px] text-slate-400">{user.name}</div>
+              <div className="text-[11px] text-slate-400">{user?.name || 'Usuário'}</div>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
           </button>
@@ -204,9 +204,9 @@ export const Header: React.FC = () => {
           {showUserDropdown && (
             <div className="absolute right-0 top-full mt-2 w-64 bg-[#141b2d] border border-slate-700/80 rounded-xl shadow-2xl p-2 z-50">
               <div className="px-3 py-2 border-b border-slate-800">
-                <div className="text-xs font-semibold text-slate-200">{producer.name}</div>
+                <div className="text-xs font-semibold text-slate-200">{producer?.name || 'Produtor DiskIngressos'}</div>
                 <div className="text-[11px] text-slate-400 font-mono mt-0.5">
-                  CNPJ: {producer.cnpj}
+                  CNPJ: {producer?.cnpj || 'Não informado'}
                 </div>
                 <div className="text-[11px] text-blue-400 mt-1 flex items-center gap-1">
                   <Building2 className="w-3 h-3" />

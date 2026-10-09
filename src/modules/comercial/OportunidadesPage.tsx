@@ -1,0 +1,164 @@
+import React, { useState } from 'react';
+import { mockCommercialOpportunities } from '@/services/api/mockSeedData';
+import { CommercialOpportunity } from '@/types/commercial';
+import {
+  Target,
+  Plus,
+  Building,
+} from 'lucide-react';
+import { formatCurrency } from '@/utils/formatters';
+
+const STAGES: { id: CommercialOpportunity['stage']; label: string }[] = [
+  { id: 'PROSPECCAO', label: 'Prospecção' },
+  { id: 'PROPOSTA_ENVIADA', label: 'Proposta Enviada' },
+  { id: 'NEGOCIACAO', label: 'Negociação' },
+  { id: 'FECHADO_GANHO', label: 'Fechado / Ganho' },
+  { id: 'FECHADO_PERDIDO', label: 'Fechado / Perdido' },
+];
+
+export const OportunidadesPage: React.FC = () => {
+  const [opportunities] = useState<CommercialOpportunity[]>(mockCommercialOpportunities);
+
+  const totalPipeline = opportunities
+    .filter((o) => o.stage !== 'FECHADO_PERDIDO')
+    .reduce((acc, curr) => acc + curr.estimatedValue, 0);
+
+  const weightedPipeline = opportunities
+    .filter((o) => o.stage !== 'FECHADO_PERDIDO')
+    .reduce((acc, curr) => acc + (curr.estimatedValue * curr.probability) / 100, 0);
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-2xl font-extrabold text-slate-100 tracking-tight">
+              Oportunidades & Funil Comercial
+            </h1>
+            <span className="px-2 py-0.5 rounded text-xs font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+              Pipeline de Patrocínio & Cotas
+            </span>
+          </div>
+          <p className="text-sm text-slate-400">
+            Acompanhamento de vendas corporativas, cotas de patrocínio e camarotes fechados.
+          </p>
+        </div>
+
+        <button
+          onClick={() => alert('Formulário de nova oportunidade comercial.')}
+          className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-blue-600/25 transition cursor-pointer"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Nova Oportunidade</span>
+        </button>
+      </div>
+
+      {/* Pipeline Summary KPIs */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-4">
+          <span className="text-[11px] text-slate-400 font-semibold uppercase">Total no Pipeline</span>
+          <div className="text-xl font-extrabold text-slate-100 mt-1">
+            {formatCurrency(totalPipeline)}
+          </div>
+          <span className="text-[10px] text-slate-400">Em todas as etapas ativas</span>
+        </div>
+
+        <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-4">
+          <span className="text-[11px] text-slate-400 font-semibold uppercase">Pipeline Ponderado</span>
+          <div className="text-xl font-extrabold text-emerald-400 mt-1">
+            {formatCurrency(weightedPipeline)}
+          </div>
+          <span className="text-[10px] text-emerald-400">Probabilidade real esperada</span>
+        </div>
+
+        <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-4">
+          <span className="text-[11px] text-slate-400 font-semibold uppercase">Negócios no Funil</span>
+          <div className="text-xl font-extrabold text-blue-400 mt-1">
+            {opportunities.length}
+          </div>
+          <span className="text-[10px] text-blue-400">Oportunidades mapeadas</span>
+        </div>
+
+        <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-4">
+          <span className="text-[11px] text-slate-400 font-semibold uppercase">Taxa de Sucesso</span>
+          <div className="text-xl font-extrabold text-teal-400 mt-1">
+            68.4%
+          </div>
+          <span className="text-[10px] text-teal-400">Conversão histórica</span>
+        </div>
+      </div>
+
+      {/* Kanban Board Columns */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 overflow-x-auto pb-4">
+        {STAGES.map((stage) => {
+          const stageOpps = opportunities.filter((o) => o.stage === stage.id);
+          const stageTotal = stageOpps.reduce((acc, curr) => acc + curr.estimatedValue, 0);
+
+          return (
+            <div
+              key={stage.id}
+              className="bg-[#141b2d] border border-slate-800 rounded-xl p-3 flex flex-col min-w-[220px]"
+            >
+              {/* Column Header */}
+              <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      stage.id === 'FECHADO_GANHO'
+                        ? 'bg-emerald-400'
+                        : stage.id === 'FECHADO_PERDIDO'
+                        ? 'bg-rose-400'
+                        : 'bg-blue-400'
+                    }`}
+                  />
+                  <span className="text-xs font-bold text-slate-200">{stage.label}</span>
+                </div>
+                <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-slate-800 text-slate-400">
+                  {stageOpps.length}
+                </span>
+              </div>
+
+              <div className="text-[11px] text-slate-400 mb-2 font-mono">
+                {formatCurrency(stageTotal)}
+              </div>
+
+              {/* Cards List */}
+              <div className="space-y-2.5 flex-1">
+                {stageOpps.map((opp) => (
+                  <div
+                    key={opp.id}
+                    className="p-3 bg-slate-900/80 hover:bg-slate-900 border border-slate-800 rounded-xl space-y-2 cursor-pointer transition shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-1">
+                      <div className="text-xs font-bold text-slate-200 leading-snug">
+                        {opp.title}
+                      </div>
+                      <span className="text-[10px] font-bold text-emerald-400 font-mono">
+                        {opp.probability}%
+                      </span>
+                    </div>
+
+                    <div className="text-[11px] text-slate-400 flex items-center gap-1">
+                      <Building className="w-3 h-3 flex-shrink-0" />
+                      <span className="truncate">{opp.clientName}</span>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs">
+                      <span className="font-extrabold text-slate-100">
+                        {formatCurrency(opp.estimatedValue)}
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-mono truncate max-w-[100px]">
+                        {opp.eventName || '-'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};

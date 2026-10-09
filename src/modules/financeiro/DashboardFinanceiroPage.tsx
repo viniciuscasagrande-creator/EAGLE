@@ -8,13 +8,12 @@ import {
   DollarSign,
   Wallet,
   ShieldCheck,
-  ArrowUpRight,
   TrendingDown,
   CheckCircle2,
-  Clock,
-  FileText,
   AlertTriangle,
-  Building,
+  RotateCw,
+  Clock,
+  Lock,
 } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '@/utils/formatters';
 import { useNavigate } from 'react-router-dom';
@@ -25,20 +24,50 @@ export const DashboardFinanceiroPage: React.FC = () => {
 
   const [wallets, setWallets] = useState<EventWalletPosition[]>([]);
   const [ledgerEntries, setLedgerEntries] = useState<FinancialLedgerEntry[]>([]);
-  const [payouts, setPayouts] = useState<PayoutRequest[]>([]);
+  const [, setPayouts] = useState<PayoutRequest[]>([]);
   const [selectedWalletForPayout, setSelectedWalletForPayout] = useState<EventWalletPosition | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const [isLoading, setIsLoading] = useState(true);
+  const [isKeeperOffline, setIsKeeperOffline] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
+
+  const loadFinancialData = async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    try {
+      const [w, l, p] = await Promise.all([
+        keeperAdapter.getEventWallets(),
+        keeperAdapter.getLedgerEntries(),
+        keeperAdapter.getPayoutSchedules(),
+      ]);
+      setWallets(w);
+      setLedgerEntries(l);
+      setPayouts(p);
+      setIsKeeperOffline(false);
+      setLastSyncTime(new Date().toISOString());
+    } catch (err: any) {
+      setIsKeeperOffline(true);
+      setErrorMessage(
+        err.message || 'Serviço financeiro temporariamente indisponível no Keeper ERP.'
+      );
+      if (err.cachedData && Array.isArray(err.cachedData)) {
+        setWallets(err.cachedData);
+        setLastSyncTime(err.lastConfirmedAt || null);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    keeperAdapter.getEventWallets().then(setWallets);
-    keeperAdapter.getLedgerEntries().then(setLedgerEntries);
-    keeperAdapter.getPayoutSchedules().then(setPayouts);
+    loadFinancialData();
   }, []);
 
-  const totalDisponivel = wallets.reduce((acc, curr) => acc + curr.balanceAvailable, 0);
   const totalBruto = wallets.reduce((acc, curr) => acc + curr.grossTicketSales, 0);
   const totalTaxasDisk = wallets.reduce((acc, curr) => acc + curr.diskFeeTotal, 0);
-  const totalDespesas = wallets.reduce((acc, curr) => acc + curr.expensesTotal, 0);
+  const saldoDisponivel = producer?.kpis?.disponivel ?? wallets.reduce((acc, curr) => acc + curr.balanceAvailable, 0);
 
   return (
     <div className="space-y-6">
@@ -49,8 +78,14 @@ export const DashboardFinanceiroPage: React.FC = () => {
             <h1 className="text-2xl font-extrabold text-slate-100 tracking-tight">
               Financeiro do Produtor
             </h1>
-            <span className="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              Conexão Direta ao Keeper ERP
+            <span
+              className={`px-2 py-0.5 rounded text-xs font-bold border ${
+                isKeeperOffline
+                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                  : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+              }`}
+            >
+              {isKeeperOffline ? 'Keeper ERP: Standby / Offline' : 'Conexão Direta ao Keeper ERP'}
             </span>
           </div>
           <p className="text-sm text-slate-400">
@@ -58,19 +93,54 @@ export const DashboardFinanceiroPage: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => {
-            if (wallets.length > 0) {
-              setSelectedWalletForPayout(wallets[0]);
-              setIsModalOpen(true);
-            }
-          }}
-          className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-700/20 transition cursor-pointer"
-        >
-          <DollarSign className="w-4 h-4" />
-          <span>Nova Solicitação de Repasse</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={loadFinancialData}
+            disabled={isLoading}
+            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold border border-slate-700 transition cursor-pointer disabled:opacity-50"
+            title="Atualizar dados oficiais do Keeper"
+          >
+            <RotateCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+            <span>Sincronizar</span>
+          </button>
+
+          <button
+            onClick={() => {
+              if (wallets.length > 0) {
+                setSelectedWalletForPayout(wallets[0]);
+                setIsModalOpen(true);
+              }
+            }}
+            disabled={isKeeperOffline || wallets.length === 0}
+            className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-700/20 transition cursor-pointer"
+          >
+            <DollarSign className="w-4 h-4" />
+            <span>Nova Solicitação de Repasse</span>
+          </button>
+        </div>
       </div>
+
+      {/* Audit & Unavailability Warning Banner */}
+      {isKeeperOffline && (
+        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs animate-in fade-in duration-200">
+          <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+          <div className="flex-1 space-y-1">
+            <div className="font-bold text-amber-300 flex items-center justify-between">
+              <span>Serviço Financeiro do Keeper ERP Indisponível no Momento</span>
+              {lastSyncTime && (
+                <span className="text-[11px] font-normal text-amber-400/80">
+                  Última sincronização confirmada: {formatDateTime(lastSyncTime)}
+                </span>
+              )}
+            </div>
+            <p className="text-slate-300 leading-relaxed">
+              {errorMessage || 'Não foi possível estabelecer contato com a API do Keeper ERP.'}{' '}
+              Em estrito cumprimento às normas contábeis, o Portal do Produtor{' '}
+              <strong>não simula saldos nem registra repasses offline</strong>. Novas operações financeiras permanecerão bloqueadas até a restauração do motor de liquidação.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Governança Rule Banner */}
       <div className="p-4 rounded-xl bg-blue-950/30 border border-blue-500/30 flex items-start gap-3">
@@ -89,8 +159,8 @@ export const DashboardFinanceiroPage: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <MetricKpiCard
           title="Saldo Disponível Consolidado"
-          value={formatCurrency(producer.kpis.disponivel)}
-          subtitle="Apto para solicitação de repasse"
+          value={formatCurrency(saldoDisponivel)}
+          subtitle={isKeeperOffline ? 'Último saldo apurado' : 'Apto para solicitação de repasse'}
           icon={Wallet}
           iconColor="text-emerald-400"
           iconBg="bg-emerald-500/10"
@@ -116,7 +186,7 @@ export const DashboardFinanceiroPage: React.FC = () => {
 
         <MetricKpiCard
           title="Repasses Já Executados"
-          value={formatCurrency(producer.kpis.emRepasse)}
+          value={formatCurrency(producer?.kpis?.emRepasse || 0)}
           subtitle="Liquidados via PIX"
           icon={CheckCircle2}
           iconColor="text-teal-400"
@@ -143,50 +213,57 @@ export const DashboardFinanceiroPage: React.FC = () => {
           </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="bg-slate-900/80 text-slate-400 border-b border-slate-800">
-                <th className="p-3 font-semibold">Evento</th>
-                <th className="p-3 font-semibold">Vendas Brutas</th>
-                <th className="p-3 font-semibold">Taxa Disk</th>
-                <th className="p-3 font-semibold">Despesas Retidas</th>
-                <th className="p-3 font-semibold">Repasses Pagos</th>
-                <th className="p-3 font-semibold">Saldo Disponível</th>
-                <th className="p-3 font-semibold text-right">Ação</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60">
-              {wallets.map((wallet) => (
-                <tr key={wallet.id} className="hover:bg-slate-900/40">
-                  <td className="p-3">
-                    <div className="font-bold text-slate-200">{wallet.eventName}</div>
-                    <div className="text-[11px] text-slate-400 font-mono">{wallet.eventId}</div>
-                  </td>
-                  <td className="p-3 font-bold text-slate-200">{formatCurrency(wallet.grossTicketSales)}</td>
-                  <td className="p-3 text-rose-400">- {formatCurrency(wallet.diskFeeTotal)}</td>
-                  <td className="p-3 text-rose-400">- {formatCurrency(wallet.expensesTotal)}</td>
-                  <td className="p-3 text-slate-300">{formatCurrency(wallet.repaymentsPaidTotal)}</td>
-                  <td className="p-3 font-extrabold text-emerald-400 text-sm">
-                    {formatCurrency(wallet.balanceAvailable)}
-                  </td>
-                  <td className="p-3 text-right">
-                    <button
-                      onClick={() => {
-                        setSelectedWalletForPayout(wallet);
-                        setIsModalOpen(true);
-                      }}
-                      disabled={wallet.balanceAvailable <= 0}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow transition disabled:opacity-40 cursor-pointer"
-                    >
-                      Repasse
-                    </button>
-                  </td>
+        {wallets.length === 0 && !isLoading ? (
+          <div className="py-8 text-center text-slate-400 text-xs">
+            <Lock className="w-8 h-8 mx-auto text-slate-600 mb-2" />
+            Nenhuma carteira financeira disponível no momento. Conexão ao Keeper aguardando sincronização.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="bg-slate-900/80 text-slate-400 border-b border-slate-800">
+                  <th className="p-3 font-semibold">Evento</th>
+                  <th className="p-3 font-semibold">Vendas Brutas</th>
+                  <th className="p-3 font-semibold">Taxa Disk</th>
+                  <th className="p-3 font-semibold">Despesas Retidas</th>
+                  <th className="p-3 font-semibold">Repasses Pagos</th>
+                  <th className="p-3 font-semibold">Saldo Disponível</th>
+                  <th className="p-3 font-semibold text-right">Ação</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {wallets.map((wallet) => (
+                  <tr key={wallet.id} className="hover:bg-slate-900/40">
+                    <td className="p-3">
+                      <div className="font-bold text-slate-200">{wallet.eventName}</div>
+                      <div className="text-[11px] text-slate-400 font-mono">{wallet.eventId}</div>
+                    </td>
+                    <td className="p-3 font-bold text-slate-200">{formatCurrency(wallet.grossTicketSales)}</td>
+                    <td className="p-3 text-rose-400">- {formatCurrency(wallet.diskFeeTotal)}</td>
+                    <td className="p-3 text-rose-400">- {formatCurrency(wallet.expensesTotal)}</td>
+                    <td className="p-3 text-slate-300">{formatCurrency(wallet.repaymentsPaidTotal)}</td>
+                    <td className="p-3 font-extrabold text-emerald-400 text-sm">
+                      {formatCurrency(wallet.balanceAvailable)}
+                    </td>
+                    <td className="p-3 text-right">
+                      <button
+                        onClick={() => {
+                          setSelectedWalletForPayout(wallet);
+                          setIsModalOpen(true);
+                        }}
+                        disabled={isKeeperOffline || wallet.balanceAvailable <= 0}
+                        className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                      >
+                        Repasse
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Recent Ledger Entries */}
@@ -208,36 +285,42 @@ export const DashboardFinanceiroPage: React.FC = () => {
           </button>
         </div>
 
-        <div className="divide-y divide-slate-800/60">
-          {ledgerEntries.slice(0, 5).map((entry) => (
-            <div key={entry.id} className="py-3 flex items-center justify-between gap-3 text-xs">
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-slate-200">{entry.description}</span>
-                  <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-slate-800 text-slate-400">
-                    {entry.entryType}
-                  </span>
+        {ledgerEntries.length === 0 && !isLoading ? (
+          <div className="py-6 text-center text-slate-400 text-xs">
+            Nenhum lançamento contábil recuperado do Keeper.
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-800/60">
+            {ledgerEntries.slice(0, 5).map((entry) => (
+              <div key={entry.id} className="py-3 flex items-center justify-between gap-3 text-xs">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-slate-200">{entry.description}</span>
+                    <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-slate-800 text-slate-400">
+                      {entry.entryType}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-400">
+                    {entry.eventName} • {formatDateTime(entry.createdAt)}
+                  </div>
                 </div>
-                <div className="text-[11px] text-slate-400">
-                  {entry.eventName} • {formatDateTime(entry.createdAt)}
-                </div>
-              </div>
 
-              <div className="text-right">
-                <div
-                  className={`font-bold ${
-                    entry.direction === 'CREDIT' ? 'text-emerald-400' : 'text-rose-400'
-                  }`}
-                >
-                  {entry.direction === 'CREDIT' ? '+' : '-'} {formatCurrency(entry.amount)}
-                </div>
-                <div className="text-[10px] text-slate-400">
-                  Saldo após: {formatCurrency(entry.balanceAfter)}
+                <div className="text-right">
+                  <div
+                    className={`font-bold ${
+                      entry.direction === 'CREDIT' ? 'text-emerald-400' : 'text-rose-400'
+                    }`}
+                  >
+                    {entry.direction === 'CREDIT' ? '+' : '-'} {formatCurrency(entry.amount)}
+                  </div>
+                  <div className="text-[10px] text-slate-400">
+                    Saldo após: {formatCurrency(entry.balanceAfter)}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {selectedWalletForPayout && (
@@ -246,7 +329,8 @@ export const DashboardFinanceiroPage: React.FC = () => {
           onClose={() => setIsModalOpen(false)}
           wallet={selectedWalletForPayout}
           onSuccess={(req) => {
-            alert(`Solicitação ${req.scheduleNumber} submetida ao Keeper Financeiro.`);
+            alert(`Solicitação ${req.scheduleNumber} submetida com sucesso ao Keeper Financeiro.`);
+            loadFinancialData();
           }}
         />
       )}

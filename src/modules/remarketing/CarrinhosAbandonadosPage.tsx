@@ -1,0 +1,239 @@
+import React, { useState } from 'react';
+import { mockAbandonedCarts } from '@/services/api/mockSeedData';
+import { AbandonedCart } from '@/types/marketing';
+import {
+  ShoppingCart,
+  Send,
+  MessageCircle,
+  Mail,
+  Search,
+  CheckCircle,
+  Clock,
+  XCircle,
+} from 'lucide-react';
+import { formatCurrency, formatDateTime } from '@/utils/formatters';
+
+export const CarrinhosAbandonadosPage: React.FC = () => {
+  const [carts, setCarts] = useState<AbandonedCart[]>(mockAbandonedCarts);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+
+  const filteredCarts = carts.filter((c) => {
+    const matchesSearch =
+      c.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.customerEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.eventName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'ALL' || c.recoveryStatus === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const totalAbandonedAmount = carts.reduce((acc, c) => acc + c.cartValue, 0);
+  const recoveredCarts = carts.filter((c) => c.recoveryStatus === 'RECOVERED');
+  const totalRecoveredAmount = recoveredCarts.reduce((acc, c) => acc + c.cartValue, 0);
+
+  const handleSendRecovery = (cart: AbandonedCart) => {
+    alert(`Disparando mensagem de recuperação via WhatsApp oficial DiskIngressos para ${cart.customerName} (${cart.customerPhone}) com link direto de checkout.`);
+    setCarts((prev) =>
+      prev.map((item) =>
+        item.id === cart.id ? { ...item, recoveryStatus: 'RECOVERY_SENT' as const } : item
+      )
+    );
+  };
+
+  const getRecoveryBadge = (status: AbandonedCart['recoveryStatus']) => {
+    switch (status) {
+      case 'RECOVERED':
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <CheckCircle className="w-3 h-3" />
+            Recuperado
+          </span>
+        );
+      case 'RECOVERY_SENT':
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+            <Clock className="w-3 h-3" />
+            Mensagem Enviada
+          </span>
+        );
+      case 'PENDING':
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            <Clock className="w-3 h-3" />
+            Pendente Disparo
+          </span>
+        );
+      case 'EXPIRED':
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+            <XCircle className="w-3 h-3" />
+            Expirado
+          </span>
+        );
+      default:
+        return (
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400">
+            {status}
+          </span>
+        );
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-2xl font-extrabold text-slate-100 tracking-tight">
+              Central de Carrinhos Abandonados
+            </h1>
+            <span className="px-2 py-0.5 rounded text-xs font-bold bg-pink-500/10 text-pink-400 border border-pink-500/20">
+              Recuperação Ativa & Conversão
+            </span>
+          </div>
+          <p className="text-sm text-slate-400">
+            Acompanhe usuários que iniciaram o checkout de ingressos mas não concluíram o pagamento.
+          </p>
+        </div>
+
+        <button
+          onClick={() => alert('Disparando automação em massa para todos os carrinhos pendentes...')}
+          className="flex items-center gap-2 bg-gradient-to-r from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-pink-600/25 transition cursor-pointer"
+        >
+          <Send className="w-4 h-4" />
+          <span>Disparar Recuperação em Massa</span>
+        </button>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-4">
+          <span className="text-[11px] text-slate-400 font-semibold uppercase">Total Abandonado</span>
+          <div className="text-xl font-extrabold text-rose-400 mt-1">
+            {formatCurrency(totalAbandonedAmount)}
+          </div>
+          <span className="text-[10px] text-slate-400">{carts.length} carrinhos pendentes</span>
+        </div>
+
+        <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-4">
+          <span className="text-[11px] text-slate-400 font-semibold uppercase">Receita Recuperada</span>
+          <div className="text-xl font-extrabold text-emerald-400 mt-1">
+            {formatCurrency(totalRecoveredAmount)}
+          </div>
+          <span className="text-[10px] text-emerald-400">Convertidos pós-disparo</span>
+        </div>
+
+        <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-4">
+          <span className="text-[11px] text-slate-400 font-semibold uppercase">Taxa de Resgate</span>
+          <div className="text-xl font-extrabold text-teal-400 mt-1">
+            {((recoveredCarts.length / (carts.length || 1)) * 100).toFixed(1)}%
+          </div>
+          <span className="text-[10px] text-teal-400">Eficiência de recuperação</span>
+        </div>
+
+        <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-4">
+          <span className="text-[11px] text-slate-400 font-semibold uppercase">Ticket Médio Perdido</span>
+          <div className="text-xl font-extrabold text-slate-200 mt-1">
+            {formatCurrency(totalAbandonedAmount / (carts.length || 1))}
+          </div>
+          <span className="text-[10px] text-slate-400">Por checkout abandonado</span>
+        </div>
+      </div>
+
+      {/* Filter and Search */}
+      <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="relative w-full sm:w-80">
+          <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder="Buscar por comprador, e-mail ou evento..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-slate-900 text-xs text-slate-200 pl-8 pr-3 py-2 rounded-lg border border-slate-700/80 focus:outline-none focus:border-blue-500"
+          />
+        </div>
+
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="bg-slate-900 text-xs text-slate-300 px-3 py-2 rounded-lg border border-slate-700 focus:outline-none"
+        >
+          <option value="ALL">Todos os Status</option>
+          <option value="PENDING">Pendentes de Disparo</option>
+          <option value="RECOVERY_SENT">Disparo Realizado</option>
+          <option value="RECOVERED">Recuperados com Sucesso</option>
+          <option value="EXPIRED">Expirados</option>
+        </select>
+      </div>
+
+      {/* Abandoned Carts Table */}
+      <div className="bg-[#141b2d] border border-slate-800 rounded-xl overflow-hidden shadow-lg">
+        <table className="w-full text-left text-xs">
+          <thead>
+            <tr className="bg-slate-900/80 text-slate-400 border-b border-slate-800">
+              <th className="p-3.5 font-semibold">Comprador & Contato</th>
+              <th className="p-3.5 font-semibold">Evento & Setor</th>
+              <th className="p-3.5 font-semibold text-center">Ingressos</th>
+              <th className="p-3.5 font-semibold text-right">Valor do Carrinho</th>
+              <th className="p-3.5 font-semibold">Momento do Abandono</th>
+              <th className="p-3.5 font-semibold text-center">Status</th>
+              <th className="p-3.5 font-semibold text-right">Ação Imediata</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-800/60">
+            {filteredCarts.map((cart) => (
+              <tr key={cart.id} className="hover:bg-slate-800/40">
+                <td className="p-3.5">
+                  <div className="font-bold text-slate-100">{cart.customerName}</div>
+                  <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
+                    <span className="flex items-center gap-1 text-emerald-400 font-mono">
+                      <MessageCircle className="w-3 h-3" />
+                      {cart.customerPhone}
+                    </span>
+                    <span>•</span>
+                    <span className="flex items-center gap-1">
+                      <Mail className="w-3 h-3" />
+                      {cart.customerEmail}
+                    </span>
+                  </div>
+                </td>
+                <td className="p-3.5">
+                  <div className="font-semibold text-slate-200">{cart.eventName}</div>
+                  <div className="text-[11px] text-slate-400">{cart.sectorName}</div>
+                </td>
+                <td className="p-3.5 text-center font-bold text-blue-400">
+                  {cart.ticketsCount} un
+                </td>
+                <td className="p-3.5 text-right font-extrabold text-rose-400 text-sm">
+                  {formatCurrency(cart.cartValue)}
+                </td>
+                <td className="p-3.5 text-slate-400">
+                  {formatDateTime(cart.abandonedAt)}
+                </td>
+                <td className="p-3.5 text-center">
+                  {getRecoveryBadge(cart.recoveryStatus)}
+                </td>
+                <td className="p-3.5 text-right">
+                  {cart.recoveryStatus !== 'RECOVERED' ? (
+                    <button
+                      onClick={() => handleSendRecovery(cart)}
+                      className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow transition flex items-center gap-1.5 ml-auto cursor-pointer"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" />
+                      <span>WhatsApp</span>
+                    </button>
+                  ) : (
+                    <span className="text-[11px] text-emerald-400 font-semibold">
+                      Convertido ✓
+                    </span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};

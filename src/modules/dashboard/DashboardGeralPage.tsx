@@ -33,9 +33,15 @@ export const DashboardGeralPage: React.FC = () => {
   const [isPayoutModalOpen, setIsPayoutModalOpen] = useState(false);
 
   useEffect(() => {
-    keeperAdapter.getEventWallets().then((data) => {
-      setWallets(data);
-    });
+    keeperAdapter.getEventWallets()
+      .then((data) => {
+        setWallets(data);
+      })
+      .catch((err) => {
+        if (err.cachedData && Array.isArray(err.cachedData)) {
+          setWallets(err.cachedData);
+        }
+      });
   }, []);
 
   const totalGrossSales = allEvents.reduce((acc, curr) => acc + curr.grossSales, 0);
@@ -57,14 +63,14 @@ export const DashboardGeralPage: React.FC = () => {
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
               <Building className="w-3.5 h-3.5" />
-              {producer.name}
+              {producer?.name || 'Produtor DiskIngressos'}
             </span>
             <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-300 border border-blue-500/20">
-              CNPJ: {producer.cnpj}
+              CNPJ: {producer?.cnpj || 'Não informado'}
             </span>
           </div>
           <h1 className="text-2xl font-extrabold text-slate-100 tracking-tight">
-            Olá, {user.name} 👋
+            Olá, {user?.name || 'Produtor'} 👋
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
             Visão consolidada comercial e financeira dos seus eventos integrados ao Keeper Core DiskIngressos.
@@ -104,7 +110,7 @@ export const DashboardGeralPage: React.FC = () => {
 
         <MetricKpiCard
           title="Saldo Disponível para Repasse"
-          value={formatCurrency(producer.kpis.disponivel)}
+          value={formatCurrency(producer?.kpis?.disponivel ?? 0)}
           subtitle="Liberado pelo Keeper Financeiro"
           icon={Wallet}
           iconColor="text-blue-400"
@@ -122,7 +128,7 @@ export const DashboardGeralPage: React.FC = () => {
 
         <MetricKpiCard
           title="Repasses Já Executados"
-          value={formatCurrency(producer.kpis.emRepasse)}
+          value={formatCurrency(producer?.kpis?.emRepasse ?? 0)}
           subtitle="Confirmados via PIX bancário"
           icon={CheckCircle}
           iconColor="text-teal-400"

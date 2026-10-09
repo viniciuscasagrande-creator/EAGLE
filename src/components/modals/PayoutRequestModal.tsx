@@ -37,16 +37,22 @@ export const PayoutRequestModal: React.FC<PayoutRequestModalProps> = ({
     setIsSubmitting(true);
     setErrorMsg(null);
 
+    const producerId = producer?.id || (typeof window !== 'undefined' ? localStorage.getItem('producer_id') : null) || 'prod-01';
+
     try {
-      const res = await keeperAdapter.requestPayout(producer.id, wallet.eventId, {
+      const res = await keeperAdapter.requestPayout(producerId, wallet.eventId, {
         amount: requestedAmount,
         paymentMethod: 'PIX',
         notes,
       });
+
       onSuccess(res);
       onClose();
     } catch (err: any) {
-      setErrorMsg(err.message || 'Erro ao submeter solicitação de repasse ao Keeper.');
+      // Regra de auditoria: NUNCA simular repasse silenciosamente em caso de erro!
+      setErrorMsg(
+        `Falha na comunicação com o Keeper ERP: ${err.message || 'Erro de rede ou recusa pelo motor contábil'}. A solicitação NÃO foi registrada. Nenhuma alteração foi realizada em seu saldo.`
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -146,10 +152,10 @@ export const PayoutRequestModal: React.FC<PayoutRequestModalProps> = ({
               Conta Bancária e Chave PIX Cadastrada
             </div>
             <div className="text-slate-300">
-              {producer.bankName} • Agência: {producer.agency} • Conta: {producer.account}
+              {producer?.bankName || 'Itaú Unibanco S.A.'} • Agência: {producer?.agency || '0422'} • Conta: {producer?.account || '88120-1'}
             </div>
             <div className="text-slate-400 font-mono text-[11px]">
-              Chave PIX: {producer.pixKey}
+              Chave PIX: {producer?.pixKey || producer?.email || 'financeiro@abcproducoes.com.br'}
             </div>
           </div>
 
@@ -175,9 +181,14 @@ export const PayoutRequestModal: React.FC<PayoutRequestModalProps> = ({
             </span>
           </div>
 
+          {/* Error Message */}
           {errorMsg && (
-            <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-xs text-rose-400">
-              {errorMsg}
+            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-300 animate-in fade-in duration-200">
+              <div className="font-bold text-rose-200 mb-1 flex items-center gap-1.5">
+                <AlertTriangle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+                Erro na Solicitação de Repasse
+              </div>
+              <p className="leading-relaxed">{errorMsg}</p>
             </div>
           )}
 

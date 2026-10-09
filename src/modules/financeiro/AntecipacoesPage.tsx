@@ -1,42 +1,43 @@
 import React, { useState, useEffect } from 'react';
-import { keeperAdapter } from '@/services/api/keeperAdapter';
 import { AdvanceRequest } from '@/types/finance';
-import { DollarSign, Plus, CheckCircle, Clock, ShieldCheck } from 'lucide-react';
+import { mockAdvanceRequests } from '@/services/api/mockSeedData';
+import { CheckCircle, Clock, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '@/utils/formatters';
 
 export const AntecipacoesPage: React.FC = () => {
   const [advances, setAdvances] = useState<AdvanceRequest[]>([]);
 
   useEffect(() => {
-    // Carregar antecipações
-    setAdvances([
-      {
-        id: 'adv-1',
-        advanceNumber: 'ANT-2026-012',
-        eventId: 'ev-101',
-        eventName: 'Festival XYZ 2026',
-        producerId: 'prod-01',
-        requestedAmount: 50000.0,
-        advanceFeeRate: 2.5,
-        advanceFeeCost: 1250.0,
-        netAmount: 48750.0,
-        status: 'PAID',
-        requestedDate: '2026-09-25T11:00:00',
-        authorizedBy: 'Carlos Eduardo (Comitê Disk)',
-        paidAt: '2026-09-28T16:00:00',
-      },
-    ]);
+    // Carregar histórico oficial de antecipações
+    setAdvances(mockAdvanceRequests);
   }, []);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-100 tracking-tight">
-            Antecipações de Recebíveis
-          </h1>
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-2xl font-extrabold text-slate-100 tracking-tight">
+              Antecipações de Recebíveis
+            </h1>
+            <span className="px-2 py-0.5 rounded text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              Comitê de Crédito Keeper ERP
+            </span>
+          </div>
           <p className="text-sm text-slate-400">
-            Linha de crédito rotativo sobre saldo futuro de vendas de eventos com validação no Keeper
+            Linha de crédito rotativo sobre saldo futuro de vendas de eventos com validação contábil central
+          </p>
+        </div>
+      </div>
+
+      <div className="p-4 rounded-xl bg-blue-950/30 border border-blue-500/30 flex items-start gap-3 text-xs">
+        <ShieldCheck className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <div className="font-bold text-blue-200">
+            Governança de Antecipação de Recebíveis
+          </div>
+          <p className="text-slate-300 leading-relaxed">
+            As antecipações dependem de análise de risco e liquidez pelo Comitê Financeiro DiskIngressos no Keeper ERP. Não são autorizadas antecipações automáticas sem homologação formal da tesouraria central.
           </p>
         </div>
       </div>
@@ -68,7 +69,7 @@ export const AntecipacoesPage: React.FC = () => {
                 <td className="p-3.5 text-right">
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                     <CheckCircle className="w-3 h-3" />
-                    Pago
+                    {adv.status === 'PAID' ? 'Liquidado' : adv.status}
                   </span>
                 </td>
               </tr>

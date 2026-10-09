@@ -1,4 +1,4 @@
-import { keeperRequest } from './client';
+import { keeperRequest, ApiError } from './client';
 import {
   mockProducer,
   mockEvents,
@@ -21,24 +21,84 @@ import {
   AdvanceRequest,
 } from '@/types/finance';
 
+export class KeeperOfflineError extends Error {
+  isOffline: boolean;
+  endpoint: string;
+  lastConfirmedAt?: string;
+  cachedData?: any;
+
+  constructor(
+    message: string,
+    endpoint: string,
+    lastConfirmedAt?: string,
+    cachedData?: any
+  ) {
+    super(message);
+    this.name = 'KeeperOfflineError';
+    this.isOffline = true;
+    this.endpoint = endpoint;
+    this.lastConfirmedAt = lastConfirmedAt;
+    this.cachedData = cachedData;
+  }
+}
+
+// Helpers para preservação de dados confirmados em auditoria
+function getCachedSnapshot<T>(key: string): { data: T; timestamp: string } | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(`keeper_confirmed_${key}`);
+    const time = localStorage.getItem(`keeper_confirmed_time_${key}`);
+    if (raw && time) {
+      return { data: JSON.parse(raw), timestamp: time };
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+function saveConfirmedSnapshot(key: string, data: any) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(`keeper_confirmed_${key}`, JSON.stringify(data));
+    localStorage.setItem(`keeper_confirmed_time_${key}`, new Date().toISOString());
+  } catch {
+    // ignore
+  }
+}
+
 export const keeperAdapter = {
+  getLastSyncTime(key: string): string | null {
+    const snap = getCachedSnapshot(key);
+    return snap?.timestamp || null;
+  },
+
   /**
    * Consulta os dados cadastrais e KPIs consolidados do Produtor
    * Consome GET /financeiro/settlement/producers/:id/overview do Keeper
    */
   async getProducerOverview(producerId = 'prod-01'): Promise<Producer> {
+    const cacheKey = `producer_${producerId}`;
     try {
       const data = await keeperRequest<any>(
         `/financeiro/settlement/producers/${producerId}/overview`
       );
       if (data && data.producer) {
-        return {
+        const result: Producer = {
           ...data.producer,
           kpis: data.consolidatedKpis || data.producer.kpis,
         };
+        saveConfirmedSnapshot(cacheKey, result);
+        return result;
       }
-    } catch {
-      // Fallback gracioso usando o seed do Keeper
+    } catch (err: any) {
+      const cached = getCachedSnapshot<Producer>(cacheKey);
+      throw new KeeperOfflineError(
+        'Serviço cadastral e financeiro do produtor indisponível no Keeper ERP.',
+        `/financeiro/settlement/producers/${producerId}/overview`,
+        cached?.timestamp,
+        cached?.data || mockProducer
+      );
     }
     return mockProducer;
   },
@@ -48,16 +108,18 @@ export const keeperAdapter = {
    * Lista todos os eventos com estatísticas consolidadas
    */
   async getEvents(producerId = 'prod-01'): Promise<EventItem[]> {
+    const cacheKey = `events_${producerId}`;
     try {
       const data = await keeperRequest<any>(
         `/financeiro/settlement/producers/${producerId}/overview`
       );
       if (data && Array.isArray(data.events)) {
-        // Enriquecer com métricas do catálogo
-        return mockEvents;
+        saveConfirmedSnapshot(cacheKey, data.events);
+        return data.events;
       }
     } catch {
-      // Fallback
+      const cached = getCachedSnapshot<EventItem[]>(cacheKey);
+      if (cached?.data) return cached.data;
     }
     return mockEvents;
   },
@@ -68,38 +130,55 @@ export const keeperAdapter = {
    */
   async getEventById(eventId: string): Promise<EventItem | null> {
     const localEvent = mockEvents.find((e) => e.id === eventId) || mockEvents[0];
+    const cacheKey = `event_detail_${eventId}`;
     try {
       const financialDetail = await keeperRequest<any>(
         `/financeiro/settlement/events/${eventId}/financial-detail`
       );
       if (financialDetail) {
-        return {
+        const enriched = {
           ...localEvent,
           grossSales: financialDetail.vendasBrutas || localEvent.grossSales,
         };
+        saveConfirmedSnapshot(cacheKey, enriched);
+        return enriched;
       }
     } catch {
-      // Fallback
+      const cached = getCachedSnapshot<EventItem>(cacheKey);
+      if (cached?.data) return cached.data;
     }
     return localEvent;
   },
 
   /**
-   * Carteiras dos Eventos
+   * Carteiras dos Eventos (Regra estrita: nunca simula saldos)
    * Consome GET /financeiro/settlement/wallets
    */
   async getEventWallets(): Promise<EventWalletPosition[]> {
+    const cacheKey = 'wallets';
     try {
       const data = await keeperRequest<EventWalletPosition[]>(
         '/financeiro/settlement/wallets'
       );
       if (Array.isArray(data) && data.length > 0) {
+        saveConfirmedSnapshot(cacheKey, data);
         return data;
       }
-    } catch {
-      // Fallback
+    } catch (err: any) {
+      const cached = getCachedSnapshot<EventWalletPosition[]>(cacheKey);
+      throw new KeeperOfflineError(
+        'Serviço financeiro temporariamente indisponível no Keeper ERP. Não foi possível consultar as carteiras oficiais.',
+        '/financeiro/settlement/wallets',
+        cached?.timestamp,
+        cached?.data
+      );
     }
-    return mockWallets;
+    const cached = getCachedSnapshot<EventWalletPosition[]>(cacheKey);
+    if (cached?.data) return cached.data;
+    throw new KeeperOfflineError(
+      'Nenhuma carteira financeira confirmada foi localizada no Keeper ERP.',
+      '/financeiro/settlement/wallets'
+    );
   },
 
   /**
@@ -111,6 +190,7 @@ export const keeperAdapter = {
     eventId?: string;
     entryType?: string;
   }): Promise<FinancialLedgerEntry[]> {
+    const cacheKey = 'ledger';
     try {
       const query = new URLSearchParams();
       if (params?.producerId) query.append('producerId', params.producerId);
@@ -122,12 +202,24 @@ export const keeperAdapter = {
         `/financeiro/settlement/ledger${qs}`
       );
       if (Array.isArray(data) && data.length > 0) {
+        saveConfirmedSnapshot(cacheKey, data);
         return data;
       }
-    } catch {
-      // Fallback
+    } catch (err: any) {
+      const cached = getCachedSnapshot<FinancialLedgerEntry[]>(cacheKey);
+      throw new KeeperOfflineError(
+        'Serviço de Ledger financeiro indisponível no Keeper ERP.',
+        '/financeiro/settlement/ledger',
+        cached?.timestamp,
+        cached?.data
+      );
     }
-    return mockLedgerEntries;
+    const cached = getCachedSnapshot<FinancialLedgerEntry[]>(cacheKey);
+    if (cached?.data) return cached.data;
+    throw new KeeperOfflineError(
+      'Extrato do Ledger financeiro indisponível.',
+      '/financeiro/settlement/ledger'
+    );
   },
 
   /**
@@ -135,17 +227,30 @@ export const keeperAdapter = {
    * Consome GET /financeiro/settlement/schedules
    */
   async getPayoutRequests(): Promise<PayoutRequest[]> {
+    const cacheKey = 'payout_schedules';
     try {
       const data = await keeperRequest<PayoutRequest[]>(
         '/financeiro/settlement/schedules'
       );
       if (Array.isArray(data) && data.length > 0) {
+        saveConfirmedSnapshot(cacheKey, data);
         return data;
       }
-    } catch {
-      // Fallback
+    } catch (err: any) {
+      const cached = getCachedSnapshot<PayoutRequest[]>(cacheKey);
+      throw new KeeperOfflineError(
+        'Serviço de programação de repasses indisponível no Keeper ERP.',
+        '/financeiro/settlement/schedules',
+        cached?.timestamp,
+        cached?.data
+      );
     }
-    return mockPayoutRequests;
+    const cached = getCachedSnapshot<PayoutRequest[]>(cacheKey);
+    if (cached?.data) return cached.data;
+    throw new KeeperOfflineError(
+      'Programação de repasses indisponível.',
+      '/financeiro/settlement/schedules'
+    );
   },
 
   async getPayoutSchedules(): Promise<PayoutRequest[]> {
@@ -155,6 +260,10 @@ export const keeperAdapter = {
   /**
    * Inicia Solicitação de Repasse com Chave de Idempotência
    * Consome POST /financeiro/settlement/producers/:id/repayments
+   *
+   * REGRA CRÍTICA DE AUDITORIA:
+   * NUNCA SIMULAR SUCESSO OU ADICIONAR RECORD FICTÍCIO EM CASO DE FALHA.
+   * Se o Keeper ERP falhar, lançar a exceção diretamente para o frontend.
    */
   async requestPayout(
     producerId: string,
@@ -166,45 +275,32 @@ export const keeperAdapter = {
     }
   ): Promise<PayoutRequest> {
     const idempotencyKey = `payout_${producerId}_${eventId}_${Date.now()}`;
-    try {
-      const res = await keeperRequest<any>(
-        `/financeiro/settlement/producers/${producerId}/repayments?eventId=${eventId}`,
-        {
-          method: 'POST',
-          body: JSON.stringify(payload),
-          idempotencyKey,
-        }
+    // Executa a chamada oficial sem capturar silenciosamente
+    const res = await keeperRequest<PayoutRequest>(
+      `/financeiro/settlement/producers/${producerId}/repayments?eventId=${eventId}`,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        idempotencyKey,
+      }
+    );
+
+    if (!res || !res.id) {
+      throw new ApiError(
+        'Resposta inválida do Keeper ERP ao submeter solicitação de repasse.',
+        500
       );
-      if (res) return res;
-    } catch {
-      // Operação simulada resiliente
     }
 
-    const event = mockEvents.find((e) => e.id === eventId) || mockEvents[0];
-    const newRequest: PayoutRequest = {
-      id: `rep-${Date.now()}`,
-      scheduleNumber: `REP-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
-      eventId,
-      eventName: event.name,
-      producerId,
-      producerName: mockProducer.name,
-      amount: payload.amount,
-      status: 'UNDER_ANALYSIS',
-      paymentMethod: 'PIX',
-      destinationBank: mockProducer.bankName,
-      destinationPixKey: mockProducer.pixKey,
-      requestedAt: new Date().toISOString(),
-      scheduledDate: new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0],
-      notes: payload.notes || 'Solicitação via Portal do Produtor',
-    };
-
-    mockPayoutRequests.unshift(newRequest);
-    return newRequest;
+    return res;
   },
 
   /**
    * Inicia Solicitação de Antecipação
    * Consome POST /financeiro/settlement/producers/:id/advances
+   *
+   * REGRA CRÍTICA DE AUDITORIA:
+   * NUNCA SIMULAR ANTECIPAÇÃO FICTÍCIA.
    */
   async requestAdvance(
     producerId: string,
@@ -212,39 +308,23 @@ export const keeperAdapter = {
     payload: { requestedAmount: number }
   ): Promise<AdvanceRequest> {
     const idempotencyKey = `adv_${producerId}_${eventId}_${Date.now()}`;
-    try {
-      const res = await keeperRequest<any>(
-        `/financeiro/settlement/producers/${producerId}/advances?eventId=${eventId}`,
-        {
-          method: 'POST',
-          body: JSON.stringify(payload),
-          idempotencyKey,
-        }
+    const res = await keeperRequest<AdvanceRequest>(
+      `/financeiro/settlement/producers/${producerId}/advances?eventId=${eventId}`,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        idempotencyKey,
+      }
+    );
+
+    if (!res || !res.id) {
+      throw new ApiError(
+        'Resposta inválida do Keeper ERP ao submeter solicitação de antecipação.',
+        500
       );
-      if (res) return res;
-    } catch {
-      // Fallback
     }
 
-    const event = mockEvents.find((e) => e.id === eventId) || mockEvents[0];
-    const feeRate = 2.5;
-    const feeCost = (payload.requestedAmount * feeRate) / 100;
-    const newAdvance: AdvanceRequest = {
-      id: `adv-${Date.now()}`,
-      advanceNumber: `ANT-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
-      eventId,
-      eventName: event.name,
-      producerId,
-      requestedAmount: payload.requestedAmount,
-      advanceFeeRate: feeRate,
-      advanceFeeCost: feeCost,
-      netAmount: payload.requestedAmount - feeCost,
-      status: 'UNDER_ANALYSIS',
-      requestedDate: new Date().toISOString(),
-    };
-
-    mockAdvanceRequests.unshift(newAdvance);
-    return newAdvance;
+    return res;
   },
 
   // Módulos Comerciais
