@@ -34,7 +34,7 @@ export const CampanhasPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-extrabold text-slate-100 tracking-tight">
+            <h1 className="text-2xl font-extrabold text-white tracking-tight">
               Campanhas de Tráfego & Mídia Paga
             </h1>
             <span className="px-2 py-0.5 rounded text-xs font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
@@ -48,7 +48,7 @@ export const CampanhasPage: React.FC = () => {
 
         <button
           onClick={() => alert('Abrir criador de anúncio integrado.')}
-          className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-blue-600/25 transition cursor-pointer"
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Criar Campanha</span>
@@ -57,32 +57,32 @@ export const CampanhasPage: React.FC = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-4">
-          <span className="text-[11px] text-slate-400 font-semibold uppercase">Investimento Total</span>
-          <div className="text-xl font-extrabold text-slate-100 mt-1">
+        <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-4 shadow-md">
+          <span className="text-[11px] text-slate-300 font-semibold uppercase">Investimento Total</span>
+          <div className="text-xl font-extrabold text-white mt-1">
             {formatCurrency(totalSpent)}
           </div>
           <span className="text-[10px] text-slate-400">Verba consumida</span>
         </div>
 
-        <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-4">
-          <span className="text-[11px] text-slate-400 font-semibold uppercase">Receita Gerada (ROAS)</span>
+        <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-4 shadow-md">
+          <span className="text-[11px] text-slate-300 font-semibold uppercase">Receita Gerada (ROAS)</span>
           <div className="text-xl font-extrabold text-emerald-400 mt-1">
             {formatCurrency(totalRevenue)}
           </div>
           <span className="text-[10px] text-emerald-400 font-bold">ROAS Médio: {overallRoas}x</span>
         </div>
 
-        <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-4">
-          <span className="text-[11px] text-slate-400 font-semibold uppercase">Ingressos Convertidos</span>
+        <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-4 shadow-md">
+          <span className="text-[11px] text-slate-300 font-semibold uppercase">Ingressos Convertidos</span>
           <div className="text-xl font-extrabold text-blue-400 mt-1">
             {formatNumber(totalConversions)} un
           </div>
           <span className="text-[10px] text-blue-400">Vendas via anúncios</span>
         </div>
 
-        <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-4">
-          <span className="text-[11px] text-slate-400 font-semibold uppercase">CPA Médio</span>
+        <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-4 shadow-md">
+          <span className="text-[11px] text-slate-300 font-semibold uppercase">CPA Médio</span>
           <div className="text-xl font-extrabold text-indigo-400 mt-1">
             {formatCurrency(totalSpent / (totalConversions || 1))}
           </div>
@@ -91,22 +91,22 @@ export const CampanhasPage: React.FC = () => {
       </div>
 
       {/* Filter and Search */}
-      <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-3 flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="relative w-full sm:w-80">
-          <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Buscar por campanha ou evento..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-900 text-xs text-slate-200 pl-8 pr-3 py-2 rounded-lg border border-slate-700/80 focus:outline-none focus:border-blue-500"
+            className="w-full bg-[#202124] text-xs text-white pl-8 pr-3 py-2 rounded-md border border-[#37393e] focus:outline-none focus:border-blue-500"
           />
         </div>
 
         <select
           value={channelFilter}
           onChange={(e) => setChannelFilter(e.target.value)}
-          className="bg-slate-900 text-xs text-slate-300 px-3 py-2 rounded-lg border border-slate-700 focus:outline-none"
+          className="bg-[#202124] text-xs text-white px-3 py-2 rounded-md border border-[#37393e] focus:outline-none"
         >
           <option value="ALL">Todas as Plataformas</option>
           <option value="META_ADS">Meta Ads (Instagram / Facebook)</option>
@@ -116,10 +116,10 @@ export const CampanhasPage: React.FC = () => {
       </div>
 
       {/* Campaigns Table */}
-      <div className="bg-[#141b2d] border border-slate-800 rounded-xl overflow-hidden shadow-lg">
+      <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg overflow-hidden shadow-md">
         <table className="w-full text-left text-xs">
           <thead>
-            <tr className="bg-slate-900/80 text-slate-400 border-b border-slate-800">
+            <tr className="bg-[#232429] text-slate-300 border-b border-[#37393e]">
               <th className="p-3.5 font-semibold">Campanha & Evento</th>
               <th className="p-3.5 font-semibold">Plataforma</th>
               <th className="p-3.5 font-semibold text-right">Gasto</th>
@@ -131,21 +131,21 @@ export const CampanhasPage: React.FC = () => {
               <th className="p-3.5 font-semibold text-right">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/60">
+          <tbody className="divide-y divide-[#37393e]">
             {filteredCampaigns.map((camp) => {
               const cpa = camp.conversions > 0 ? camp.budgetSpent / camp.conversions : 0;
               return (
-                <tr key={camp.id} className="hover:bg-slate-800/40">
+                <tr key={camp.id} className="hover:bg-[#25262c] transition">
                   <td className="p-3.5">
-                    <div className="font-bold text-slate-100">{camp.name}</div>
+                    <div className="font-bold text-white">{camp.name}</div>
                     <div className="text-[11px] text-slate-400 mt-0.5">{camp.eventName}</div>
                   </td>
                   <td className="p-3.5">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-cyan-400 border border-slate-700">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#232429] text-cyan-400 border border-[#37393e]">
                       {camp.channel.replace('_', ' ')}
                     </span>
                   </td>
-                  <td className="p-3.5 text-right font-bold text-slate-200">
+                  <td className="p-3.5 text-right font-bold text-white">
                     {formatCurrency(camp.budgetSpent)}
                   </td>
                   <td className="p-3.5 text-center text-slate-300">

@@ -33,7 +33,7 @@ export const OportunidadesPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-extrabold text-slate-100 tracking-tight">
+            <h1 className="text-2xl font-extrabold text-white tracking-tight">
               Oportunidades & Funil Comercial
             </h1>
             <span className="px-2 py-0.5 rounded text-xs font-bold bg-purple-500/10 text-purple-400 border border-purple-500/20">
@@ -47,7 +47,7 @@ export const OportunidadesPage: React.FC = () => {
 
         <button
           onClick={() => alert('Formulário de nova oportunidade comercial.')}
-          className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-blue-600/25 transition cursor-pointer"
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Nova Oportunidade</span>
@@ -56,32 +56,32 @@ export const OportunidadesPage: React.FC = () => {
 
       {/* Pipeline Summary KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-4">
-          <span className="text-[11px] text-slate-400 font-semibold uppercase">Total no Pipeline</span>
-          <div className="text-xl font-extrabold text-slate-100 mt-1">
+        <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-4 shadow-md">
+          <span className="text-[11px] text-slate-300 font-semibold uppercase">Total no Pipeline</span>
+          <div className="text-xl font-extrabold text-white mt-1">
             {formatCurrency(totalPipeline)}
           </div>
           <span className="text-[10px] text-slate-400">Em todas as etapas ativas</span>
         </div>
 
-        <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-4">
-          <span className="text-[11px] text-slate-400 font-semibold uppercase">Pipeline Ponderado</span>
+        <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-4 shadow-md">
+          <span className="text-[11px] text-slate-300 font-semibold uppercase">Pipeline Ponderado</span>
           <div className="text-xl font-extrabold text-emerald-400 mt-1">
             {formatCurrency(weightedPipeline)}
           </div>
           <span className="text-[10px] text-emerald-400">Probabilidade real esperada</span>
         </div>
 
-        <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-4">
-          <span className="text-[11px] text-slate-400 font-semibold uppercase">Negócios no Funil</span>
+        <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-4 shadow-md">
+          <span className="text-[11px] text-slate-300 font-semibold uppercase">Negócios no Funil</span>
           <div className="text-xl font-extrabold text-blue-400 mt-1">
             {opportunities.length}
           </div>
           <span className="text-[10px] text-blue-400">Oportunidades mapeadas</span>
         </div>
 
-        <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-4">
-          <span className="text-[11px] text-slate-400 font-semibold uppercase">Taxa de Sucesso</span>
+        <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-4 shadow-md">
+          <span className="text-[11px] text-slate-300 font-semibold uppercase">Taxa de Sucesso</span>
           <div className="text-xl font-extrabold text-teal-400 mt-1">
             68.4%
           </div>
@@ -98,10 +98,10 @@ export const OportunidadesPage: React.FC = () => {
           return (
             <div
               key={stage.id}
-              className="bg-[#141b2d] border border-slate-800 rounded-xl p-3 flex flex-col min-w-[220px]"
+              className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-3 flex flex-col min-w-[220px]"
             >
               {/* Column Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+              <div className="flex items-center justify-between pb-3 border-b border-[#37393e] mb-3">
                 <div className="flex items-center gap-2">
                   <span
                     className={`w-2 h-2 rounded-full ${
@@ -112,9 +112,9 @@ export const OportunidadesPage: React.FC = () => {
                         : 'bg-blue-400'
                     }`}
                   />
-                  <span className="text-xs font-bold text-slate-200">{stage.label}</span>
+                  <span className="text-xs font-bold text-white">{stage.label}</span>
                 </div>
-                <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-slate-800 text-slate-400">
+                <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-[#202124] text-slate-300">
                   {stageOpps.length}
                 </span>
               </div>
@@ -128,10 +128,10 @@ export const OportunidadesPage: React.FC = () => {
                 {stageOpps.map((opp) => (
                   <div
                     key={opp.id}
-                    className="p-3 bg-slate-900/80 hover:bg-slate-900 border border-slate-800 rounded-xl space-y-2 cursor-pointer transition shadow-sm"
+                    className="p-3 bg-[#232429] hover:bg-[#25262c] border border-[#37393e] rounded-lg space-y-2 cursor-pointer transition shadow-sm"
                   >
                     <div className="flex items-start justify-between gap-1">
-                      <div className="text-xs font-bold text-slate-200 leading-snug">
+                      <div className="text-xs font-bold text-white leading-snug">
                         {opp.title}
                       </div>
                       <span className="text-[10px] font-bold text-emerald-400 font-mono">
@@ -144,13 +144,11 @@ export const OportunidadesPage: React.FC = () => {
                       <span className="truncate">{opp.clientName}</span>
                     </div>
 
-                    <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs">
-                      <span className="font-extrabold text-slate-100">
+                    <div className="pt-2 border-t border-[#37393e] flex items-center justify-between text-xs">
+                      <span className="font-extrabold text-white">
                         {formatCurrency(opp.estimatedValue)}
                       </span>
-                      <span className="text-[10px] text-slate-500 font-mono truncate max-w-[100px]">
-                        {opp.eventName || '-'}
-                      </span>
+                      <span className="text-[10px] text-slate-400">{opp.assignedTo}</span>
                     </div>
                   </div>
                 ))}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useEventContext } from '@/contexts/EventContext';
 import {
@@ -40,6 +40,22 @@ export const Sidebar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Auto-expand the active section based on current URL path
+  useEffect(() => {
+    const path = location.pathname;
+    if (path.startsWith('/eventos')) {
+      setOpenSubmenus((prev) => ({ ...prev, eventos: true }));
+    } else if (path.startsWith('/comercial')) {
+      setOpenSubmenus((prev) => ({ ...prev, comercial: true }));
+    } else if (path.startsWith('/marketing')) {
+      setOpenSubmenus((prev) => ({ ...prev, marketing: true }));
+    } else if (path.startsWith('/remarketing')) {
+      setOpenSubmenus((prev) => ({ ...prev, remarketing: true }));
+    } else if (path.startsWith('/financeiro')) {
+      setOpenSubmenus((prev) => ({ ...prev, financeiro: true }));
+    }
+  }, [location.pathname]);
+
   const toggleSubmenu = (key: string) => {
     setOpenSubmenus((prev) => ({ ...prev, [key]: !prev[key] }));
   };
@@ -48,6 +64,20 @@ export const Sidebar: React.FC = () => {
     clearSelectedEvent();
     navigate('/eventos');
   };
+
+  const getSubmenuLinkClass = (isActive: boolean) =>
+    `block py-1.5 px-2.5 text-xs rounded-md transition ${
+      isActive
+        ? 'text-blue-400 font-semibold bg-[#283142] border-l-2 border-blue-500 pl-2'
+        : 'text-slate-400 hover:text-slate-200 hover:bg-[#202126]'
+    }`;
+
+  const getLevel2LinkClass = (isActive: boolean) =>
+    `flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition ${
+      isActive
+        ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+        : 'text-slate-300 hover:bg-[#25262c] hover:text-white'
+    }`;
 
   // Level 2 Menu: Specific to an active Event
   if (selectedEvent) {
@@ -94,13 +124,7 @@ export const Sidebar: React.FC = () => {
 
           <NavLink
             to={`/eventos/${selectedEvent.id}/dashboard`}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition ${
-                isActive
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                  : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
-              }`
-            }
+            className={({ isActive }) => getLevel2LinkClass(isActive)}
           >
             <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
             {!collapsed && <span>Dashboard do Evento</span>}
@@ -108,71 +132,41 @@ export const Sidebar: React.FC = () => {
 
           <NavLink
             to={`/eventos/${selectedEvent.id}/ingressos`}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition ${
-                isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
-              }`
-            }
+            className={({ isActive }) => getLevel2LinkClass(isActive)}
           >
-            <Ticket className="w-4 h-4 flex-shrink-0" />
+            <Ticket className="w-4 h-4 flex-shrink-0 text-cyan-400" />
             {!collapsed && <span>Ingressos & Lotes</span>}
           </NavLink>
 
           <NavLink
             to={`/eventos/${selectedEvent.id}/mapa`}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition ${
-                isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
-              }`
-            }
+            className={({ isActive }) => getLevel2LinkClass(isActive)}
           >
-            <MapPin className="w-4 h-4 flex-shrink-0" />
+            <MapPin className="w-4 h-4 flex-shrink-0 text-amber-400" />
             {!collapsed && <span>Mapa / Ocupação</span>}
           </NavLink>
 
           <NavLink
             to={`/eventos/${selectedEvent.id}/vendas`}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition ${
-                isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
-              }`
-            }
+            className={({ isActive }) => getLevel2LinkClass(isActive)}
           >
-            <ShoppingCart className="w-4 h-4 flex-shrink-0" />
+            <ShoppingCart className="w-4 h-4 flex-shrink-0 text-emerald-400" />
             {!collapsed && <span>Pedidos e Vendas</span>}
           </NavLink>
 
           <NavLink
             to={`/eventos/${selectedEvent.id}/cortesias`}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition ${
-                isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
-              }`
-            }
+            className={({ isActive }) => getLevel2LinkClass(isActive)}
           >
-            <Gift className="w-4 h-4 flex-shrink-0" />
+            <Gift className="w-4 h-4 flex-shrink-0 text-purple-400" />
             {!collapsed && <span>Cortesias Emitidas</span>}
           </NavLink>
 
-          <div className="pt-2 border-t border-slate-800/80" />
+          <div className="pt-2 border-t border-[#2b2c31]" />
 
           <NavLink
             to={`/eventos/${selectedEvent.id}/financeiro`}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition ${
-                isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
-              }`
-            }
+            className={({ isActive }) => getLevel2LinkClass(isActive)}
           >
             <DollarSign className="w-4 h-4 flex-shrink-0 text-emerald-400" />
             {!collapsed && <span>Financeiro do Evento</span>}
@@ -180,13 +174,7 @@ export const Sidebar: React.FC = () => {
 
           <NavLink
             to={`/eventos/${selectedEvent.id}/comercial`}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition ${
-                isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
-              }`
-            }
+            className={({ isActive }) => getLevel2LinkClass(isActive)}
           >
             <Briefcase className="w-4 h-4 flex-shrink-0 text-amber-400" />
             {!collapsed && <span>Comercial do Evento</span>}
@@ -194,13 +182,7 @@ export const Sidebar: React.FC = () => {
 
           <NavLink
             to={`/eventos/${selectedEvent.id}/marketing`}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition ${
-                isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
-              }`
-            }
+            className={({ isActive }) => getLevel2LinkClass(isActive)}
           >
             <Megaphone className="w-4 h-4 flex-shrink-0 text-indigo-400" />
             {!collapsed && <span>Marketing do Evento</span>}
@@ -208,13 +190,7 @@ export const Sidebar: React.FC = () => {
 
           <NavLink
             to={`/eventos/${selectedEvent.id}/remarketing`}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition ${
-                isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
-              }`
-            }
+            className={({ isActive }) => getLevel2LinkClass(isActive)}
           >
             <Repeat className="w-4 h-4 flex-shrink-0 text-pink-400" />
             {!collapsed && <span>Remarketing do Evento</span>}
@@ -222,29 +198,17 @@ export const Sidebar: React.FC = () => {
 
           <NavLink
             to={`/eventos/${selectedEvent.id}/relatorios`}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition ${
-                isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
-              }`
-            }
+            className={({ isActive }) => getLevel2LinkClass(isActive)}
           >
-            <BarChart3 className="w-4 h-4 flex-shrink-0" />
+            <BarChart3 className="w-4 h-4 flex-shrink-0 text-violet-400" />
             {!collapsed && <span>Relatórios do Evento</span>}
           </NavLink>
 
           <NavLink
             to={`/eventos/${selectedEvent.id}/configuracoes`}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition ${
-                isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
-              }`
-            }
+            className={({ isActive }) => getLevel2LinkClass(isActive)}
           >
-            <Settings className="w-4 h-4 flex-shrink-0" />
+            <Settings className="w-4 h-4 flex-shrink-0 text-slate-400" />
             {!collapsed && <span>Configurações</span>}
           </NavLink>
         </nav>
@@ -309,45 +273,55 @@ export const Sidebar: React.FC = () => {
           </button>
 
           {openSubmenus.eventos && !collapsed && (
-            <div className="ml-7 mt-1 space-y-1 border-l border-slate-800 pl-2">
+            <div className="ml-7 mt-1 space-y-1 border-l border-[#37393e] pl-2">
               <NavLink
                 to="/eventos"
                 end
-                className={({ isActive }) =>
-                  `block py-1.5 px-2 text-xs rounded transition ${
-                    isActive ? 'text-blue-400 font-semibold bg-slate-800/50' : 'text-slate-400 hover:text-slate-200'
-                  }`
+                className={() =>
+                  getSubmenuLinkClass(location.pathname === '/eventos' && !location.search)
                 }
               >
                 Todos os Eventos
               </NavLink>
               <NavLink
                 to="/eventos?status=ACTIVE"
-                className="block py-1.5 px-2 text-xs text-slate-400 hover:text-slate-200 transition"
+                className={() =>
+                  getSubmenuLinkClass(location.pathname === '/eventos' && location.search.includes('status=ACTIVE'))
+                }
               >
                 Eventos Ativos
               </NavLink>
               <NavLink
                 to="/eventos?status=UPCOMING"
-                className="block py-1.5 px-2 text-xs text-slate-400 hover:text-slate-200 transition"
+                className={() =>
+                  getSubmenuLinkClass(location.pathname === '/eventos' && location.search.includes('status=UPCOMING'))
+                }
               >
                 Eventos Futuros
               </NavLink>
               <NavLink
                 to="/eventos?status=COMPLETED"
-                className="block py-1.5 px-2 text-xs text-slate-400 hover:text-slate-200 transition"
+                className={() =>
+                  getSubmenuLinkClass(location.pathname === '/eventos' && location.search.includes('status=COMPLETED'))
+                }
               >
                 Eventos Encerrados
               </NavLink>
               <NavLink
                 to="/eventos/novo"
-                className="block py-1.5 px-2 text-xs text-emerald-400 hover:text-emerald-300 font-medium transition"
+                className={({ isActive }) =>
+                  `block py-1.5 px-2.5 text-xs rounded-md font-medium transition ${
+                    isActive
+                      ? 'text-emerald-300 font-bold bg-[#1a382e] border-l-2 border-emerald-500 pl-2'
+                      : 'text-emerald-400 hover:text-emerald-300 hover:bg-[#202126]'
+                  }`
+                }
               >
                 + Criar Novo Evento
               </NavLink>
               <NavLink
                 to="/eventos/comparar"
-                className="block py-1.5 px-2 text-xs text-slate-400 hover:text-slate-200 transition"
+                className={({ isActive }) => getSubmenuLinkClass(isActive)}
               >
                 Comparar Resultados
               </NavLink>
@@ -362,7 +336,7 @@ export const Sidebar: React.FC = () => {
             className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition ${
               location.pathname.startsWith('/comercial')
                 ? 'text-blue-400 bg-blue-500/10'
-                : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
+                : 'text-slate-300 hover:bg-[#25262c] hover:text-white'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -379,45 +353,41 @@ export const Sidebar: React.FC = () => {
           </button>
 
           {openSubmenus.comercial && !collapsed && (
-            <div className="ml-7 mt-1 space-y-1 border-l border-slate-800 pl-2">
+            <div className="ml-7 mt-1 space-y-1 border-l border-[#37393e] pl-2">
               <NavLink
                 to="/comercial"
                 end
-                className={({ isActive }) =>
-                  `block py-1.5 px-2 text-xs rounded transition ${
-                    isActive ? 'text-blue-400 font-semibold bg-slate-800/50' : 'text-slate-400 hover:text-slate-200'
-                  }`
-                }
+                className={({ isActive }) => getSubmenuLinkClass(isActive)}
               >
                 Dashboard Comercial
               </NavLink>
               <NavLink
                 to="/comercial/clientes"
-                className="block py-1.5 px-2 text-xs text-slate-400 hover:text-slate-200 transition"
+                className={({ isActive }) => getSubmenuLinkClass(isActive)}
               >
                 Central de Clientes
               </NavLink>
               <NavLink
                 to="/comercial/oportunidades"
-                className="block py-1.5 px-2 text-xs text-slate-400 hover:text-slate-200 transition"
+                className={({ isActive }) => getSubmenuLinkClass(isActive)}
               >
                 Oportunidades & Funil
               </NavLink>
               <NavLink
                 to="/comercial/propostas"
-                className="block py-1.5 px-2 text-xs text-slate-400 hover:text-slate-200 transition"
+                className={({ isActive }) => getSubmenuLinkClass(isActive)}
               >
                 Orçamentos & Propostas
               </NavLink>
               <NavLink
                 to="/comercial/vendas-corporativas"
-                className="block py-1.5 px-2 text-xs text-slate-400 hover:text-slate-200 transition"
+                className={({ isActive }) => getSubmenuLinkClass(isActive)}
               >
                 Vendas Corporativas & Grupos
               </NavLink>
               <NavLink
                 to="/comercial/parceiros"
-                className="block py-1.5 px-2 text-xs text-slate-400 hover:text-slate-200 transition"
+                className={({ isActive }) => getSubmenuLinkClass(isActive)}
               >
                 Parceiros & Convênios
               </NavLink>
@@ -432,7 +402,7 @@ export const Sidebar: React.FC = () => {
             className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition ${
               location.pathname.startsWith('/marketing')
                 ? 'text-blue-400 bg-blue-500/10'
-                : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
+                : 'text-slate-300 hover:bg-[#25262c] hover:text-white'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -449,33 +419,29 @@ export const Sidebar: React.FC = () => {
           </button>
 
           {openSubmenus.marketing && !collapsed && (
-            <div className="ml-7 mt-1 space-y-1 border-l border-slate-800 pl-2">
+            <div className="ml-7 mt-1 space-y-1 border-l border-[#37393e] pl-2">
               <NavLink
                 to="/marketing"
                 end
-                className={({ isActive }) =>
-                  `block py-1.5 px-2 text-xs rounded transition ${
-                    isActive ? 'text-blue-400 font-semibold bg-slate-800/50' : 'text-slate-400 hover:text-slate-200'
-                  }`
-                }
+                className={({ isActive }) => getSubmenuLinkClass(isActive)}
               >
                 Dashboard Marketing
               </NavLink>
               <NavLink
                 to="/marketing/campanhas"
-                className="block py-1.5 px-2 text-xs text-slate-400 hover:text-slate-200 transition"
+                className={({ isActive }) => getSubmenuLinkClass(isActive)}
               >
                 Campanhas & Anúncios
               </NavLink>
               <NavLink
                 to="/marketing/integracoes"
-                className="block py-1.5 px-2 text-xs text-slate-400 hover:text-slate-200 transition"
+                className={({ isActive }) => getSubmenuLinkClass(isActive)}
               >
                 Meta / Google / TikTok Ads
               </NavLink>
               <NavLink
                 to="/marketing/publicos"
-                className="block py-1.5 px-2 text-xs text-slate-400 hover:text-slate-200 transition"
+                className={({ isActive }) => getSubmenuLinkClass(isActive)}
               >
                 Públicos & Criativos
               </NavLink>
@@ -490,7 +456,7 @@ export const Sidebar: React.FC = () => {
             className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition ${
               location.pathname.startsWith('/remarketing')
                 ? 'text-blue-400 bg-blue-500/10'
-                : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
+                : 'text-slate-300 hover:bg-[#25262c] hover:text-white'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -507,33 +473,29 @@ export const Sidebar: React.FC = () => {
           </button>
 
           {openSubmenus.remarketing && !collapsed && (
-            <div className="ml-7 mt-1 space-y-1 border-l border-slate-800 pl-2">
+            <div className="ml-7 mt-1 space-y-1 border-l border-[#37393e] pl-2">
               <NavLink
                 to="/remarketing"
                 end
-                className={({ isActive }) =>
-                  `block py-1.5 px-2 text-xs rounded transition ${
-                    isActive ? 'text-blue-400 font-semibold bg-slate-800/50' : 'text-slate-400 hover:text-slate-200'
-                  }`
-                }
+                className={({ isActive }) => getSubmenuLinkClass(isActive)}
               >
                 Dashboard Remarketing
               </NavLink>
               <NavLink
                 to="/remarketing/carrinhos-abandonados"
-                className="block py-1.5 px-2 text-xs text-slate-400 hover:text-slate-200 transition"
+                className={({ isActive }) => getSubmenuLinkClass(isActive)}
               >
                 Carrinhos Abandonados
               </NavLink>
               <NavLink
                 to="/remarketing/campanhas"
-                className="block py-1.5 px-2 text-xs text-slate-400 hover:text-slate-200 transition"
+                className={({ isActive }) => getSubmenuLinkClass(isActive)}
               >
                 Disparos WhatsApp & E-mail
               </NavLink>
               <NavLink
                 to="/remarketing/consentimento"
-                className="block py-1.5 px-2 text-xs text-slate-400 hover:text-slate-200 transition"
+                className={({ isActive }) => getSubmenuLinkClass(isActive)}
               >
                 Consentimento & LGPD
               </NavLink>
@@ -548,7 +510,7 @@ export const Sidebar: React.FC = () => {
             className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition ${
               location.pathname.startsWith('/financeiro')
                 ? 'text-blue-400 bg-blue-500/10'
-                : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
+                : 'text-slate-300 hover:bg-[#25262c] hover:text-white'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -565,45 +527,47 @@ export const Sidebar: React.FC = () => {
           </button>
 
           {openSubmenus.financeiro && !collapsed && (
-            <div className="ml-7 mt-1 space-y-1 border-l border-slate-800 pl-2">
+            <div className="ml-7 mt-1 space-y-1 border-l border-[#37393e] pl-2">
               <NavLink
                 to="/financeiro"
                 end
-                className={({ isActive }) =>
-                  `block py-1.5 px-2 text-xs rounded transition ${
-                    isActive ? 'text-blue-400 font-semibold bg-slate-800/50' : 'text-slate-400 hover:text-slate-200'
-                  }`
-                }
+                className={({ isActive }) => getSubmenuLinkClass(isActive)}
               >
                 Dashboard Financeiro
               </NavLink>
               <NavLink
                 to="/financeiro/carteiras"
-                className="block py-1.5 px-2 text-xs text-slate-400 hover:text-slate-200 transition"
+                className={({ isActive }) => getSubmenuLinkClass(isActive)}
               >
                 Carteiras dos Eventos
               </NavLink>
               <NavLink
                 to="/financeiro/extrato-ledger"
-                className="block py-1.5 px-2 text-xs text-slate-400 hover:text-slate-200 transition"
+                className={({ isActive }) => getSubmenuLinkClass(isActive)}
               >
                 Extrato Oficial (Ledger)
               </NavLink>
               <NavLink
                 to="/financeiro/taxas-retencoes"
-                className="block py-1.5 px-2 text-xs text-slate-400 hover:text-slate-200 transition"
+                className={({ isActive }) => getSubmenuLinkClass(isActive)}
               >
                 Taxas & Retenções
               </NavLink>
               <NavLink
                 to="/financeiro/repasses"
-                className="block py-1.5 px-2 text-xs text-emerald-400 hover:text-emerald-300 font-medium transition"
+                className={({ isActive }) =>
+                  `block py-1.5 px-2.5 text-xs rounded-md font-medium transition ${
+                    isActive
+                      ? 'text-emerald-300 font-bold bg-[#1a382e] border-l-2 border-emerald-500 pl-2'
+                      : 'text-emerald-400 hover:text-emerald-300 hover:bg-[#202126]'
+                  }`
+                }
               >
                 Solicitar Repasse
               </NavLink>
               <NavLink
                 to="/financeiro/antecipacoes"
-                className="block py-1.5 px-2 text-xs text-slate-400 hover:text-slate-200 transition"
+                className={({ isActive }) => getSubmenuLinkClass(isActive)}
               >
                 Antecipações
               </NavLink>

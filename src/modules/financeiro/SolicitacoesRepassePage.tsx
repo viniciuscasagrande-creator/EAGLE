@@ -80,7 +80,7 @@ export const SolicitacoesRepassePage: React.FC = () => {
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-700/40 text-slate-400">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#202124] text-slate-400 border border-[#37393e]">
             {status}
           </span>
         );
@@ -92,7 +92,7 @@ export const SolicitacoesRepassePage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-extrabold text-slate-100 tracking-tight">
+            <h1 className="text-2xl font-extrabold text-white tracking-tight">
               Solicitações de Repasse & Histórico
             </h1>
             <span
@@ -114,7 +114,7 @@ export const SolicitacoesRepassePage: React.FC = () => {
           <button
             onClick={loadPayoutsAndWallets}
             disabled={isLoading}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold border border-slate-700 transition cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-2 bg-[#2c2d33] hover:bg-[#35363c] text-white rounded-lg text-xs font-semibold border border-[#37393e] transition cursor-pointer disabled:opacity-50"
           >
             <RotateCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
             <span>Atualizar</span>
@@ -122,7 +122,7 @@ export const SolicitacoesRepassePage: React.FC = () => {
           <button
             onClick={() => setIsModalOpen(true)}
             disabled={isOffline || !selectedWallet || selectedWallet.balanceAvailable <= 0}
-            className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-700/20 transition cursor-pointer"
+            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Nova Solicitação de Repasse</span>
@@ -131,7 +131,7 @@ export const SolicitacoesRepassePage: React.FC = () => {
       </div>
 
       {isOffline && (
-        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs">
+        <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs">
           <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1 space-y-1">
             <div className="font-bold text-amber-300 flex items-center justify-between">
@@ -151,30 +151,30 @@ export const SolicitacoesRepassePage: React.FC = () => {
 
       {/* Payouts Workflow Explanation */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-3.5 space-y-1">
+        <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-3.5 space-y-1">
           <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">Passo 1</span>
-          <div className="text-xs font-bold text-slate-200">1. Solicitação Produtor</div>
+          <div className="text-xs font-bold text-white">1. Solicitação Produtor</div>
           <p className="text-[11px] text-slate-400">Produtor consulta saldo oficial e submete o valor desejado.</p>
         </div>
-        <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-3.5 space-y-1">
+        <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-3.5 space-y-1">
           <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">Passo 2</span>
-          <div className="text-xs font-bold text-slate-200">2. Análise Disk (Keeper)</div>
+          <div className="text-xs font-bold text-white">2. Análise Disk (Keeper)</div>
           <p className="text-[11px] text-slate-400">A Controladoria valida reservas de contingência e taxas.</p>
         </div>
-        <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-3.5 space-y-1">
+        <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-3.5 space-y-1">
           <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">Passo 3</span>
-          <div className="text-xs font-bold text-slate-200">3. Programação / Agendamento</div>
+          <div className="text-xs font-bold text-white">3. Programação / Agendamento</div>
           <p className="text-[11px] text-slate-400">Operação agendada para envio à câmara bancária PIX/TED.</p>
         </div>
-        <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-3.5 space-y-1">
+        <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-3.5 space-y-1">
           <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Passo 4</span>
-          <div className="text-xs font-bold text-slate-200">4. Confirmação no Ledger</div>
+          <div className="text-xs font-bold text-white">4. Confirmação no Ledger</div>
           <p className="text-[11px] text-slate-400">Débito registrado no livro contábil com comprovante.</p>
         </div>
       </div>
 
       {/* Requests Table */}
-      <div className="bg-[#141b2d] border border-slate-800 rounded-xl overflow-hidden shadow-lg">
+      <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg overflow-hidden shadow-md">
         {payouts.length === 0 && !isLoading ? (
           <div className="p-8 text-center text-xs text-slate-400">
             <Lock className="w-8 h-8 mx-auto text-slate-600 mb-2" />
@@ -183,7 +183,7 @@ export const SolicitacoesRepassePage: React.FC = () => {
         ) : (
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="bg-slate-900/80 text-slate-400 border-b border-slate-800">
+              <tr className="bg-[#232429] text-slate-300 border-b border-[#37393e]">
                 <th className="p-3.5 font-semibold">Identificador</th>
                 <th className="p-3.5 font-semibold">Evento</th>
                 <th className="p-3.5 font-semibold">Valor Solicitado</th>
@@ -193,22 +193,22 @@ export const SolicitacoesRepassePage: React.FC = () => {
                 <th className="p-3.5 font-semibold text-right">Situação</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-[#37393e]">
               {payouts.map((req) => (
-                <tr key={req.id} className="hover:bg-slate-800/40">
+                <tr key={req.id} className="hover:bg-[#25262c] transition">
                   <td className="p-3.5">
                     <div className="font-mono font-bold text-blue-400">{req.scheduleNumber}</div>
                     {req.transactionHash && (
-                      <div className="text-[10px] text-slate-500 font-mono truncate max-w-[140px]">
+                      <div className="text-[10px] text-slate-400 font-mono truncate max-w-[140px]">
                         hash: {req.transactionHash}
                       </div>
                     )}
                   </td>
                   <td className="p-3.5">
-                    <div className="font-semibold text-slate-200">{req.eventName}</div>
+                    <div className="font-semibold text-white">{req.eventName}</div>
                     <div className="text-[11px] text-slate-400">{req.notes || '-'}</div>
                   </td>
-                  <td className="p-3.5 font-extrabold text-slate-100 text-sm">
+                  <td className="p-3.5 font-extrabold text-white text-sm">
                     {formatCurrency(req.amount)}
                   </td>
                   <td className="p-3.5 text-slate-300">

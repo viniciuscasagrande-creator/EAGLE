@@ -11,7 +11,7 @@ export const SuporteChamadosPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-100 tracking-tight">
+          <h1 className="text-2xl font-extrabold text-white tracking-tight">
             Atendimento & Suporte ao Produtor
           </h1>
           <p className="text-sm text-slate-400">
@@ -21,17 +21,17 @@ export const SuporteChamadosPage: React.FC = () => {
 
         <button
           onClick={() => alert('Abrindo formulário de chamado oficial com a equipe DiskIngressos...')}
-          className="flex items-center gap-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition cursor-pointer"
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Abrir Novo Chamado</span>
         </button>
       </div>
 
-      <div className="bg-[#141b2d] border border-slate-800 rounded-xl overflow-hidden shadow-lg">
+      <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg overflow-hidden shadow-md">
         <table className="w-full text-left text-xs">
           <thead>
-            <tr className="bg-slate-900/80 text-slate-400 border-b border-slate-800">
+            <tr className="bg-[#232429] text-slate-300 border-b border-[#37393e]">
               <th className="p-3.5 font-semibold">Código Chamado</th>
               <th className="p-3.5 font-semibold">Assunto / Solicitação</th>
               <th className="p-3.5 font-semibold">Abertura</th>
@@ -39,11 +39,11 @@ export const SuporteChamadosPage: React.FC = () => {
               <th className="p-3.5 font-semibold text-right">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/60">
+          <tbody className="divide-y divide-[#37393e]">
             {tickets.map((t) => (
-              <tr key={t.id} className="hover:bg-slate-800/40">
+              <tr key={t.id} className="hover:bg-[#25262c] transition">
                 <td className="p-3.5 font-mono font-bold text-blue-400">{t.id}</td>
-                <td className="p-3.5 font-semibold text-slate-200">{t.subject}</td>
+                <td className="p-3.5 font-semibold text-white">{t.subject}</td>
                 <td className="p-3.5 text-slate-400">{t.created}</td>
                 <td className="p-3.5 text-slate-400">{t.lastUpdate}</td>
                 <td className="p-3.5 text-right">

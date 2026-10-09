@@ -1,26 +1,45 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useEventContext } from '@/contexts/EventContext';
 import { Ticket, Plus, Tag, CheckCircle2, AlertTriangle, Layers } from 'lucide-react';
 import { formatCurrency, formatNumber, formatPercent } from '@/utils/formatters';
 
 export const IngressosPage: React.FC = () => {
-  const { selectedEvent } = useEventContext();
+  const { id } = useParams<{ id: string }>();
+  const { selectedEvent, selectEventById, allEvents } = useEventContext();
 
-  if (!selectedEvent) return null;
+  useEffect(() => {
+    if (id && (!selectedEvent || selectedEvent.id !== id)) {
+      selectEventById(id);
+    }
+  }, [id, selectedEvent, selectEventById]);
+
+  const currentEvent = selectedEvent || allEvents.find((e) => e.id === id) || allEvents[0];
+
+  if (!currentEvent) {
+    return (
+      <div className="p-8 text-center text-slate-400">
+        Nenhum evento encontrado.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-100 tracking-tight">
+          <h1 className="text-2xl font-extrabold text-white tracking-tight">
             Ingressos, Lotes & Setores
           </h1>
           <p className="text-sm text-slate-400">
-            {selectedEvent.name} — Gestão de disponibilidade, preços e viradas de lote
+            {currentEvent.name} — Gestão de disponibilidade, preços e viradas de lote
           </p>
         </div>
 
-        <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition cursor-pointer">
+        <button
+          onClick={() => alert('Configuração de novo lote disponível na próxima atualização.')}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
+        >
           <Plus className="w-4 h-4" />
           <span>Configurar Novo Lote</span>
         </button>
@@ -28,19 +47,19 @@ export const IngressosPage: React.FC = () => {
 
       {/* Setores e Lotes Table Cards */}
       <div className="space-y-4">
-        {selectedEvent.sectors.map((sector) => (
+        {currentEvent.sectors.map((sector) => (
           <div
             key={sector.id}
-            className="bg-[#141b2d] border border-slate-800 rounded-xl overflow-hidden shadow-lg"
+            className="bg-[#2c2d33] border border-[#37393e] rounded-lg overflow-hidden shadow-md"
           >
-            <div className="p-4 bg-slate-900/80 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
+            <div className="p-4 bg-[#232429] border-b border-[#37393e] flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <span
                   className="w-3.5 h-3.5 rounded-md"
                   style={{ backgroundColor: sector.color }}
                 />
                 <div>
-                  <h3 className="font-bold text-slate-100 text-base">{sector.name}</h3>
+                  <h3 className="font-bold text-white text-base">{sector.name}</h3>
                   <div className="text-xs text-slate-400">
                     Capacidade Setor: {formatNumber(sector.totalCapacity)} un • Vendidos: {formatNumber(sector.soldCount)} un
                   </div>
@@ -58,7 +77,7 @@ export const IngressosPage: React.FC = () => {
             <div className="p-4">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="text-slate-400 border-b border-slate-800/80">
+                  <tr className="text-slate-400 border-b border-[#37393e]">
                     <th className="pb-2 font-semibold">Lote</th>
                     <th className="pb-2 font-semibold">Valor Unitário</th>
                     <th className="pb-2 font-semibold">Cota Total</th>
@@ -67,9 +86,9 @@ export const IngressosPage: React.FC = () => {
                     <th className="pb-2 font-semibold text-right">Situação</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/50">
+                <tbody className="divide-y divide-[#37393e]">
                   {sector.batches.map((batch) => (
-                    <tr key={batch.id} className="hover:bg-slate-900/40">
+                    <tr key={batch.id} className="hover:bg-[#25262c] transition">
                       <td className="py-3 font-medium text-slate-200">{batch.name}</td>
                       <td className="py-3 font-bold text-emerald-400">
                         {formatCurrency(batch.price)}

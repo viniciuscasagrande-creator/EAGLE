@@ -45,7 +45,7 @@ export const CarteirasEventosPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-extrabold text-slate-100 tracking-tight">
+            <h1 className="text-2xl font-extrabold text-white tracking-tight">
               Carteiras dos Eventos
             </h1>
             <span
@@ -66,7 +66,7 @@ export const CarteirasEventosPage: React.FC = () => {
         <button
           onClick={loadWallets}
           disabled={isLoading}
-          className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold border border-slate-700 transition cursor-pointer disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3 py-2 bg-[#2c2d33] hover:bg-[#35363c] text-white rounded-lg text-xs font-semibold border border-[#37393e] transition cursor-pointer disabled:opacity-50"
         >
           <RotateCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
           <span>Atualizar Carteiras</span>
@@ -74,7 +74,7 @@ export const CarteirasEventosPage: React.FC = () => {
       </div>
 
       {isOffline && (
-        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs">
+        <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs">
           <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1 space-y-1">
             <div className="font-bold text-amber-300 flex items-center justify-between">
@@ -93,7 +93,7 @@ export const CarteirasEventosPage: React.FC = () => {
       )}
 
       {wallets.length === 0 && !isLoading ? (
-        <div className="bg-[#141b2d] border border-slate-800 rounded-2xl p-12 text-center text-slate-400 text-xs">
+        <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-12 text-center text-slate-400 text-xs">
           <Lock className="w-10 h-10 mx-auto text-slate-600 mb-3" />
           <p className="font-semibold text-slate-300 mb-1">Nenhuma carteira financeira disponível</p>
           <p>Não foi possível carregar as posições patrimoniais a partir do Keeper Core.</p>
@@ -103,12 +103,12 @@ export const CarteirasEventosPage: React.FC = () => {
           {wallets.map((wallet) => (
             <div
               key={wallet.id}
-              className="bg-[#141b2d] border border-slate-800 rounded-2xl p-5 md:p-6 shadow-xl space-y-4"
+              className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-5 md:p-6 shadow-md space-y-4"
             >
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[#37393e]">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-bold text-slate-100">{wallet.eventName}</h3>
+                    <h3 className="text-lg font-bold text-white">{wallet.eventName}</h3>
                     <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-500/20 text-blue-300 border border-blue-500/30">
                       {wallet.eventId}
                     </span>
@@ -125,7 +125,7 @@ export const CarteirasEventosPage: React.FC = () => {
                       setIsModalOpen(true);
                     }}
                     disabled={isOffline || wallet.balanceAvailable <= 0}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs rounded-xl shadow transition cursor-pointer"
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs rounded-lg shadow transition cursor-pointer"
                   >
                     Solicitar Repasse
                   </button>
@@ -134,42 +134,42 @@ export const CarteirasEventosPage: React.FC = () => {
 
               {/* Balances Decomposition Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 text-xs">
-                <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800">
+                <div className="p-3 bg-[#232429] rounded-lg border border-[#37393e]">
                   <span className="text-slate-400">Vendas Brutas:</span>
-                  <div className="text-sm font-bold text-slate-100 mt-0.5">
+                  <div className="text-sm font-bold text-white mt-0.5">
                     {formatCurrency(wallet.grossTicketSales)}
                   </div>
                 </div>
 
-                <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800">
+                <div className="p-3 bg-[#232429] rounded-lg border border-[#37393e]">
                   <span className="text-slate-400">Taxa Disk Retida:</span>
                   <div className="text-sm font-bold text-rose-400 mt-0.5">
                     - {formatCurrency(wallet.diskFeeTotal)}
                   </div>
                 </div>
 
-                <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800">
+                <div className="p-3 bg-[#232429] rounded-lg border border-[#37393e]">
                   <span className="text-slate-400">Spread Financeiro:</span>
                   <div className="text-sm font-bold text-rose-400 mt-0.5">
                     - {formatCurrency(wallet.spreadFeeTotal)}
                   </div>
                 </div>
 
-                <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800">
+                <div className="p-3 bg-[#232429] rounded-lg border border-[#37393e]">
                   <span className="text-slate-400">Despesas Autorizadas:</span>
                   <div className="text-sm font-bold text-rose-400 mt-0.5">
                     - {formatCurrency(wallet.expensesTotal)}
                   </div>
                 </div>
 
-                <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800">
+                <div className="p-3 bg-[#232429] rounded-lg border border-[#37393e]">
                   <span className="text-slate-400">Repasses Já Pagos:</span>
                   <div className="text-sm font-bold text-blue-400 mt-0.5">
                     {formatCurrency(wallet.repaymentsPaidTotal)}
                   </div>
                 </div>
 
-                <div className="p-3 bg-emerald-950/20 rounded-xl border border-emerald-500/30">
+                <div className="p-3 bg-emerald-950/20 rounded-lg border border-emerald-500/30">
                   <span className="text-emerald-400 font-semibold">Disponível Repasse:</span>
                   <div className="text-base font-extrabold text-emerald-400 mt-0.5">
                     {formatCurrency(wallet.balanceAvailable)}
@@ -186,8 +186,8 @@ export const CarteirasEventosPage: React.FC = () => {
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           wallet={selectedWallet}
-          onSuccess={() => {
-            alert('Solicitação de repasse enviada com sucesso ao Keeper ERP!');
+          onSuccess={(req) => {
+            alert(`Solicitação ${req.scheduleNumber} registrada com sucesso.`);
             loadWallets();
           }}
         />

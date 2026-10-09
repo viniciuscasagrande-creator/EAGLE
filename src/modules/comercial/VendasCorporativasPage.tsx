@@ -62,17 +62,17 @@ const mockCorporateOrders: CorporateOrder[] = [
   {
     id: 'corp-03',
     orderNumber: 'CORP-2026-003',
-    companyName: 'Associação dos Magistrados do PR',
-    cnpj: '76.120.345/0001-12',
-    contactName: 'Fernanda Lopes (Diretoria Social)',
-    eventName: 'Stand-up Comedy Gala',
-    ticketQuantity: 60,
-    sector: 'Platéia A Central',
-    totalAmount: 9600.0,
-    paymentTerm: 'PIX PJ à Vista',
+    companyName: 'Associação Médica Paranaense',
+    cnpj: '76.123.456/0001-12',
+    contactName: 'Dr. Fernando Lins (Diretoria Social)',
+    eventName: 'Stand-up Especial 2026',
+    ticketQuantity: 200,
+    sector: 'Plateia Central',
+    totalAmount: 30000.0,
+    paymentTerm: 'À vista PIX',
     paymentStatus: 'PAID',
     invoiceIssued: true,
-    createdAt: '2026-10-02T16:45:00',
+    createdAt: '2026-10-02T16:00:00',
   },
 ];
 
@@ -80,11 +80,13 @@ export const VendasCorporativasPage: React.FC = () => {
   const [orders] = useState<CorporateOrder[]>(mockCorporateOrders);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredOrders = orders.filter((o) =>
-    o.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    o.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    o.cnpj.includes(searchTerm)
-  );
+  const filteredOrders = orders.filter((o) => {
+    return (
+      o.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      o.cnpj.includes(searchTerm) ||
+      o.orderNumber.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
   const totalB2bRevenue = orders.reduce((acc, o) => acc + o.totalAmount, 0);
   const totalB2bTickets = orders.reduce((acc, o) => acc + o.ticketQuantity, 0);
@@ -95,7 +97,7 @@ export const VendasCorporativasPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-extrabold text-slate-100 tracking-tight">
+            <h1 className="text-2xl font-extrabold text-white tracking-tight">
               Vendas Corporativas & Grupos B2B
             </h1>
             <span className="px-2 py-0.5 rounded text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
@@ -109,7 +111,7 @@ export const VendasCorporativasPage: React.FC = () => {
 
         <button
           onClick={() => alert('Abrir modal de novo pedido corporativo B2B.')}
-          className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-blue-600/25 transition cursor-pointer"
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Novo Pedido Corporativo</span>
@@ -118,32 +120,32 @@ export const VendasCorporativasPage: React.FC = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-4">
-          <span className="text-[11px] text-slate-400 font-semibold uppercase">Faturamento B2B Total</span>
+        <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-4 shadow-md">
+          <span className="text-[11px] text-slate-300 font-semibold uppercase">Faturamento B2B Total</span>
           <div className="text-xl font-extrabold text-emerald-400 mt-1">
             {formatCurrency(totalB2bRevenue)}
           </div>
           <span className="text-[10px] text-slate-400">Vendas corporativas</span>
         </div>
 
-        <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-4">
-          <span className="text-[11px] text-slate-400 font-semibold uppercase">Ingressos em Lote</span>
+        <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-4 shadow-md">
+          <span className="text-[11px] text-slate-300 font-semibold uppercase">Ingressos em Lote</span>
           <div className="text-xl font-extrabold text-blue-400 mt-1">
             {totalB2bTickets} un
           </div>
           <span className="text-[10px] text-blue-400">Para colaboradores/convidados</span>
         </div>
 
-        <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-4">
-          <span className="text-[11px] text-slate-400 font-semibold uppercase">Empresas Atendidas</span>
-          <div className="text-xl font-extrabold text-slate-100 mt-1">
+        <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-4 shadow-md">
+          <span className="text-[11px] text-slate-300 font-semibold uppercase">Empresas Atendidas</span>
+          <div className="text-xl font-extrabold text-white mt-1">
             {orders.length} empresas
           </div>
           <span className="text-[10px] text-slate-400">Contratos vigentes</span>
         </div>
 
-        <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-4">
-          <span className="text-[11px] text-slate-400 font-semibold uppercase">Ticket Médio B2B</span>
+        <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-4 shadow-md">
+          <span className="text-[11px] text-slate-300 font-semibold uppercase">Ticket Médio B2B</span>
           <div className="text-xl font-extrabold text-purple-400 mt-1">
             {formatCurrency(totalB2bRevenue / (orders.length || 1))}
           </div>
@@ -152,24 +154,24 @@ export const VendasCorporativasPage: React.FC = () => {
       </div>
 
       {/* Search */}
-      <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-3">
+      <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-3">
         <div className="relative w-full sm:w-80">
-          <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Buscar empresa, CNPJ ou pedido..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-900 text-xs text-slate-200 pl-8 pr-3 py-2 rounded-lg border border-slate-700/80 focus:outline-none focus:border-blue-500"
+            className="w-full bg-[#202124] text-xs text-white pl-8 pr-3 py-2 rounded-md border border-[#37393e] focus:outline-none focus:border-blue-500"
           />
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-[#141b2d] border border-slate-800 rounded-xl overflow-hidden shadow-lg">
+      <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg overflow-hidden shadow-md">
         <table className="w-full text-left text-xs">
           <thead>
-            <tr className="bg-slate-900/80 text-slate-400 border-b border-slate-800">
+            <tr className="bg-[#232429] text-slate-300 border-b border-[#37393e]">
               <th className="p-3.5 font-semibold">Pedido / Empresa</th>
               <th className="p-3.5 font-semibold">Contato Responsável</th>
               <th className="p-3.5 font-semibold">Evento & Setor</th>
@@ -180,11 +182,11 @@ export const VendasCorporativasPage: React.FC = () => {
               <th className="p-3.5 font-semibold text-right">Pagamento</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/60">
+          <tbody className="divide-y divide-[#37393e]">
             {filteredOrders.map((order) => (
-              <tr key={order.id} className="hover:bg-slate-800/40">
+              <tr key={order.id} className="hover:bg-[#25262c] transition">
                 <td className="p-3.5">
-                  <div className="font-bold text-slate-100">{order.companyName}</div>
+                  <div className="font-bold text-white">{order.companyName}</div>
                   <div className="text-[11px] text-slate-400 font-mono flex items-center gap-2 mt-0.5">
                     <span className="text-blue-400 font-bold">{order.orderNumber}</span>
                     <span>•</span>
@@ -193,7 +195,7 @@ export const VendasCorporativasPage: React.FC = () => {
                 </td>
                 <td className="p-3.5 text-slate-300">{order.contactName}</td>
                 <td className="p-3.5">
-                  <div className="font-semibold text-slate-200">{order.eventName}</div>
+                  <div className="font-semibold text-white">{order.eventName}</div>
                   <div className="text-[11px] text-slate-400">{order.sector}</div>
                 </td>
                 <td className="p-3.5 text-center font-bold text-blue-400">

@@ -29,23 +29,23 @@ export const MetricKpiCard: React.FC<MetricKpiCardProps> = ({
   progress,
 }) => {
   return (
-    <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-4 md:p-5 flex flex-col justify-between hover:border-slate-700 transition-all shadow-lg shadow-black/20">
+    <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-4 md:p-5 flex flex-col justify-between hover:border-[#4a4c55] transition-all shadow-md">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+          <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
             {title}
           </span>
-          <div className="text-xl sm:text-2xl font-extrabold text-slate-100 mt-1 tracking-tight">
+          <div className="text-xl sm:text-2xl font-extrabold text-white mt-1 tracking-tight">
             {value}
           </div>
         </div>
-        <div className={`p-2.5 rounded-xl ${iconBg} ${iconColor} border border-white/5`}>
+        <div className={`p-2.5 rounded-lg ${iconBg} ${iconColor} border border-white/5`}>
           <Icon className="w-5 h-5" />
         </div>
       </div>
 
       {(subtitle || trend || progress) && (
-        <div className="mt-4 pt-3 border-t border-slate-800/80">
+        <div className="mt-4 pt-3 border-t border-[#37393e]">
           {trend && (
             <div className="flex items-center gap-1.5 text-xs">
               <span

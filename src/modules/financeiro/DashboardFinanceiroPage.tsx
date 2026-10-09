@@ -75,7 +75,7 @@ export const DashboardFinanceiroPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-extrabold text-slate-100 tracking-tight">
+            <h1 className="text-2xl font-extrabold text-white tracking-tight">
               Financeiro do Produtor
             </h1>
             <span
@@ -97,36 +97,21 @@ export const DashboardFinanceiroPage: React.FC = () => {
           <button
             onClick={loadFinancialData}
             disabled={isLoading}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold border border-slate-700 transition cursor-pointer disabled:opacity-50"
-            title="Atualizar dados oficiais do Keeper"
+            className="flex items-center gap-1.5 px-3 py-2 bg-[#2c2d33] hover:bg-[#35363c] text-white rounded-lg text-xs font-semibold border border-[#37393e] transition cursor-pointer disabled:opacity-50"
           >
             <RotateCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-            <span>Sincronizar</span>
-          </button>
-
-          <button
-            onClick={() => {
-              if (wallets.length > 0) {
-                setSelectedWalletForPayout(wallets[0]);
-                setIsModalOpen(true);
-              }
-            }}
-            disabled={isKeeperOffline || wallets.length === 0}
-            className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-700/20 transition cursor-pointer"
-          >
-            <DollarSign className="w-4 h-4" />
-            <span>Nova Solicitação de Repasse</span>
+            <span>Sincronizar Keeper</span>
           </button>
         </div>
       </div>
 
-      {/* Audit & Unavailability Warning Banner */}
+      {/* Offline Alert Box */}
       {isKeeperOffline && (
-        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs animate-in fade-in duration-200">
+        <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs">
           <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1 space-y-1">
             <div className="font-bold text-amber-300 flex items-center justify-between">
-              <span>Serviço Financeiro do Keeper ERP Indisponível no Momento</span>
+              <span>Modo Resiliente Ativo (Keeper ERP Indisponível)</span>
               {lastSyncTime && (
                 <span className="text-[11px] font-normal text-amber-400/80">
                   Última sincronização confirmada: {formatDateTime(lastSyncTime)}
@@ -143,10 +128,10 @@ export const DashboardFinanceiroPage: React.FC = () => {
       )}
 
       {/* Governança Rule Banner */}
-      <div className="p-4 rounded-xl bg-blue-950/30 border border-blue-500/30 flex items-start gap-3">
+      <div className="p-4 rounded-lg bg-[#2c2d33] border border-[#37393e] flex items-start gap-3">
         <ShieldCheck className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
         <div className="text-xs space-y-1">
-          <div className="font-bold text-blue-200">
+          <div className="font-bold text-white">
             Regra Central de Arquitetura Financeira DiskIngressos
           </div>
           <p className="text-slate-300 leading-relaxed">
@@ -195,10 +180,10 @@ export const DashboardFinanceiroPage: React.FC = () => {
       </div>
 
       {/* Wallets Overview */}
-      <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-5 shadow-lg space-y-4">
+      <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-5 shadow-md space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-base font-bold text-slate-100">
+            <h3 className="text-base font-bold text-white">
               Carteiras dos Eventos
             </h3>
             <p className="text-xs text-slate-400">
@@ -207,7 +192,7 @@ export const DashboardFinanceiroPage: React.FC = () => {
           </div>
           <button
             onClick={() => navigate('/financeiro/carteiras')}
-            className="text-xs text-blue-400 hover:text-blue-300 font-semibold"
+            className="text-xs text-blue-400 hover:text-blue-300 font-semibold cursor-pointer"
           >
             Ver Detalhes
           </button>
@@ -222,7 +207,7 @@ export const DashboardFinanceiroPage: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="bg-slate-900/80 text-slate-400 border-b border-slate-800">
+                <tr className="bg-[#232429] text-slate-300 border-b border-[#37393e]">
                   <th className="p-3 font-semibold">Evento</th>
                   <th className="p-3 font-semibold">Vendas Brutas</th>
                   <th className="p-3 font-semibold">Taxa Disk</th>
@@ -232,16 +217,16 @@ export const DashboardFinanceiroPage: React.FC = () => {
                   <th className="p-3 font-semibold text-right">Ação</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-[#37393e]">
                 {wallets.map((wallet) => (
-                  <tr key={wallet.id} className="hover:bg-slate-900/40">
+                  <tr key={wallet.id} className="hover:bg-[#25262c] transition">
                     <td className="p-3">
-                      <div className="font-bold text-slate-200">{wallet.eventName}</div>
+                      <div className="font-bold text-white">{wallet.eventName}</div>
                       <div className="text-[11px] text-slate-400 font-mono">{wallet.eventId}</div>
                     </td>
-                    <td className="p-3 font-bold text-slate-200">{formatCurrency(wallet.grossTicketSales)}</td>
-                    <td className="p-3 text-rose-400">- {formatCurrency(wallet.diskFeeTotal)}</td>
-                    <td className="p-3 text-rose-400">- {formatCurrency(wallet.expensesTotal)}</td>
+                    <td className="p-3 font-bold text-white">{formatCurrency(wallet.grossTicketSales)}</td>
+                    <td className="p-3 text-rose-400 font-semibold">- {formatCurrency(wallet.diskFeeTotal)}</td>
+                    <td className="p-3 text-rose-400 font-semibold">- {formatCurrency(wallet.expensesTotal)}</td>
                     <td className="p-3 text-slate-300">{formatCurrency(wallet.repaymentsPaidTotal)}</td>
                     <td className="p-3 font-extrabold text-emerald-400 text-sm">
                       {formatCurrency(wallet.balanceAvailable)}
@@ -267,10 +252,10 @@ export const DashboardFinanceiroPage: React.FC = () => {
       </div>
 
       {/* Recent Ledger Entries */}
-      <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-5 shadow-lg space-y-4">
+      <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-5 shadow-md space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-base font-bold text-slate-100">
+            <h3 className="text-base font-bold text-white">
               Últimos Lançamentos no Livro Financeiro (FinancialLedger)
             </h3>
             <p className="text-xs text-slate-400">
@@ -279,7 +264,7 @@ export const DashboardFinanceiroPage: React.FC = () => {
           </div>
           <button
             onClick={() => navigate('/financeiro/extrato-ledger')}
-            className="text-xs text-blue-400 hover:text-blue-300 font-semibold"
+            className="text-xs text-blue-400 hover:text-blue-300 font-semibold cursor-pointer"
           >
             Extrato Completo
           </button>
@@ -290,13 +275,13 @@ export const DashboardFinanceiroPage: React.FC = () => {
             Nenhum lançamento contábil recuperado do Keeper.
           </div>
         ) : (
-          <div className="divide-y divide-slate-800/60">
+          <div className="divide-y divide-[#37393e]">
             {ledgerEntries.slice(0, 5).map((entry) => (
-              <div key={entry.id} className="py-3 flex items-center justify-between gap-3 text-xs">
+              <div key={entry.id} className="py-3 flex items-center justify-between gap-3 text-xs hover:bg-[#25262c] px-2 rounded-md transition">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-slate-200">{entry.description}</span>
-                    <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-slate-800 text-slate-400">
+                    <span className="font-semibold text-white">{entry.description}</span>
+                    <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-[#202124] text-slate-300 border border-[#37393e]">
                       {entry.entryType}
                     </span>
                   </div>

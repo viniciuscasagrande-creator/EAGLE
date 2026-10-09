@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { keeperAdapter } from '@/services/api/keeperAdapter';
 import { AbandonedCart } from '@/types/marketing';
 import { MetricKpiCard } from '@/components/cards/MetricKpiCard';
-import { Repeat, ShoppingCart, MessageSquare, ShieldCheck, CheckCircle2, Clock } from 'lucide-react';
+import { Repeat, ShoppingCart, MessageSquare, ShieldCheck, CheckCircle2, Clock, Plus } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '@/utils/formatters';
+import { useNavigate } from 'react-router-dom';
 
 export const DashboardRemarketingPage: React.FC = () => {
+  const navigate = useNavigate();
   const [carts, setCarts] = useState<AbandonedCart[]>([]);
 
   useEffect(() => {
@@ -18,13 +20,21 @@ export const DashboardRemarketingPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-100 tracking-tight">
+          <h1 className="text-2xl font-extrabold text-white tracking-tight">
             Remarketing & Recuperação de Carrinhos
           </h1>
           <p className="text-sm text-slate-400">
             Jornadas automatizadas de WhatsApp e E-mail com estrito respeito à LGPD e consentimento
           </p>
         </div>
+
+        <button
+          onClick={() => navigate('/remarketing/carrinhos-abandonados')}
+          className="flex items-center gap-2 bg-pink-600 hover:bg-pink-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
+        >
+          <ShoppingCart className="w-4 h-4" />
+          <span>Ver Fila de Carrinhos</span>
+        </button>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -66,13 +76,13 @@ export const DashboardRemarketingPage: React.FC = () => {
       </div>
 
       {/* Abandoned Carts Table */}
-      <div className="bg-[#141b2d] border border-slate-800 rounded-xl overflow-hidden shadow-lg">
-        <div className="p-4 bg-slate-900/80 border-b border-slate-800">
-          <h3 className="font-bold text-slate-100 text-sm">Fila de Carrinhos Elegíveis para Recuperação</h3>
+      <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg overflow-hidden shadow-md">
+        <div className="p-4 bg-[#232429] border-b border-[#37393e]">
+          <h3 className="font-bold text-white text-sm">Fila de Carrinhos Elegíveis para Recuperação</h3>
         </div>
         <table className="w-full text-left text-xs">
           <thead>
-            <tr className="bg-slate-900/60 text-slate-400 border-b border-slate-800">
+            <tr className="bg-[#232429] text-slate-300 border-b border-[#37393e]">
               <th className="p-3.5 font-semibold">Cliente</th>
               <th className="p-3.5 font-semibold">Contato</th>
               <th className="p-3.5 font-semibold">Evento / Setor</th>
@@ -81,16 +91,16 @@ export const DashboardRemarketingPage: React.FC = () => {
               <th className="p-3.5 font-semibold text-right">Status Recuperação</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/60">
+          <tbody className="divide-y divide-[#37393e]">
             {carts.map((cart) => (
-              <tr key={cart.id} className="hover:bg-slate-800/40">
-                <td className="p-3.5 font-bold text-slate-200">{cart.customerName}</td>
+              <tr key={cart.id} className="hover:bg-[#25262c] transition">
+                <td className="p-3.5 font-bold text-white">{cart.customerName}</td>
                 <td className="p-3.5 text-slate-400">
                   <div>{cart.customerPhone}</div>
-                  <div className="text-[11px] text-slate-500">{cart.customerEmail}</div>
+                  <div className="text-[11px] text-slate-400">{cart.customerEmail}</div>
                 </td>
                 <td className="p-3.5 text-slate-300">
-                  <div className="font-medium text-slate-200">{cart.eventName}</div>
+                  <div className="font-medium text-white">{cart.eventName}</div>
                   <div className="text-[11px] text-slate-400">{cart.sectorName} ({cart.ticketsCount} un)</div>
                 </td>
                 <td className="p-3.5 font-extrabold text-emerald-400">{formatCurrency(cart.cartValue)}</td>
@@ -99,18 +109,19 @@ export const DashboardRemarketingPage: React.FC = () => {
                   {cart.recoveryStatus === 'RECOVERED' && (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                       <CheckCircle2 className="w-3 h-3" />
-                      Venda Recuperada
+                      Recuperado
                     </span>
                   )}
                   {cart.recoveryStatus === 'RECOVERY_SENT' && (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
                       <Clock className="w-3 h-3" />
-                      Mensagem Enviada
+                      Notificado
                     </span>
                   )}
                   {cart.recoveryStatus === 'PENDING' && (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                      Aguardando Disparo
+                      <Clock className="w-3 h-3" />
+                      Fila Disparo
                     </span>
                   )}
                 </td>

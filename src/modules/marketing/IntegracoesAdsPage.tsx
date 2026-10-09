@@ -65,7 +65,7 @@ export const IntegracoesAdsPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-extrabold text-slate-100 tracking-tight">
+            <h1 className="text-2xl font-extrabold text-white tracking-tight">
               Integrações de Pixels & Tags de Rastreamento
             </h1>
             <span className="px-2 py-0.5 rounded text-xs font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
@@ -79,7 +79,7 @@ export const IntegracoesAdsPage: React.FC = () => {
 
         <button
           onClick={() => alert('Abrir assistente de configuração de novo Pixel / Tag.')}
-          className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-blue-600/25 transition cursor-pointer"
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
         >
           <Zap className="w-4 h-4" />
           <span>Conectar Novo Pixel</span>
@@ -87,10 +87,10 @@ export const IntegracoesAdsPage: React.FC = () => {
       </div>
 
       {/* Explanatory Banner */}
-      <div className="p-4 rounded-xl bg-blue-950/30 border border-blue-500/30 flex items-start gap-3 text-xs">
+      <div className="p-4 rounded-lg bg-[#2c2d33] border border-[#37393e] flex items-start gap-3 text-xs">
         <ShieldCheck className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
         <div className="space-y-1">
-          <div className="font-bold text-blue-200">
+          <div className="font-bold text-white">
             Rastreamento Híbrido: Navegador + Servidor (CAPI)
           </div>
           <p className="text-slate-300 leading-relaxed">
@@ -104,7 +104,7 @@ export const IntegracoesAdsPage: React.FC = () => {
         {integrations.map((item) => (
           <div
             key={item.id}
-            className="bg-[#141b2d] border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col justify-between space-y-4"
+            className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-5 shadow-md flex flex-col justify-between space-y-4 hover:border-[#4a4c55] transition"
           >
             <div>
               <div className="flex items-center justify-between mb-3">
@@ -117,18 +117,18 @@ export const IntegracoesAdsPage: React.FC = () => {
                 </span>
               </div>
 
-              <h3 className="text-sm font-bold text-slate-100">{item.name}</h3>
+              <h3 className="text-sm font-bold text-white">{item.name}</h3>
 
-              <div className="mt-3 p-2.5 bg-slate-900/80 rounded-xl border border-slate-800 space-y-1 text-xs">
+              <div className="mt-3 p-2.5 bg-[#232429] rounded-md border border-[#37393e] space-y-1 text-xs">
                 <div className="text-[11px] text-slate-400">Identificador (ID do Pixel):</div>
-                <div className="font-mono font-bold text-slate-200 flex items-center justify-between">
+                <div className="font-mono font-bold text-white flex items-center justify-between">
                   <span className="truncate">{item.pixelId}</span>
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(item.pixelId);
                       alert('ID copiado para a área de transferência!');
                     }}
-                    className="p-1 text-slate-400 hover:text-slate-200 transition"
+                    className="p-1 text-slate-400 hover:text-white transition cursor-pointer"
                     title="Copiar ID"
                   >
                     <Copy className="w-3 h-3" />
@@ -145,7 +145,7 @@ export const IntegracoesAdsPage: React.FC = () => {
                 </div>
                 <div className="flex justify-between items-center">
                   <span>Eventos Capturados:</span>
-                  <span className="font-bold text-slate-200">{item.trackedEventsCount.toLocaleString()}</span>
+                  <span className="font-bold text-white">{item.trackedEventsCount.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span>Último Disparo:</span>
@@ -156,17 +156,17 @@ export const IntegracoesAdsPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
+            <div className="pt-3 border-t border-[#37393e] flex items-center justify-between text-xs">
               <button
                 onClick={() => alert(`Configurações de integração para ${item.name}`)}
-                className="flex items-center gap-1 text-blue-400 hover:text-blue-300 font-semibold"
+                className="flex items-center gap-1 text-blue-400 hover:text-blue-300 font-semibold cursor-pointer"
               >
                 <Settings className="w-3.5 h-3.5" />
                 <span>Configurar</span>
               </button>
               <button
                 onClick={() => alert(`Testando disparo de evento de teste para ${item.name}... Evento de teste enviado com sucesso!`)}
-                className="flex items-center gap-1 text-slate-400 hover:text-slate-200"
+                className="flex items-center gap-1 text-slate-400 hover:text-slate-200 cursor-pointer"
               >
                 <Activity className="w-3.5 h-3.5" />
                 <span>Testar Disparo</span>

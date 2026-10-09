@@ -17,7 +17,7 @@ export const AntecipacoesPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-extrabold text-slate-100 tracking-tight">
+            <h1 className="text-2xl font-extrabold text-white tracking-tight">
               Antecipações de Recebíveis
             </h1>
             <span className="px-2 py-0.5 rounded text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
@@ -30,10 +30,10 @@ export const AntecipacoesPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-4 rounded-xl bg-blue-950/30 border border-blue-500/30 flex items-start gap-3 text-xs">
+      <div className="p-4 rounded-lg bg-[#2c2d33] border border-[#37393e] flex items-start gap-3 text-xs">
         <ShieldCheck className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
         <div className="space-y-1">
-          <div className="font-bold text-blue-200">
+          <div className="font-bold text-white">
             Governança de Antecipação de Recebíveis
           </div>
           <p className="text-slate-300 leading-relaxed">
@@ -42,10 +42,10 @@ export const AntecipacoesPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-[#141b2d] border border-slate-800 rounded-xl overflow-hidden shadow-lg">
+      <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg overflow-hidden shadow-md">
         <table className="w-full text-left text-xs">
           <thead>
-            <tr className="bg-slate-900/80 text-slate-400 border-b border-slate-800">
+            <tr className="bg-[#232429] text-slate-300 border-b border-[#37393e]">
               <th className="p-3.5 font-semibold">Código</th>
               <th className="p-3.5 font-semibold">Evento</th>
               <th className="p-3.5 font-semibold">Valor Solicitado</th>
@@ -55,12 +55,12 @@ export const AntecipacoesPage: React.FC = () => {
               <th className="p-3.5 font-semibold text-right">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/60">
+          <tbody className="divide-y divide-[#37393e]">
             {advances.map((adv) => (
-              <tr key={adv.id} className="hover:bg-slate-800/40">
+              <tr key={adv.id} className="hover:bg-[#25262c] transition">
                 <td className="p-3.5 font-mono font-bold text-blue-400">{adv.advanceNumber}</td>
-                <td className="p-3.5 font-semibold text-slate-200">{adv.eventName}</td>
-                <td className="p-3.5 font-bold text-slate-100">{formatCurrency(adv.requestedAmount)}</td>
+                <td className="p-3.5 font-semibold text-white">{adv.eventName}</td>
+                <td className="p-3.5 font-bold text-white">{formatCurrency(adv.requestedAmount)}</td>
                 <td className="p-3.5 text-rose-400">
                   {adv.advanceFeeRate}% ({formatCurrency(adv.advanceFeeCost)})
                 </td>

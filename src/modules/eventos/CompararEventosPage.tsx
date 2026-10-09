@@ -16,12 +16,12 @@ export const CompararEventosPage: React.FC = () => {
       <div className="flex items-center gap-3">
         <button
           onClick={() => navigate('/eventos')}
-          className="p-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white transition"
+          className="p-2 rounded-lg bg-[#2c2d33] border border-[#37393e] text-slate-300 hover:text-white hover:bg-[#35363c] transition"
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-100 tracking-tight">
+          <h1 className="text-2xl font-extrabold text-white tracking-tight">
             Comparador de Desempenho de Eventos
           </h1>
           <p className="text-sm text-slate-400">
@@ -34,10 +34,10 @@ export const CompararEventosPage: React.FC = () => {
         {eventsToCompare.map((event) => (
           <div
             key={event.id}
-            className="bg-[#141b2d] border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between space-y-4"
+            className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-5 shadow-md flex flex-col justify-between space-y-4 hover:border-[#4a4c55] transition"
           >
             <div>
-              <div className="h-32 rounded-xl overflow-hidden relative mb-3">
+              <div className="h-32 rounded-lg overflow-hidden relative mb-3">
                 <img
                   src={event.imageUrl}
                   alt={event.name}
@@ -48,11 +48,11 @@ export const CompararEventosPage: React.FC = () => {
                 </span>
               </div>
 
-              <h3 className="font-bold text-slate-100 text-base">{event.name}</h3>
+              <h3 className="font-bold text-white text-base">{event.name}</h3>
               <p className="text-xs text-slate-400">{event.venue} • {event.dateStart}</p>
             </div>
 
-            <div className="space-y-3 pt-3 border-t border-slate-800 text-xs">
+            <div className="space-y-3 pt-3 border-t border-[#37393e] text-xs">
               <div className="flex justify-between items-center">
                 <span className="text-slate-400">Faturamento Bruto:</span>
                 <span className="font-extrabold text-emerald-400 text-sm">
@@ -101,7 +101,7 @@ export const CompararEventosPage: React.FC = () => {
                 selectEvent(event);
                 navigate(`/eventos/${event.id}/dashboard`);
               }}
-              className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow transition"
+              className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg shadow transition cursor-pointer"
             >
               Abrir Dashboard do Evento
             </button>

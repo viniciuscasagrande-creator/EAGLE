@@ -52,7 +52,7 @@ export const ExtratoLedgerPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-extrabold text-slate-100 tracking-tight">
+            <h1 className="text-2xl font-extrabold text-white tracking-tight">
               Extrato Financeiro Oficial (Keeper Ledger)
             </h1>
             <span className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
@@ -69,14 +69,14 @@ export const ExtratoLedgerPage: React.FC = () => {
           <button
             onClick={loadLedger}
             disabled={isLoading}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold border border-slate-700 transition cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-2 bg-[#2c2d33] hover:bg-[#35363c] text-white rounded-lg text-xs font-semibold border border-[#37393e] transition cursor-pointer disabled:opacity-50"
           >
             <RotateCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
             <span>Atualizar</span>
           </button>
           <button
             onClick={() => alert('Exportação de extrato oficial em formato CSV gerada.')}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-[#2c2d33] hover:bg-[#35363c] text-white text-xs font-semibold rounded-lg border border-[#37393e] transition cursor-pointer"
           >
             <Download className="w-4 h-4" />
             <span>Exportar Extrato OFX/CSV</span>
@@ -85,7 +85,7 @@ export const ExtratoLedgerPage: React.FC = () => {
       </div>
 
       {isOffline && (
-        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs">
+        <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs">
           <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1 space-y-1">
             <div className="font-bold text-amber-300 flex items-center justify-between">
@@ -104,22 +104,22 @@ export const ExtratoLedgerPage: React.FC = () => {
       )}
 
       {/* Filter and Search */}
-      <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-3 flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="relative w-full sm:w-80">
-          <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Buscar por descrição ou pedido..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-900 text-xs text-slate-200 pl-8 pr-3 py-2 rounded-lg border border-slate-700/80 focus:outline-none focus:border-blue-500"
+            className="w-full bg-[#202124] text-xs text-white pl-8 pr-3 py-2 rounded-md border border-[#37393e] focus:outline-none focus:border-blue-500"
           />
         </div>
 
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
-          className="bg-slate-900 text-xs text-slate-300 px-3 py-2 rounded-lg border border-slate-700 focus:outline-none"
+          className="bg-[#202124] text-xs text-white px-3 py-2 rounded-md border border-[#37393e] focus:outline-none"
         >
           <option value="ALL">Todos os Tipos de Lançamento</option>
           <option value="VENDA_INGRESSO">Vendas de Ingressos</option>
@@ -131,7 +131,7 @@ export const ExtratoLedgerPage: React.FC = () => {
       </div>
 
       {/* Ledger Table */}
-      <div className="bg-[#141b2d] border border-slate-800 rounded-xl overflow-hidden shadow-lg">
+      <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg overflow-hidden shadow-md">
         {filteredEntries.length === 0 && !isLoading ? (
           <div className="p-8 text-center text-xs text-slate-400">
             Nenhum lançamento contábil encontrado no Ledger.
@@ -139,7 +139,7 @@ export const ExtratoLedgerPage: React.FC = () => {
         ) : (
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="bg-slate-900/80 text-slate-400 border-b border-slate-800">
+              <tr className="bg-[#232429] text-slate-300 border-b border-[#37393e]">
                 <th className="p-3.5 font-semibold">Data / Hora</th>
                 <th className="p-3.5 font-semibold">Tipo</th>
                 <th className="p-3.5 font-semibold">Descrição do Fato Financeiro</th>
@@ -148,18 +148,18 @@ export const ExtratoLedgerPage: React.FC = () => {
                 <th className="p-3.5 font-semibold text-right">Saldo Resultante</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-[#37393e]">
               {filteredEntries.map((entry) => (
-                <tr key={entry.id} className="hover:bg-slate-800/40">
+                <tr key={entry.id} className="hover:bg-[#25262c] transition">
                   <td className="p-3.5 text-slate-400 whitespace-nowrap">
                     {formatDateTime(entry.createdAt)}
                   </td>
                   <td className="p-3.5">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-slate-800 text-slate-300">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-[#202124] text-slate-300 border border-[#37393e]">
                       {entry.entryType}
                     </span>
                   </td>
-                  <td className="p-3.5 font-medium text-slate-200">
+                  <td className="p-3.5 font-medium text-white">
                     {entry.description}
                     {entry.orderNumber && (
                       <span className="ml-2 font-mono text-[11px] text-blue-400 font-bold">
@@ -167,7 +167,7 @@ export const ExtratoLedgerPage: React.FC = () => {
                       </span>
                     )}
                   </td>
-                  <td className="p-3.5 text-slate-400">
+                  <td className="p-3.5 text-slate-300">
                     {entry.eventName || '-'}
                   </td>
                   <td className="p-3.5 text-right font-bold text-sm">
@@ -179,7 +179,7 @@ export const ExtratoLedgerPage: React.FC = () => {
                       {entry.direction === 'CREDIT' ? '+' : '-'} {formatCurrency(entry.amount)}
                     </span>
                   </td>
-                  <td className="p-3.5 text-right font-bold text-slate-200 text-sm">
+                  <td className="p-3.5 text-right font-bold text-white text-sm">
                     {formatCurrency(entry.balanceAfter)}
                   </td>
                 </tr>

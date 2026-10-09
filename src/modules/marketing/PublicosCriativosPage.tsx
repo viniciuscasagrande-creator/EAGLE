@@ -107,7 +107,7 @@ export const PublicosCriativosPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-extrabold text-slate-100 tracking-tight">
+            <h1 className="text-2xl font-extrabold text-white tracking-tight">
               Públicos Segmentados & Biblioteca de Criativos
             </h1>
             <span className="px-2 py-0.5 rounded text-xs font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
@@ -122,7 +122,7 @@ export const PublicosCriativosPage: React.FC = () => {
         {activeTab === 'AUDIENCES' ? (
           <button
             onClick={() => alert('Criar novo público personalizado a partir da base DiskIngressos.')}
-            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-blue-600/25 transition cursor-pointer"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Criar Novo Público</span>
@@ -130,7 +130,7 @@ export const PublicosCriativosPage: React.FC = () => {
         ) : (
           <button
             onClick={() => alert('Fazer upload de nova peça criativa.')}
-            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-blue-600/25 transition cursor-pointer"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Enviar Criativo</span>
@@ -139,13 +139,13 @@ export const PublicosCriativosPage: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-3 border-b border-slate-800 pb-2">
+      <div className="flex items-center gap-3 border-b border-[#37393e] pb-2">
         <button
           onClick={() => setActiveTab('AUDIENCES')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
             activeTab === 'AUDIENCES'
-              ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+              ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+              : 'text-slate-400 hover:text-white hover:bg-[#25262c]'
           }`}
         >
           <Users className="w-4 h-4" />
@@ -154,10 +154,10 @@ export const PublicosCriativosPage: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('CREATIVES')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
             activeTab === 'CREATIVES'
-              ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+              ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+              : 'text-slate-400 hover:text-white hover:bg-[#25262c]'
           }`}
         >
           <Image className="w-4 h-4" />
@@ -168,10 +168,10 @@ export const PublicosCriativosPage: React.FC = () => {
       {/* Tab 1: Audiences Content */}
       {activeTab === 'AUDIENCES' && (
         <div className="space-y-4">
-          <div className="bg-[#141b2d] border border-slate-800 rounded-xl overflow-hidden shadow-lg">
+          <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg overflow-hidden shadow-md">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="bg-slate-900/80 text-slate-400 border-b border-slate-800">
+                <tr className="bg-[#232429] text-slate-300 border-b border-[#37393e]">
                   <th className="p-3.5 font-semibold">Nome do Público</th>
                   <th className="p-3.5 font-semibold">Tipo</th>
                   <th className="p-3.5 font-semibold text-center">Tamanho Estimado</th>
@@ -180,10 +180,10 @@ export const PublicosCriativosPage: React.FC = () => {
                   <th className="p-3.5 font-semibold text-right">Ação</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-[#37393e]">
                 {mockAudiences.map((aud) => (
-                  <tr key={aud.id} className="hover:bg-slate-800/40">
-                    <td className="p-3.5 font-bold text-slate-100">
+                  <tr key={aud.id} className="hover:bg-[#25262c] transition">
+                    <td className="p-3.5 font-bold text-white">
                       {aud.name}
                     </td>
                     <td className="p-3.5">
@@ -201,7 +201,7 @@ export const PublicosCriativosPage: React.FC = () => {
                     <td className="p-3.5 text-right">
                       <button
                         onClick={() => alert(`Sincronizando ${aud.name} com Meta Ads e Google Ads...`)}
-                        className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-blue-400 text-xs font-semibold rounded-lg border border-slate-700 transition"
+                        className="px-2.5 py-1 bg-[#202124] hover:bg-[#25262c] text-blue-400 text-xs font-semibold rounded-md border border-[#37393e] transition cursor-pointer"
                       >
                         Sincronizar
                       </button>
@@ -220,9 +220,9 @@ export const PublicosCriativosPage: React.FC = () => {
           {mockCreatives.map((asset) => (
             <div
               key={asset.id}
-              className="bg-[#141b2d] border border-slate-800 rounded-2xl overflow-hidden shadow-lg flex flex-col justify-between"
+              className="bg-[#2c2d33] border border-[#37393e] rounded-lg overflow-hidden shadow-md flex flex-col justify-between hover:border-[#4a4c55] transition"
             >
-              <div className="relative aspect-video w-full overflow-hidden bg-slate-900">
+              <div className="relative aspect-video w-full overflow-hidden bg-black/40">
                 <img
                   src={asset.thumbnailUrl}
                   alt={asset.title}
@@ -234,7 +234,7 @@ export const PublicosCriativosPage: React.FC = () => {
               </div>
 
               <div className="p-4 space-y-2">
-                <h4 className="text-xs font-bold text-slate-100 leading-snug">
+                <h4 className="text-xs font-bold text-white leading-snug">
                   {asset.title}
                 </h4>
                 <div className="text-[11px] text-slate-400 flex items-center justify-between">
@@ -243,17 +243,17 @@ export const PublicosCriativosPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-3 border-t border-slate-800 bg-slate-900/40 flex items-center justify-between">
+              <div className="p-3 border-t border-[#37393e] bg-[#232429] flex items-center justify-between">
                 <button
                   onClick={() => alert(`Download de ${asset.title} iniciado.`)}
-                  className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 font-semibold"
+                  className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 font-semibold cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Baixar Arquivo</span>
                 </button>
                 <button
                   onClick={() => alert('Link de compartilhamento copiado!')}
-                  className="p-1.5 text-slate-400 hover:text-slate-200 transition"
+                  className="p-1.5 text-slate-400 hover:text-white transition cursor-pointer"
                 >
                   <Share2 className="w-3.5 h-3.5" />
                 </button>
