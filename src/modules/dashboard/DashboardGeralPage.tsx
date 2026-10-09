@@ -20,6 +20,13 @@ import {
   Sparkles,
   Building,
   CheckCircle,
+  Megaphone,
+  Repeat,
+  MessageSquare,
+  Music2,
+  Video,
+  Share2,
+  Activity,
 } from 'lucide-react';
 import { formatCurrency, formatNumber, formatPercent } from '@/utils/formatters';
 
@@ -240,6 +247,92 @@ export const DashboardGeralPage: React.FC = () => {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Row 3.5: Central de Marketing & Remarketing (Mapeamento do Vídeo) */}
+      <div className="bg-[#2c2d33] border border-[#37393e] rounded-xl p-5 shadow-lg space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <Megaphone className="w-5 h-5 text-amber-400" />
+              <h3 className="text-base font-extrabold text-white">
+                Módulos de Marketing & Remarketing (Mapeamento Integral do Vídeo)
+              </h3>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                Novo Pacote de Recursos
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Acesso rápido às ferramentas operacionais de mídia, campanhas prontas e recuperação de checkouts
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate('/marketing')}
+              className="text-xs font-bold text-amber-400 hover:text-amber-300 transition"
+            >
+              Ir para Marketing →
+            </button>
+            <span className="text-slate-600">•</span>
+            <button
+              onClick={() => navigate('/remarketing')}
+              className="text-xs font-bold text-pink-400 hover:text-pink-300 transition"
+            >
+              Ir para Remarketing →
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <div
+            onClick={() => navigate('/marketing/campanhas-prontas')}
+            className="p-3.5 bg-[#202124] hover:bg-[#25262c] border border-[#37393e] hover:border-amber-500/50 rounded-lg cursor-pointer transition group"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span className="text-[10px] text-amber-400 font-bold">8 Modelos</span>
+            </div>
+            <div className="font-bold text-white group-hover:text-amber-400 transition">Campanhas Prontas</div>
+            <p className="text-[11px] text-slate-400 mt-1">Playbooks validados de vendas</p>
+          </div>
+
+          <div
+            onClick={() => navigate('/marketing/status-real')}
+            className="p-3.5 bg-[#202124] hover:bg-[#25262c] border border-[#37393e] hover:border-blue-500/50 rounded-lg cursor-pointer transition group"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <Activity className="w-4 h-4 text-blue-400" />
+              <span className="text-[10px] text-emerald-400 font-bold">Ao Vivo</span>
+            </div>
+            <div className="font-bold text-white group-hover:text-blue-400 transition">Status Real das Redes</div>
+            <p className="text-[11px] text-slate-400 mt-1">Meta, Google, TikTok e Spotify</p>
+          </div>
+
+          <div
+            onClick={() => navigate('/remarketing/whatsapp')}
+            className="p-3.5 bg-[#202124] hover:bg-[#25262c] border border-[#37393e] hover:border-emerald-500/50 rounded-lg cursor-pointer transition group"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <MessageSquare className="w-4 h-4 text-emerald-400" />
+              <span className="text-[10px] text-emerald-400 font-bold">Resgate PIX</span>
+            </div>
+            <div className="font-bold text-white group-hover:text-emerald-400 transition">WhatsApp Remarketing</div>
+            <p className="text-[11px] text-slate-400 mt-1">Fila de resgate de carrinhos</p>
+          </div>
+
+          <div
+            onClick={() => navigate('/marketing/utm-links')}
+            className="p-3.5 bg-[#202124] hover:bg-[#25262c] border border-[#37393e] hover:border-purple-500/50 rounded-lg cursor-pointer transition group"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <Share2 className="w-4 h-4 text-purple-400" />
+              <span className="text-[10px] text-purple-400 font-bold">Atribuição</span>
+            </div>
+            <div className="font-bold text-white group-hover:text-purple-400 transition">Central UTM & Links</div>
+            <p className="text-[11px] text-slate-400 mt-1">Rastreamento de vendas por link</p>
+          </div>
         </div>
       </div>
 

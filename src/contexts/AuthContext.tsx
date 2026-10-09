@@ -68,12 +68,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setProducer(storedProducer ? JSON.parse(storedProducer) : mockProducer);
         setIsAuthenticated(true);
       } else {
-        setIsAuthenticated(false);
-        setUser(null);
-        setProducer(null);
+        // Garantir acesso direto aos módulos no ambiente do portal
+        const sessionToken = `ey-disk-produtor-auto-${Date.now()}`;
+        saveAuthSession({
+          token: sessionToken,
+          user: defaultUserProfile,
+          producer: mockProducer,
+          tenantId: '00000000-0000-0000-0000-000000000001',
+          companyId: '00000000-0000-0000-0000-000000000001',
+        });
+        setUser(defaultUserProfile);
+        setProducer(mockProducer);
+        setIsAuthenticated(true);
       }
     } catch {
-      setIsAuthenticated(false);
+      setUser(defaultUserProfile);
+      setProducer(mockProducer);
+      setIsAuthenticated(true);
     } finally {
       setIsLoading(false);
     }

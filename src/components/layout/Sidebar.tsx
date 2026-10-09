@@ -32,8 +32,8 @@ export const Sidebar: React.FC = () => {
     eventos: true,
     financeiro: false,
     comercial: false,
-    marketing: false,
-    remarketing: false,
+    marketing: true,
+    remarketing: true,
   });
 
   const { selectedEvent, clearSelectedEvent } = useEventContext();

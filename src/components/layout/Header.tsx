@@ -11,6 +11,8 @@ import {
   Building2,
   Calendar,
   Layers,
+  Megaphone,
+  Repeat,
 } from 'lucide-react';
 
 export const Header: React.FC = () => {
@@ -152,13 +154,31 @@ export const Header: React.FC = () => {
             </button>
           </div>
         ) : (
-          <button
-            onClick={() => navigate('/eventos')}
-            className="hidden sm:flex items-center gap-1.5 text-xs text-slate-300 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-slate-800 transition"
-          >
-            <Layers className="w-3.5 h-3.5 text-slate-400" />
-            <span>Todos os Eventos</span>
-          </button>
+          <div className="hidden sm:flex items-center gap-1.5">
+            <button
+              onClick={() => navigate('/eventos')}
+              className="flex items-center gap-1.5 text-xs text-slate-300 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-[#2c2d33] transition"
+            >
+              <Layers className="w-3.5 h-3.5 text-slate-400" />
+              <span>Eventos</span>
+            </button>
+
+            <button
+              onClick={() => navigate('/marketing')}
+              className="flex items-center gap-1.5 text-xs font-semibold text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 px-2.5 py-1.5 rounded-lg transition"
+            >
+              <Megaphone className="w-3.5 h-3.5" />
+              <span>Marketing</span>
+            </button>
+
+            <button
+              onClick={() => navigate('/remarketing')}
+              className="flex items-center gap-1.5 text-xs font-semibold text-pink-400 hover:text-pink-300 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/30 px-2.5 py-1.5 rounded-lg transition"
+            >
+              <Repeat className="w-3.5 h-3.5" />
+              <span>Remarketing</span>
+            </button>
+          </div>
         )}
 
         {/* Notifications */}
