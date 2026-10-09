@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { mockCommercialClients } from '@/services/api/mockSeedData';
+import React, { useState, useEffect } from 'react';
 import { CommercialClient } from '@/types/commercial';
 import {
   Users,
@@ -11,14 +10,24 @@ import {
   DollarSign,
   Building,
   Star,
+  Plus,
 } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '@/utils/formatters';
+import { downloadCsv } from '@/utils/csvExport';
+import { keeperAdapter } from '@/services/api/keeperAdapter';
+import { NovoClienteModal } from '@/components/modals/NovoClienteModal';
 
 export const ClientesPage: React.FC = () => {
+  const [clients, setClients] = useState<CommercialClient[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const filteredClients = mockCommercialClients.filter((client) => {
+  useEffect(() => {
+    keeperAdapter.getCommercialClients().then(setClients);
+  }, []);
+
+  const filteredClients = clients.filter((client) => {
     const matchesSearch =
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -27,8 +36,8 @@ export const ClientesPage: React.FC = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const totalSpentAll = mockCommercialClients.reduce((acc, c) => acc + c.totalVolume, 0);
-  const totalOrdersAll = mockCommercialClients.reduce((acc, c) => acc + c.totalOrders, 0);
+  const totalSpentAll = clients.reduce((acc, c) => acc + c.totalVolume, 0);
+  const totalOrdersAll = clients.reduce((acc, c) => acc + c.totalOrders, 0);
 
   return (
     <div className="space-y-6">
@@ -48,21 +57,57 @@ export const ClientesPage: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => alert('Base de clientes exportada em formato CSV.')}
-          className="flex items-center gap-1.5 px-3.5 py-2 bg-[#2c2d33] hover:bg-[#35363c] text-white text-xs font-semibold rounded-lg border border-[#37393e] transition cursor-pointer"
-        >
-          <Download className="w-4 h-4" />
-          <span>Exportar Base (CSV)</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              downloadCsv(
+                'clientes-comercial-diskingressos',
+                ['Nome/Razão Social', 'Documento', 'Contato', 'E-mail', 'Telefone', 'Categoria', 'Cidade', 'Total Pedidos', 'Volume Total (R$)'],
+                filteredClients.map((c) => [
+                  c.name,
+                  c.document,
+                  c.contactName,
+                  c.email,
+                  c.phone,
+                  c.category,
+                  c.city,
+                  c.totalOrders,
+                  c.totalVolume,
+                ])
+              );
+            }}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-[#2c2d33] hover:bg-[#35363c] text-white text-xs font-semibold rounded-lg border border-[#37393e] transition cursor-pointer"
+          >
+            <Download className="w-4 h-4" />
+            <span>Exportar Base (CSV)</span>
+          </button>
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold rounded-lg shadow transition cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Novo Cliente</span>
+          </button>
+        </div>
       </div>
+
+      <NovoClienteModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={async (data) => {
+          const created = await keeperAdapter.createCommercialClient(data);
+          setClients((prev) => [created, ...prev]);
+        }}
+      />
+
 
       {/* KPIs Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-4 shadow-md">
           <span className="text-[11px] text-slate-300 font-semibold uppercase">Total de Clientes</span>
           <div className="text-xl font-extrabold text-white mt-1">
-            {mockCommercialClients.length}
+            {clients.length}
           </div>
           <span className="text-[10px] text-emerald-400">Compradores e parceiros</span>
         </div>
@@ -86,7 +131,7 @@ export const ClientesPage: React.FC = () => {
         <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-4 shadow-md">
           <span className="text-[11px] text-slate-300 font-semibold uppercase">Ticket Médio Geral</span>
           <div className="text-xl font-extrabold text-indigo-400 mt-1">
-            {formatCurrency(totalSpentAll / (mockCommercialClients.length || 1))}
+            {formatCurrency(totalSpentAll / (clients.length || 1))}
           </div>
           <span className="text-[10px] text-indigo-400">Por cliente cadastrado</span>
         </div>

@@ -1,12 +1,15 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useEventContext } from '@/contexts/EventContext';
 import { Ticket, Plus, Tag, CheckCircle2, AlertTriangle, Layers } from 'lucide-react';
 import { formatCurrency, formatNumber, formatPercent } from '@/utils/formatters';
+import { NovoLoteModal } from '@/components/modals/NovoLoteModal';
+
 
 export const IngressosPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { selectedEvent, selectEventById, allEvents } = useEventContext();
+  const { selectedEvent, selectEventById, allEvents, addTicketTier } = useEventContext();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (id && (!selectedEvent || selectedEvent.id !== id)) {
@@ -37,13 +40,23 @@ export const IngressosPage: React.FC = () => {
         </div>
 
         <button
-          onClick={() => alert('Configuração de novo lote disponível na próxima atualização.')}
+          onClick={() => setIsModalOpen(true)}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Configurar Novo Lote</span>
         </button>
       </div>
+
+      <NovoLoteModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        sectors={currentEvent.sectors}
+        onConfirm={async (tier) => {
+          await addTicketTier(currentEvent.id, tier);
+        }}
+      />
+
 
       {/* Setores e Lotes Table Cards */}
       <div className="space-y-4">

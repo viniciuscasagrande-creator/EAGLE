@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
 import {
   Handshake,
   Plus,
@@ -68,9 +69,17 @@ const mockPartners: CommercialPartner[] = [
   },
 ];
 
+import { keeperAdapter } from '@/services/api/keeperAdapter';
+import { NovoParceiroModal } from '@/components/modals/NovoParceiroModal';
+
 export const ParceirosPage: React.FC = () => {
-  const [partners] = useState<CommercialPartner[]>(mockPartners);
+  const [partners, setPartners] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    keeperAdapter.getPartners().then(setPartners);
+  }, []);
 
   const filteredPartners = partners.filter((p) => {
     return (
@@ -80,8 +89,8 @@ export const ParceirosPage: React.FC = () => {
     );
   });
 
-  const totalGrossPartner = partners.reduce((acc, p) => acc + p.grossSalesGenerated, 0);
-  const totalTicketsPartner = partners.reduce((acc, p) => acc + p.ticketsSold, 0);
+  const totalGrossPartner = partners.reduce((acc, p) => acc + (p.grossSalesGenerated || 0), 0);
+  const totalTicketsPartner = partners.reduce((acc, p) => acc + (p.ticketsSold || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -102,13 +111,23 @@ export const ParceirosPage: React.FC = () => {
         </div>
 
         <button
-          onClick={() => alert('Abrir cadastro de novo convênio ou parceiro comercial.')}
+          onClick={() => setIsModalOpen(true)}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Cadastrar Parceiro</span>
         </button>
       </div>
+
+      <NovoParceiroModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={async (data) => {
+          const created = await keeperAdapter.createPartner(data);
+          setPartners((prev) => [created, ...prev]);
+        }}
+      />
+
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

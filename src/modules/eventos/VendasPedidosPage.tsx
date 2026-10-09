@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom';
 import { useEventContext } from '@/contexts/EventContext';
 import { ShoppingCart, Search, Filter, Download, CheckCircle, Clock, RefreshCw } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '@/utils/formatters';
+import { downloadCsv } from '@/utils/csvExport';
+
 
 export const VendasPedidosPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -46,8 +48,24 @@ export const VendasPedidosPage: React.FC = () => {
         </div>
 
         <button
-          onClick={() => alert('Exportando relatório em formato CSV...')}
-          className="flex items-center gap-1.5 px-3.5 py-2 bg-[#2c2d33] hover:bg-[#35363c] text-white text-xs font-semibold rounded-lg border border-[#37393e] transition"
+          onClick={() => {
+            downloadCsv(
+              `pedidos-${currentEvent.code.toLowerCase()}`,
+              ['Número Pedido', 'Comprador', 'E-mail', 'Setor', 'Qtd Ingressos', 'Valor Total (R$)', 'Forma de Pagamento', 'Status', 'Data/Hora'],
+              filteredOrders.map((o) => [
+                o.orderNumber,
+                o.customerName,
+                o.customerEmail,
+                o.sectorName,
+                o.itemsCount,
+                o.totalAmount,
+                o.paymentMethod,
+                o.status,
+                formatDateTime(o.createdAt),
+              ])
+            );
+          }}
+          className="flex items-center gap-1.5 px-3.5 py-2 bg-[#2c2d33] hover:bg-[#35363c] text-white text-xs font-semibold rounded-lg border border-[#37393e] transition cursor-pointer"
         >
           <Download className="w-4 h-4" />
           <span>Exportar Relatório CSV/Excel</span>

@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { mockCommercialProposals } from '@/services/api/mockSeedData';
+import React, { useState, useEffect } from 'react';
 import { CommercialProposal } from '@/types/commercial';
 import {
   FileText,
@@ -10,13 +9,28 @@ import {
   Clock,
   XCircle,
   Send,
+  Check,
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/utils/formatters';
+import { downloadCsv } from '@/utils/csvExport';
+import { keeperAdapter } from '@/services/api/keeperAdapter';
+import { NovaPropostaModal } from '@/components/modals/NovaPropostaModal';
 
 export const PropostasPage: React.FC = () => {
-  const [proposals] = useState<CommercialProposal[]>(mockCommercialProposals);
+  const [proposals, setProposals] = useState<CommercialProposal[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    keeperAdapter.getCommercialProposals().then(setProposals);
+  }, []);
+
+  const handleUpdateStatus = async (id: string, status: CommercialProposal['status']) => {
+    const updated = await keeperAdapter.updateCommercialProposalStatus(id, status);
+    setProposals(updated);
+  };
+
 
   const filteredProposals = proposals.filter((p) => {
     const matchesSearch =
@@ -90,14 +104,49 @@ export const PropostasPage: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => alert('Abrir criador de nova proposta comercial.')}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Nova Proposta Comercial</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              downloadCsv(
+                'propostas-comerciais',
+                ['Número Proposta', 'Cliente', 'Evento', 'Ingressos', 'Desconto (%)', 'Valor Total (R$)', 'Validade', 'Status'],
+                filteredProposals.map((p) => [
+                  p.proposalNumber,
+                  p.clientName,
+                  p.eventName,
+                  p.totalTickets,
+                  p.discountRate,
+                  p.totalAmount,
+                  formatDate(p.validUntil),
+                  p.status,
+                ])
+              );
+            }}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-[#2c2d33] hover:bg-[#35363c] text-white text-xs font-semibold rounded-lg border border-[#37393e] transition cursor-pointer"
+          >
+            <Download className="w-4 h-4" />
+            <span>Exportar CSV</span>
+          </button>
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Nova Proposta Comercial</span>
+          </button>
+        </div>
       </div>
+
+      <NovaPropostaModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={async (data) => {
+          const created = await keeperAdapter.createCommercialProposal(data);
+          setProposals((prev) => [created, ...prev]);
+        }}
+      />
+
 
       {/* Filter and Search */}
       <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-3 flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -161,13 +210,50 @@ export const PropostasPage: React.FC = () => {
                 <td className="p-3.5 text-slate-400">{formatDate(p.validUntil)}</td>
                 <td className="p-3.5 text-right">{getStatusBadge(p.status)}</td>
                 <td className="p-3.5 text-center">
-                  <button
-                    onClick={() => alert(`Baixando PDF da proposta ${p.proposalNumber}...`)}
-                    className="p-1.5 rounded-md hover:bg-[#35363c] text-slate-300 hover:text-white transition cursor-pointer"
-                    title="Baixar PDF Proposta"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="flex items-center justify-center gap-1">
+                    {p.status === 'RASCUNHO' && (
+                      <button
+                        onClick={() => handleUpdateStatus(p.id, 'ENVIADA')}
+                        className="px-2 py-1 rounded bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white text-[10px] font-bold flex items-center gap-1 transition cursor-pointer"
+                        title="Enviar ao Cliente"
+                      >
+                        <Send className="w-3 h-3" />
+                        <span>Enviar</span>
+                      </button>
+                    )}
+                    {p.status === 'ENVIADA' && (
+                      <>
+                        <button
+                          onClick={() => handleUpdateStatus(p.id, 'APROVADA')}
+                          className="px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white text-[10px] font-bold flex items-center gap-1 transition cursor-pointer"
+                          title="Aprovar Proposta"
+                        >
+                          <Check className="w-3 h-3" />
+                          <span>Aprovar</span>
+                        </button>
+                        <button
+                          onClick={() => handleUpdateStatus(p.id, 'RECUSADA')}
+                          className="px-2 py-1 rounded bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white text-[10px] font-bold flex items-center gap-1 transition cursor-pointer"
+                          title="Recusar Proposta"
+                        >
+                          <XCircle className="w-3 h-3" />
+                        </button>
+                      </>
+                    )}
+                    <button
+                      onClick={() => {
+                        downloadCsv(
+                          `proposta-${p.proposalNumber.toLowerCase()}`,
+                          ['Número Proposta', 'Cliente', 'Evento', 'Ingressos', 'Valor Total', 'Validade', 'Status'],
+                          [[p.proposalNumber, p.clientName, p.eventName, p.totalTickets, p.totalAmount, formatDate(p.validUntil), p.status]]
+                        );
+                      }}
+                      className="p-1.5 rounded-md hover:bg-[#35363c] text-slate-300 hover:text-white transition cursor-pointer"
+                      title="Baixar Arquivo da Proposta"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

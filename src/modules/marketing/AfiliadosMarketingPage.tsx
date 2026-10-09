@@ -1,13 +1,16 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, Award, TrendingUp, DollarSign, Plus } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
+import { keeperAdapter } from '@/services/api/keeperAdapter';
+import { NovoAfiliadoModal } from '@/components/modals/NovoAfiliadoModal';
 
 export const AfiliadosMarketingPage: React.FC = () => {
-  const promoters = [
-    { name: 'Lucas Promoter VIP', code: 'LUCASVIP', salesCount: 310, totalVolume: 80600, commission: 4030, status: 'Ativo' },
-    { name: 'Mariana Agência Night', code: 'MARINIGHT', salesCount: 195, totalVolume: 50700, commission: 2535, status: 'Ativo' },
-    { name: 'Atlética de Engenharia UFPR', code: 'ATLETICAENG', salesCount: 140, totalVolume: 36400, commission: 1820, status: 'Ativo' },
-  ];
+  const [promoters, setPromoters] = useState<any[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    keeperAdapter.getAffiliates().then(setPromoters);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -27,13 +30,23 @@ export const AfiliadosMarketingPage: React.FC = () => {
         </div>
 
         <button
-          onClick={() => alert('Abrindo cadastro de novo promoter...')}
+          onClick={() => setIsModalOpen(true)}
           className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Cadastrar Novo Promoter</span>
         </button>
       </div>
+
+      <NovoAfiliadoModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={async (data) => {
+          const created = await keeperAdapter.createAffiliate(data);
+          setPromoters((prev) => [created, ...prev]);
+        }}
+      />
+
 
       <div className="bg-[#2c2d33] border border-[#37393e] rounded-xl overflow-hidden shadow-md">
         <table className="w-full text-left text-xs">

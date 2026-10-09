@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { HeadphonesIcon, MessageSquare, Plus, CheckCircle, Clock } from 'lucide-react';
+import { keeperAdapter } from '@/services/api/keeperAdapter';
+import { NovoChamadoModal } from '@/components/modals/NovoChamadoModal';
 
 export const SuporteChamadosPage: React.FC = () => {
-  const tickets = [
-    { id: 'CH-902', subject: 'Liberação de lote extra Pista Premium Festival XYZ', status: 'EM_ATENDIMENTO', created: '08/10/2026', lastUpdate: 'Hoje às 10:15' },
-    { id: 'CH-871', subject: 'Ajuste de chave PIX cadastrada para repasses', status: 'CONCLUIDO', created: '28/09/2026', lastUpdate: '29/09/2026' },
-  ];
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    keeperAdapter.getSupportTickets().then(setTickets);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -20,13 +24,23 @@ export const SuporteChamadosPage: React.FC = () => {
         </div>
 
         <button
-          onClick={() => alert('Abrindo formulário de chamado oficial com a equipe DiskIngressos...')}
+          onClick={() => setIsModalOpen(true)}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Abrir Novo Chamado</span>
         </button>
       </div>
+
+      <NovoChamadoModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={async (data) => {
+          const created = await keeperAdapter.createSupportTicket(data);
+          setTickets((prev) => [created, ...prev]);
+        }}
+      />
+
 
       <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg overflow-hidden shadow-md">
         <table className="w-full text-left text-xs">

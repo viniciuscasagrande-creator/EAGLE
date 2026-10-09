@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, MapPin, DollarSign, Ticket, ArrowLeft, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { useEventContext } from '@/contexts/EventContext';
 
 export const NovoEventoPage: React.FC = () => {
   const navigate = useNavigate();
+  const { createEvent } = useEventContext();
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: '',
     category: 'SHOW',
@@ -16,11 +19,27 @@ export const NovoEventoPage: React.FC = () => {
     salesGoal: 250000,
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`Evento "${form.name}" cadastrado com sucesso! Encaminhado para homologação e criação da carteira oficial no Keeper ERP.`);
-    navigate('/eventos');
+    setLoading(true);
+    try {
+      await createEvent({
+        name: form.name,
+        venue: form.venue,
+        city: form.city,
+        state: form.state,
+        dateStart: form.dateStart,
+        time: form.time,
+        totalCapacity: Number(form.totalCapacity),
+        salesGoalAmount: Number(form.salesGoal),
+      });
+      alert(`Evento "${form.name}" cadastrado com sucesso! Carteira inicial criada e registrado na Central de Eventos.`);
+      navigate('/eventos');
+    } finally {
+      setLoading(false);
+    }
   };
+
 
   return (
     <div className="space-y-6 max-w-4xl">

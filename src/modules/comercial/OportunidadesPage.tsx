@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
-import { mockCommercialOpportunities } from '@/services/api/mockSeedData';
+import React, { useState, useEffect } from 'react';
 import { CommercialOpportunity } from '@/types/commercial';
 import {
   Target,
   Plus,
   Building,
+  ArrowRight,
+  ArrowLeft,
+  CheckCircle2,
 } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
+import { keeperAdapter } from '@/services/api/keeperAdapter';
+import { NovaOportunidadeModal } from '@/components/modals/NovaOportunidadeModal';
 
 const STAGES: { id: CommercialOpportunity['stage']; label: string }[] = [
   { id: 'PROSPECCAO', label: 'Prospecção' },
@@ -17,7 +21,17 @@ const STAGES: { id: CommercialOpportunity['stage']; label: string }[] = [
 ];
 
 export const OportunidadesPage: React.FC = () => {
-  const [opportunities] = useState<CommercialOpportunity[]>(mockCommercialOpportunities);
+  const [opportunities, setOpportunities] = useState<CommercialOpportunity[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    keeperAdapter.getCommercialOpportunities().then(setOpportunities);
+  }, []);
+
+  const handleMoveStage = async (id: string, newStage: CommercialOpportunity['stage']) => {
+    const updated = await keeperAdapter.updateCommercialOpportunityStage(id, newStage);
+    setOpportunities(updated);
+  };
 
   const totalPipeline = opportunities
     .filter((o) => o.stage !== 'FECHADO_PERDIDO')
@@ -46,13 +60,23 @@ export const OportunidadesPage: React.FC = () => {
         </div>
 
         <button
-          onClick={() => alert('Formulário de nova oportunidade comercial.')}
+          onClick={() => setIsModalOpen(true)}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Nova Oportunidade</span>
         </button>
       </div>
+
+      <NovaOportunidadeModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={async (data) => {
+          const created = await keeperAdapter.createCommercialOpportunity(data);
+          setOpportunities((prev) => [created, ...prev]);
+        }}
+      />
+
 
       {/* Pipeline Summary KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -148,7 +172,27 @@ export const OportunidadesPage: React.FC = () => {
                       <span className="font-extrabold text-white">
                         {formatCurrency(opp.estimatedValue)}
                       </span>
-                      <span className="text-[10px] text-slate-400">{opp.assignedTo}</span>
+                      <div className="flex items-center gap-1">
+                        {stage.id !== 'FECHADO_GANHO' && stage.id !== 'FECHADO_PERDIDO' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const nextStage =
+                                stage.id === 'PROSPECCAO'
+                                  ? 'PROPOSTA_ENVIADA'
+                                  : stage.id === 'PROPOSTA_ENVIADA'
+                                  ? 'NEGOCIACAO'
+                                  : 'FECHADO_GANHO';
+                              handleMoveStage(opp.id, nextStage);
+                            }}
+                            className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white text-[10px] font-bold flex items-center gap-0.5 transition cursor-pointer"
+                            title="Avançar para a próxima etapa"
+                          >
+                            <span>Avançar</span>
+                            <ArrowRight className="w-2.5 h-2.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}

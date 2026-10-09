@@ -120,3 +120,38 @@ export async function keeperRequest<T>(
     throw new ApiError(msg, 0, { endpoint, originalError: err.message });
   }
 }
+
+/**
+ * Diagnóstico de conexão em tempo real com o Keeper Core API
+ */
+export async function checkKeeperHealth(): Promise<{
+  status: 'ONLINE' | 'OFFLINE';
+  latencyMs: number;
+  url: string;
+  error?: string;
+}> {
+  const start = performance.now();
+  const url = getKeeperApiUrl();
+  try {
+    const res = await fetch(`${url}/health`, {
+      method: 'GET',
+      signal: AbortSignal.timeout(3500),
+    });
+    const latencyMs = Math.round(performance.now() - start);
+    return {
+      status: res.ok ? 'ONLINE' : 'OFFLINE',
+      latencyMs,
+      url,
+      error: res.ok ? undefined : `HTTP ${res.status} (${res.statusText})`,
+    };
+  } catch (err: any) {
+    const latencyMs = Math.round(performance.now() - start);
+    return {
+      status: 'OFFLINE',
+      latencyMs,
+      url,
+      error: err.name === 'TimeoutError' ? 'Tempo limite esgotado (3.5s)' : err.message || 'Servidor inacessível',
+    };
+  }
+}
+

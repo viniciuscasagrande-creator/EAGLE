@@ -1,12 +1,15 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useEventContext } from '@/contexts/EventContext';
 import { Gift, Plus, Users, CheckCircle, ShieldCheck } from 'lucide-react';
 import { formatNumber } from '@/utils/formatters';
+import { EmitirCortesiaModal } from '@/components/modals/EmitirCortesiaModal';
+import { keeperAdapter } from '@/services/api/keeperAdapter';
 
 export const CortesiasPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { selectedEvent, selectEventById, allEvents } = useEventContext();
+  const { selectedEvent, selectEventById, allEvents, issueCourtesy } = useEventContext();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (id && (!selectedEvent || selectedEvent.id !== id)) {
@@ -15,6 +18,15 @@ export const CortesiasPage: React.FC = () => {
   }, [id, selectedEvent, selectEventById]);
 
   const currentEvent = selectedEvent || allEvents.find((e) => e.id === id) || allEvents[0];
+  const [courtesies, setCourtesies] = useState<any[]>(() =>
+    keeperAdapter.getCourtesies(currentEvent?.id)
+  );
+
+  useEffect(() => {
+    if (currentEvent) {
+      setCourtesies(keeperAdapter.getCourtesies(currentEvent.id));
+    }
+  }, [currentEvent]);
 
   if (!currentEvent) {
     return (
@@ -23,12 +35,6 @@ export const CortesiasPage: React.FC = () => {
       </div>
     );
   }
-
-  const mockCourtesies = [
-    { id: 'c-1', guestName: 'Assessoria de Imprensa Banda X', email: 'imprensa@bandax.com', sector: 'Camarote Open Bar', qty: 10, authBy: 'Diretoria Produtor', issuedAt: '2026-10-04' },
-    { id: 'c-2', guestName: 'Patrocinador Master Banco', email: 'marketing@banco.com.br', sector: 'Pista Premium VIP', qty: 50, authBy: 'Contrato Comercial', issuedAt: '2026-10-02' },
-    { id: 'c-3', guestName: 'Apoiadores Culturais / Rádio FM', email: 'promo@radiocwb.fm.br', sector: 'Pista Geral', qty: 60, authBy: 'Permuta de Mídia', issuedAt: '2026-10-01' },
-  ];
 
   return (
     <div className="space-y-6">
@@ -43,13 +49,24 @@ export const CortesiasPage: React.FC = () => {
         </div>
 
         <button
-          onClick={() => alert('Emissão de cortesias autorizada apenas mediante saldo de cota contratual.')}
+          onClick={() => setIsModalOpen(true)}
           className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Emitir Nova Cortesia</span>
         </button>
       </div>
+
+      <EmitirCortesiaModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        sectors={currentEvent.sectors}
+        onConfirm={async (data) => {
+          const created = await issueCourtesy(currentEvent.id, data);
+          setCourtesies((prev) => [created, ...prev]);
+        }}
+      />
+
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-4">
@@ -98,7 +115,7 @@ export const CortesiasPage: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-[#37393e]">
-            {mockCourtesies.map((item) => (
+            {courtesies.map((item) => (
               <tr key={item.id} className="hover:bg-[#25262c] transition">
                 <td className="p-3.5">
                   <div className="font-semibold text-white">{item.guestName}</div>

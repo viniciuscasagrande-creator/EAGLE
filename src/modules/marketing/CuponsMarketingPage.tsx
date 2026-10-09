@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Percent, Plus, Tag, CheckCircle2, DollarSign, Calendar } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
+import { keeperAdapter } from '@/services/api/keeperAdapter';
+import { NovoCupomModal } from '@/components/modals/NovoCupomModal';
 
 export const CuponsMarketingPage: React.FC = () => {
-  const coupons = [
-    { code: 'VIPFESTIVAL10', discount: '10%', event: 'Festival XYZ 2026', uses: 245, maxUses: 500, revenue: 63700, status: 'Ativo' },
-    { code: 'PREVENDA20', discount: 'R$ 20,00', event: 'Festival XYZ 2026', uses: 120, maxUses: 200, revenue: 31200, status: 'Ativo' },
-    { code: 'PROMOFLASH', discount: '15%', event: 'Show Nacional ABC 2026', uses: 80, maxUses: 100, revenue: 12400, status: 'Esgotado' },
-  ];
+  const [coupons, setCoupons] = useState<any[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    keeperAdapter.getCoupons().then(setCoupons);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -27,13 +30,23 @@ export const CuponsMarketingPage: React.FC = () => {
         </div>
 
         <button
-          onClick={() => alert('Abrindo modal de novo cupom promocional...')}
+          onClick={() => setIsModalOpen(true)}
           className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Criar Novo Cupom</span>
         </button>
       </div>
+
+      <NovoCupomModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={async (data) => {
+          const created = await keeperAdapter.createCoupon(data);
+          setCoupons((prev) => [created, ...prev]);
+        }}
+      />
+
 
       <div className="bg-[#2c2d33] border border-[#37393e] rounded-xl overflow-hidden shadow-md">
         <table className="w-full text-left text-xs">

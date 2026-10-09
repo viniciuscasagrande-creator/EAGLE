@@ -1,12 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Percent, ShieldAlert, FileText, CheckCircle2 } from 'lucide-react';
+import { keeperAdapter } from '@/services/api/keeperAdapter';
 
 export const TaxasRetencoesPage: React.FC = () => {
-  const feeRules = [
-    { id: '1', code: 'DISK_FEE', name: 'Taxa DiskIngressos', rate: '10,00%', payer: 'CLIENTE', basis: 'Valor do Ingresso', validFrom: '01/08/2026', status: 'Ativa' },
-    { id: '2', code: 'SPREAD', name: 'Spread Financeiro (Cartão/PIX)', rate: '2,50%', payer: 'PRODUTOR', basis: 'Valor Bruto Venda', validFrom: '01/10/2026', status: 'Ativa' },
-    { id: '3', code: 'RESERVA', name: 'Reserva de Contingência', rate: '10,00%', payer: 'RETENÇÃO', basis: 'Saldo da Carteira', validFrom: '01/09/2026', status: 'Ativa' },
-  ];
+  const [feeRules, setFeeRules] = useState<any[]>([]);
+
+  useEffect(() => {
+    keeperAdapter.getCommercialRules().then((rules) => {
+      setFeeRules(
+        rules.map((r) => ({
+          id: r.id,
+          code: r.feeCode,
+          name: r.feeName,
+          rate: `${r.rate.toFixed(2).replace('.', ',')}%`,
+          payer: r.payer === 'CUSTOMER' ? 'CLIENTE' : 'PRODUTOR',
+          basis: r.basisType,
+          validFrom: r.validFrom,
+          status: r.isActive ? 'Ativa' : 'Inativa',
+        }))
+      );
+    });
+  }, []);
+
 
   return (
     <div className="space-y-6">

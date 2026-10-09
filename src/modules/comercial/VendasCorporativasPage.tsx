@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
 import {
   Building2,
   Plus,
@@ -76,20 +77,28 @@ const mockCorporateOrders: CorporateOrder[] = [
   },
 ];
 
+import { keeperAdapter } from '@/services/api/keeperAdapter';
+import { NovoPedidoCorporativoModal } from '@/components/modals/NovoPedidoCorporativoModal';
+
 export const VendasCorporativasPage: React.FC = () => {
-  const [orders] = useState<CorporateOrder[]>(mockCorporateOrders);
+  const [orders, setOrders] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    keeperAdapter.getCorporateOrders().then(setOrders);
+  }, []);
 
   const filteredOrders = orders.filter((o) => {
     return (
-      o.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      o.cnpj.includes(searchTerm) ||
-      o.orderNumber.toLowerCase().includes(searchTerm.toLowerCase())
+      (o.companyName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (o.cnpj || '').includes(searchTerm) ||
+      (o.orderNumber || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
 
-  const totalB2bRevenue = orders.reduce((acc, o) => acc + o.totalAmount, 0);
-  const totalB2bTickets = orders.reduce((acc, o) => acc + o.ticketQuantity, 0);
+  const totalB2bRevenue = orders.reduce((acc, o) => acc + (o.totalAmount || 0), 0);
+  const totalB2bTickets = orders.reduce((acc, o) => acc + (o.ticketQuantity || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -110,13 +119,23 @@ export const VendasCorporativasPage: React.FC = () => {
         </div>
 
         <button
-          onClick={() => alert('Abrir modal de novo pedido corporativo B2B.')}
+          onClick={() => setIsModalOpen(true)}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Novo Pedido Corporativo</span>
         </button>
       </div>
+
+      <NovoPedidoCorporativoModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={async (data) => {
+          const created = await keeperAdapter.createCorporateOrder(data);
+          setOrders((prev) => [created, ...prev]);
+        }}
+      />
+
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
