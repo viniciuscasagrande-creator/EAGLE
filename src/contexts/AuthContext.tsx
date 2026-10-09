@@ -23,6 +23,8 @@ const defaultUser: UserProfile = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+import { getKeeperApiUrl } from '@/services/api/client';
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [producer, setProducer] = useState<Producer>(mockProducer);
   const [user, setUser] = useState<UserProfile>(defaultUser);
@@ -31,7 +33,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     // Verificar se o backend do Keeper está online
-    fetch('/api/v1/financeiro/settlement/producers', { method: 'GET' })
+    const apiUrl = getKeeperApiUrl();
+    fetch(`${apiUrl}/financeiro/settlement/producers`, { method: 'GET' })
       .then((res) => {
         setIsKeeperConnected(res.ok);
       })
