@@ -27,15 +27,38 @@ import { PropostasPage } from '@/modules/comercial/PropostasPage';
 import { VendasCorporativasPage } from '@/modules/comercial/VendasCorporativasPage';
 import { ParceirosPage } from '@/modules/comercial/ParceirosPage';
 
-// Module 4: Marketing & Mídia Paga
+// Module 4: Marketing & Mídia Paga (Mapeamento Completo do Vídeo)
 import { DashboardMarketingPage } from '@/modules/marketing/DashboardMarketingPage';
 import { CampanhasPage } from '@/modules/marketing/CampanhasPage';
+import { CampanhasProntasPage } from '@/modules/marketing/CampanhasProntasPage';
+import { StatusRealCampanhasPage } from '@/modules/marketing/StatusRealCampanhasPage';
+import { MetaAdsPage } from '@/modules/marketing/MetaAdsPage';
+import { GoogleAnalytics4Page } from '@/modules/marketing/GoogleAnalytics4Page';
+import { TikTokAdsPage } from '@/modules/marketing/TikTokAdsPage';
+import { SpotifyAdsPage } from '@/modules/marketing/SpotifyAdsPage';
+import { WhatsAppMarketingPage } from '@/modules/marketing/WhatsAppMarketingPage';
+import { EmailMarketingPage } from '@/modules/marketing/EmailMarketingPage';
+import { AutomacoesJornadasPage } from '@/modules/marketing/AutomacoesJornadasPage';
+import { CentralUtmConversoesPage } from '@/modules/marketing/CentralUtmConversoesPage';
+import { AnalyticsMarketingPage } from '@/modules/marketing/AnalyticsMarketingPage';
+import { CuponsMarketingPage } from '@/modules/marketing/CuponsMarketingPage';
+import { AfiliadosMarketingPage } from '@/modules/marketing/AfiliadosMarketingPage';
+import { PixelsConversoesPage } from '@/modules/marketing/PixelsConversoesPage';
+import { AtribuicaoMulticanalPage } from '@/modules/marketing/AtribuicaoMulticanalPage';
+import { RelatoriosMarketingPage } from '@/modules/marketing/RelatoriosMarketingPage';
 import { IntegracoesAdsPage } from '@/modules/marketing/IntegracoesAdsPage';
 import { PublicosCriativosPage } from '@/modules/marketing/PublicosCriativosPage';
 
-// Module 5: Remarketing & Recuperação
+// Module 5: Remarketing & Recuperação (Mapeamento Completo do Vídeo)
+import { HubRemarketingPage } from '@/modules/remarketing/HubRemarketingPage';
 import { DashboardRemarketingPage } from '@/modules/remarketing/DashboardRemarketingPage';
 import { CarrinhosAbandonadosPage } from '@/modules/remarketing/CarrinhosAbandonadosPage';
+import { WhatsAppRemarketingPage } from '@/modules/remarketing/WhatsAppRemarketingPage';
+import { EmailRemarketingPage } from '@/modules/remarketing/EmailRemarketingPage';
+import { FluxosRecuperacaoPage } from '@/modules/remarketing/FluxosRecuperacaoPage';
+import { RecuperacaoPagamentoPage } from '@/modules/remarketing/RecuperacaoPagamentoPage';
+import { ClientesInativosPage } from '@/modules/remarketing/ClientesInativosPage';
+import { RelatoriosRemarketingPage } from '@/modules/remarketing/RelatoriosRemarketingPage';
 import { CampanhasDisparosPage } from '@/modules/remarketing/CampanhasDisparosPage';
 import { ConsentimentoLgpdPage } from '@/modules/remarketing/ConsentimentoLgpdPage';
 
@@ -77,7 +100,7 @@ export const AppRoutes: React.FC = () => {
           <Route path="/eventos/:id/financeiro" element={<DashboardFinanceiroPage />} />
           <Route path="/eventos/:id/comercial" element={<DashboardComercialPage />} />
           <Route path="/eventos/:id/marketing" element={<DashboardMarketingPage />} />
-          <Route path="/eventos/:id/remarketing" element={<DashboardRemarketingPage />} />
+          <Route path="/eventos/:id/remarketing" element={<HubRemarketingPage />} />
           <Route path="/eventos/:id/relatorios" element={<RelatoriosConsolidadosPage />} />
           <Route path="/eventos/:id/configuracoes" element={<ConfiguracoesProdutorPage />} />
 
@@ -89,15 +112,39 @@ export const AppRoutes: React.FC = () => {
           <Route path="/comercial/vendas-corporativas" element={<VendasCorporativasPage />} />
           <Route path="/comercial/parceiros" element={<ParceirosPage />} />
 
-          {/* Módulo 4: Marketing & Tráfego */}
+          {/* Módulo 4: Marketing & Mídia Paga (Hierarquia do Vídeo) */}
           <Route path="/marketing" element={<DashboardMarketingPage />} />
           <Route path="/marketing/campanhas" element={<CampanhasPage />} />
+          <Route path="/marketing/campanhas-prontas" element={<CampanhasProntasPage />} />
+          <Route path="/marketing/status-real" element={<StatusRealCampanhasPage />} />
+          <Route path="/marketing/meta-ads" element={<MetaAdsPage />} />
+          <Route path="/marketing/ga4" element={<GoogleAnalytics4Page />} />
+          <Route path="/marketing/tiktok-ads" element={<TikTokAdsPage />} />
+          <Route path="/marketing/spotify-ads" element={<SpotifyAdsPage />} />
+          <Route path="/marketing/whatsapp" element={<WhatsAppMarketingPage />} />
+          <Route path="/marketing/email" element={<EmailMarketingPage />} />
+          <Route path="/marketing/automacoes" element={<AutomacoesJornadasPage />} />
+          <Route path="/marketing/cupons" element={<CuponsMarketingPage />} />
+          <Route path="/marketing/utm-links" element={<CentralUtmConversoesPage />} />
+          <Route path="/marketing/afiliados" element={<AfiliadosMarketingPage />} />
+          <Route path="/marketing/pixels" element={<PixelsConversoesPage />} />
+          <Route path="/marketing/atribuicao" element={<AtribuicaoMulticanalPage />} />
+          <Route path="/marketing/relatorios" element={<RelatoriosMarketingPage />} />
+          <Route path="/marketing/analytics" element={<AnalyticsMarketingPage />} />
           <Route path="/marketing/integracoes" element={<IntegracoesAdsPage />} />
           <Route path="/marketing/publicos" element={<PublicosCriativosPage />} />
 
-          {/* Módulo 5: Remarketing & Conversão */}
-          <Route path="/remarketing" element={<DashboardRemarketingPage />} />
+          {/* Módulo 5: Remarketing & Conversão (Hierarquia do Vídeo) */}
+          <Route path="/remarketing" element={<HubRemarketingPage />} />
+          <Route path="/remarketing/dashboard" element={<DashboardRemarketingPage />} />
+          <Route path="/remarketing/carrinhos" element={<CarrinhosAbandonadosPage />} />
           <Route path="/remarketing/carrinhos-abandonados" element={<CarrinhosAbandonadosPage />} />
+          <Route path="/remarketing/whatsapp" element={<WhatsAppRemarketingPage />} />
+          <Route path="/remarketing/email" element={<EmailRemarketingPage />} />
+          <Route path="/remarketing/fluxos" element={<FluxosRecuperacaoPage />} />
+          <Route path="/remarketing/recuperacao-pagamento" element={<RecuperacaoPagamentoPage />} />
+          <Route path="/remarketing/clientes-inativos" element={<ClientesInativosPage />} />
+          <Route path="/remarketing/relatorios" element={<RelatoriosRemarketingPage />} />
           <Route path="/remarketing/campanhas" element={<CampanhasDisparosPage />} />
           <Route path="/remarketing/consentimento" element={<ConsentimentoLgpdPage />} />
 

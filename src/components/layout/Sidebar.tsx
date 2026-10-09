@@ -72,6 +72,20 @@ export const Sidebar: React.FC = () => {
         : 'text-slate-400 hover:text-slate-200 hover:bg-[#202126]'
     }`;
 
+  const getMarketingSubmenuLinkClass = (isActive: boolean) =>
+    `block py-1.5 px-2.5 text-xs rounded-md transition ${
+      isActive
+        ? 'text-amber-400 font-semibold bg-amber-500/10 border-l-2 border-amber-500 pl-2'
+        : 'text-slate-400 hover:text-slate-200 hover:bg-[#202126]'
+    }`;
+
+  const getRemarketingSubmenuLinkClass = (isActive: boolean) =>
+    `block py-1.5 px-2.5 text-xs rounded-md transition ${
+      isActive
+        ? 'text-pink-400 font-semibold bg-pink-500/10 border-l-2 border-pink-500 pl-2'
+        : 'text-slate-400 hover:text-slate-200 hover:bg-[#202126]'
+    }`;
+
   const getLevel2LinkClass = (isActive: boolean) =>
     `flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition ${
       isActive
@@ -395,18 +409,18 @@ export const Sidebar: React.FC = () => {
           )}
         </div>
 
-        {/* 4. MARKETING */}
+        {/* 4. MARKETING (Hierarquia Integral do Vídeo) */}
         <div>
           <button
             onClick={() => toggleSubmenu('marketing')}
             className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition ${
               location.pathname.startsWith('/marketing')
-                ? 'text-blue-400 bg-blue-500/10'
+                ? 'text-amber-400 bg-amber-500/10'
                 : 'text-slate-300 hover:bg-[#25262c] hover:text-white'
             }`}
           >
             <div className="flex items-center gap-3">
-              <Megaphone className="w-4 h-4 flex-shrink-0 text-cyan-400" />
+              <Megaphone className="w-4 h-4 flex-shrink-0 text-amber-400" />
               {!collapsed && <span>Marketing</span>}
             </div>
             {!collapsed && (
@@ -419,43 +433,121 @@ export const Sidebar: React.FC = () => {
           </button>
 
           {openSubmenus.marketing && !collapsed && (
-            <div className="ml-7 mt-1 space-y-1 border-l border-[#37393e] pl-2">
+            <div className="ml-7 mt-1 space-y-0.5 border-l border-[#37393e] pl-2 max-h-[360px] overflow-y-auto pr-1">
               <NavLink
                 to="/marketing"
                 end
-                className={({ isActive }) => getSubmenuLinkClass(isActive)}
+                className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
               >
                 Dashboard Marketing
               </NavLink>
               <NavLink
                 to="/marketing/campanhas"
-                className={({ isActive }) => getSubmenuLinkClass(isActive)}
+                className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
               >
-                Campanhas & Anúncios
+                Campanhas Multicanais
               </NavLink>
               <NavLink
-                to="/marketing/integracoes"
-                className={({ isActive }) => getSubmenuLinkClass(isActive)}
+                to="/marketing/campanhas-prontas"
+                className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
               >
-                Meta / Google / TikTok Ads
+                Campanhas Prontas
               </NavLink>
               <NavLink
-                to="/marketing/publicos"
-                className={({ isActive }) => getSubmenuLinkClass(isActive)}
+                to="/marketing/status-real"
+                className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
               >
-                Públicos & Criativos
+                Status Real das Campanhas
+              </NavLink>
+              <NavLink
+                to="/marketing/meta-ads"
+                className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+              >
+                Meta Ads & Pixel
+              </NavLink>
+              <NavLink
+                to="/marketing/ga4"
+                className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+              >
+                Google Analytics 4
+              </NavLink>
+              <NavLink
+                to="/marketing/tiktok-ads"
+                className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+              >
+                TikTok Ads
+              </NavLink>
+              <NavLink
+                to="/marketing/spotify-ads"
+                className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+              >
+                Spotify Ads
+              </NavLink>
+              <NavLink
+                to="/marketing/whatsapp"
+                className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+              >
+                WhatsApp Marketing
+              </NavLink>
+              <NavLink
+                to="/marketing/email"
+                className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+              >
+                E-mail Marketing
+              </NavLink>
+              <NavLink
+                to="/marketing/automacoes"
+                className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+              >
+                Automações & Jornadas
+              </NavLink>
+              <NavLink
+                to="/marketing/cupons"
+                className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+              >
+                Cupons & Descontos
+              </NavLink>
+              <NavLink
+                to="/marketing/utm-links"
+                className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+              >
+                Central UTM & Links
+              </NavLink>
+              <NavLink
+                to="/marketing/afiliados"
+                className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+              >
+                Afiliados & Promotores
+              </NavLink>
+              <NavLink
+                to="/marketing/pixels"
+                className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+              >
+                Pixels & Conversões
+              </NavLink>
+              <NavLink
+                to="/marketing/atribuicao"
+                className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+              >
+                Atribuição Multicanal
+              </NavLink>
+              <NavLink
+                to="/marketing/relatorios"
+                className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+              >
+                Relatórios de Marketing
               </NavLink>
             </div>
           )}
         </div>
 
-        {/* 5. REMARKETING */}
+        {/* 5. REMARKETING (Hierarquia Integral do Vídeo) */}
         <div>
           <button
             onClick={() => toggleSubmenu('remarketing')}
             className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition ${
               location.pathname.startsWith('/remarketing')
-                ? 'text-blue-400 bg-blue-500/10'
+                ? 'text-pink-400 bg-pink-500/10'
                 : 'text-slate-300 hover:bg-[#25262c] hover:text-white'
             }`}
           >
@@ -473,29 +565,65 @@ export const Sidebar: React.FC = () => {
           </button>
 
           {openSubmenus.remarketing && !collapsed && (
-            <div className="ml-7 mt-1 space-y-1 border-l border-[#37393e] pl-2">
+            <div className="ml-7 mt-1 space-y-0.5 border-l border-[#37393e] pl-2 max-h-[300px] overflow-y-auto pr-1">
               <NavLink
                 to="/remarketing"
                 end
-                className={({ isActive }) => getSubmenuLinkClass(isActive)}
+                className={({ isActive }) => getRemarketingSubmenuLinkClass(isActive)}
               >
-                Dashboard Remarketing
+                Hub Remarketing
               </NavLink>
               <NavLink
-                to="/remarketing/carrinhos-abandonados"
-                className={({ isActive }) => getSubmenuLinkClass(isActive)}
+                to="/remarketing/dashboard"
+                className={({ isActive }) => getRemarketingSubmenuLinkClass(isActive)}
+              >
+                Dashboard
+              </NavLink>
+              <NavLink
+                to="/remarketing/carrinhos"
+                className={({ isActive }) => getRemarketingSubmenuLinkClass(isActive)}
               >
                 Carrinhos Abandonados
               </NavLink>
               <NavLink
-                to="/remarketing/campanhas"
-                className={({ isActive }) => getSubmenuLinkClass(isActive)}
+                to="/remarketing/fluxos"
+                className={({ isActive }) => getRemarketingSubmenuLinkClass(isActive)}
               >
-                Disparos WhatsApp & E-mail
+                Fluxos de Recuperação
+              </NavLink>
+              <NavLink
+                to="/remarketing/whatsapp"
+                className={({ isActive }) => getRemarketingSubmenuLinkClass(isActive)}
+              >
+                WhatsApp Remarketing
+              </NavLink>
+              <NavLink
+                to="/remarketing/email"
+                className={({ isActive }) => getRemarketingSubmenuLinkClass(isActive)}
+              >
+                E-mail Remarketing
+              </NavLink>
+              <NavLink
+                to="/remarketing/recuperacao-pagamento"
+                className={({ isActive }) => getRemarketingSubmenuLinkClass(isActive)}
+              >
+                Recuperação de Pagamento
+              </NavLink>
+              <NavLink
+                to="/remarketing/clientes-inativos"
+                className={({ isActive }) => getRemarketingSubmenuLinkClass(isActive)}
+              >
+                Clientes Inativos
+              </NavLink>
+              <NavLink
+                to="/remarketing/relatorios"
+                className={({ isActive }) => getRemarketingSubmenuLinkClass(isActive)}
+              >
+                Relatórios de Resgate
               </NavLink>
               <NavLink
                 to="/remarketing/consentimento"
-                className={({ isActive }) => getSubmenuLinkClass(isActive)}
+                className={({ isActive }) => getRemarketingSubmenuLinkClass(isActive)}
               >
                 Consentimento & LGPD
               </NavLink>
