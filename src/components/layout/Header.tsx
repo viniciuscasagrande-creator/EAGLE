@@ -35,7 +35,7 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="h-16 border-b border-slate-800 bg-[#0e1424] px-4 md:px-6 flex items-center justify-between sticky top-0 z-40">
+    <header className="h-16 border-b border-[#2b2c31] bg-[#151515] px-4 md:px-6 flex items-center justify-between sticky top-0 z-40">
       {/* Brand & Context */}
       <div className="flex items-center gap-4">
         <div

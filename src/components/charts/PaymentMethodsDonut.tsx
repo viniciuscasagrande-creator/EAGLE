@@ -38,7 +38,7 @@ export const PaymentMethodsDonut: React.FC<PaymentMethodsDonutProps> = ({ data }
   };
 
   return (
-    <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-5 shadow-lg shadow-black/20 flex flex-col justify-between">
+    <div className="bg-[#2c2d33] border border-[#37393e] rounded-xl p-5 shadow-lg flex flex-col justify-between">
       <div className="mb-2">
         <h4 className="text-sm font-bold text-slate-100 uppercase tracking-wide">
           Formas de Pagamento

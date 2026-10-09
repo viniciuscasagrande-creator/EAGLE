@@ -16,7 +16,7 @@ export const SectorProgressBars: React.FC<SectorProgressBarsProps> = ({ sectors 
   }
 
   return (
-    <div className="bg-[#141b2d] border border-slate-800 rounded-xl p-5 shadow-lg shadow-black/20">
+    <div className="bg-[#2c2d33] border border-[#37393e] rounded-xl p-5 shadow-lg">
       <div className="mb-4">
         <h4 className="text-sm font-bold text-slate-100 uppercase tracking-wide">
           Ocupação por Setor & Lote

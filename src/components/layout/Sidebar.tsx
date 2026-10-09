@@ -55,7 +55,7 @@ export const Sidebar: React.FC = () => {
       <aside
         className={`${
           collapsed ? 'w-20' : 'w-64'
-        } transition-all duration-300 ease-in-out border-r border-slate-800 bg-[#0d1322] flex flex-col h-[calc(100vh-4rem)] sticky top-16 z-30 select-none`}
+        } transition-all duration-300 ease-in-out border-r border-[#2b2c31] bg-[#151515] flex flex-col h-[calc(100vh-4rem)] sticky top-16 z-30 select-none`}
       >
         {/* Event Header Banner in Sidebar */}
         <div className="p-3 border-b border-slate-800/80 bg-blue-950/20">
@@ -267,7 +267,7 @@ export const Sidebar: React.FC = () => {
     <aside
       className={`${
         collapsed ? 'w-20' : 'w-64'
-      } transition-all duration-300 ease-in-out border-r border-slate-800 bg-[#0d1322] flex flex-col h-[calc(100vh-4rem)] sticky top-16 z-30 select-none`}
+      } transition-all duration-300 ease-in-out border-r border-[#2b2c31] bg-[#151515] flex flex-col h-[calc(100vh-4rem)] sticky top-16 z-30 select-none`}
     >
       <nav className="flex-1 overflow-y-auto p-2 space-y-1">
         {/* 1. DASHBOARD GERAL */}
