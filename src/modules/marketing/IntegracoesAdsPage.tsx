@@ -57,10 +57,82 @@ const initialIntegrations: PixelIntegration[] = [
 ];
 
 export const IntegracoesAdsPage: React.FC = () => {
-  const [integrations] = useState<PixelIntegration[]>(initialIntegrations);
+  const [integrations, setIntegrations] = useState<PixelIntegration[]>(initialIntegrations);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+  const [configuringItem, setConfiguringItem] = useState<PixelIntegration | null>(null);
+
+  // New Pixel Form State
+  const [newPlatform, setNewPlatform] = useState<'META' | 'GOOGLE' | 'TIKTOK' | 'KWAI'>('META');
+  const [newName, setNewName] = useState('Meta Pixel Secundário');
+  const [newPixelId, setNewPixelId] = useState('849201948201948');
+  const [newCapi, setNewCapi] = useState(true);
+
+  const handleCreatePixel = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newInt: PixelIntegration = {
+      id: `int-${Date.now()}`,
+      name: newName,
+      platform: newPlatform,
+      pixelId: newPixelId,
+      status: 'CONNECTED',
+      serverSideEnabled: newCapi,
+      lastEventReceived: new Date().toISOString(),
+      trackedEventsCount: 0,
+    };
+    setIntegrations((prev) => [newInt, ...prev]);
+    setIsNewModalOpen(false);
+    setToastMessage(`Pixel "${newName}" conectado e sincronizado com o motor de tracking DiskIngressos!`);
+    setTimeout(() => setToastMessage(null), 5000);
+  };
+
+  const handleTestEvent = (item: PixelIntegration) => {
+    setIntegrations((prev) =>
+      prev.map((i) =>
+        i.id === item.id
+          ? {
+              ...i,
+              trackedEventsCount: i.trackedEventsCount + 1,
+              lastEventReceived: new Date().toISOString(),
+            }
+          : i
+      )
+    );
+    setToastMessage(`Disparo de teste "Purchase" transmitido com sucesso via CAPI para ${item.name}!`);
+    setTimeout(() => setToastMessage(null), 4500);
+  };
+
+  const handleCopyId = (pixelId: string) => {
+    navigator.clipboard.writeText(pixelId);
+    setToastMessage(`ID "${pixelId}" copiado para a área de transferência!`);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleSaveConfig = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!configuringItem) return;
+    setIntegrations((prev) =>
+      prev.map((i) => (i.id === configuringItem.id ? configuringItem : i))
+    );
+    setConfiguringItem(null);
+    setToastMessage(`Configurações de ${configuringItem.name} atualizadas com sucesso!`);
+    setTimeout(() => setToastMessage(null), 4000);
+  };
 
   return (
     <div className="space-y-6">
+      {toastMessage && (
+        <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-400 text-xs flex items-center justify-between animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 flex-shrink-0" />
+            <span>{toastMessage}</span>
+          </div>
+          <button onClick={() => setToastMessage(null)} className="text-blue-400 hover:text-white">
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -78,7 +150,7 @@ export const IntegracoesAdsPage: React.FC = () => {
         </div>
 
         <button
-          onClick={() => alert('Abrir assistente de configuração de novo Pixel / Tag.')}
+          onClick={() => setIsNewModalOpen(true)}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
         >
           <Zap className="w-4 h-4" />
@@ -124,10 +196,7 @@ export const IntegracoesAdsPage: React.FC = () => {
                 <div className="font-mono font-bold text-white flex items-center justify-between">
                   <span className="truncate">{item.pixelId}</span>
                   <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(item.pixelId);
-                      alert('ID copiado para a área de transferência!');
-                    }}
+                    onClick={() => handleCopyId(item.pixelId)}
                     className="p-1 text-slate-400 hover:text-white transition cursor-pointer"
                     title="Copiar ID"
                   >
@@ -156,16 +225,16 @@ export const IntegracoesAdsPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="pt-3 border-t border-[#37393e] flex items-center justify-between text-xs">
+            <div className="pt-3 border-t border-[#37393e] flex items-center justify-between text-xs mt-3">
               <button
-                onClick={() => alert(`Configurações de integração para ${item.name}`)}
+                onClick={() => setConfiguringItem(item)}
                 className="flex items-center gap-1 text-blue-400 hover:text-blue-300 font-semibold cursor-pointer"
               >
                 <Settings className="w-3.5 h-3.5" />
                 <span>Configurar</span>
               </button>
               <button
-                onClick={() => alert(`Testando disparo de evento de teste para ${item.name}... Evento de teste enviado com sucesso!`)}
+                onClick={() => handleTestEvent(item)}
                 className="flex items-center gap-1 text-slate-400 hover:text-slate-200 cursor-pointer"
               >
                 <Activity className="w-3.5 h-3.5" />
@@ -175,6 +244,182 @@ export const IntegracoesAdsPage: React.FC = () => {
           </div>
         ))}
       </div>
+
+      {/* Modal Conectar Novo Pixel */}
+      {isNewModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#2c2d33] border border-[#37393e] rounded-xl w-full max-w-md shadow-2xl overflow-hidden text-slate-200">
+            <div className="p-4 bg-[#232429] border-b border-[#37393e] flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  <Zap className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">Conectar Novo Pixel / Tag</h3>
+                  <p className="text-[11px] text-slate-400">Rastreamento Server-Side e Client</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsNewModalOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#37393e] transition cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreatePixel} className="p-5 space-y-4 text-xs">
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Plataforma *</label>
+                <select
+                  value={newPlatform}
+                  onChange={(e) => setNewPlatform(e.target.value as any)}
+                  className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500"
+                >
+                  <option value="META">Meta Ads (Facebook & Instagram)</option>
+                  <option value="GOOGLE">Google Ads & GA4</option>
+                  <option value="TIKTOK">TikTok Ads Pixel</option>
+                  <option value="KWAI">Kwai Ads Pixel</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Nome de Identificação *</label>
+                <input
+                  type="text"
+                  required
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Ex: Meta Pixel Festival XYZ"
+                  className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Pixel ID ou Measurement ID *</label>
+                <input
+                  type="text"
+                  required
+                  value={newPixelId}
+                  onChange={(e) => setNewPixelId(e.target.value)}
+                  placeholder="Ex: 849201948201948 ou G-XXXXXXX"
+                  className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="capiCheckbox"
+                  checked={newCapi}
+                  onChange={(e) => setNewCapi(e.target.checked)}
+                  className="rounded border-[#37393e] bg-[#202124] text-blue-600 focus:ring-0"
+                />
+                <label htmlFor="capiCheckbox" className="text-slate-300 font-medium cursor-pointer">
+                  Habilitar Conversions API Server-Side nativo
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#37393e]">
+                <button
+                  type="button"
+                  onClick={() => setIsNewModalOpen(false)}
+                  className="px-4 py-2 bg-[#202124] hover:bg-[#37393e] text-slate-300 text-xs font-bold rounded-lg border border-[#37393e] transition cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 shadow"
+                >
+                  <Zap className="w-3.5 h-3.5" />
+                  <span>Salvar & Conectar</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Configurar Pixel */}
+      {configuringItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#2c2d33] border border-[#37393e] rounded-xl w-full max-w-md shadow-2xl overflow-hidden text-slate-200">
+            <div className="p-4 bg-[#232429] border-b border-[#37393e] flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  <Settings className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">Configurações de Pixel</h3>
+                  <p className="text-[11px] text-slate-400">{configuringItem.name}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setConfiguringItem(null)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#37393e] transition cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveConfig} className="p-5 space-y-4 text-xs">
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Nome do Rastreamento</label>
+                <input
+                  type="text"
+                  required
+                  value={configuringItem.name}
+                  onChange={(e) => setConfiguringItem({ ...configuringItem, name: e.target.value })}
+                  className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Pixel ID</label>
+                <input
+                  type="text"
+                  required
+                  value={configuringItem.pixelId}
+                  onChange={(e) => setConfiguringItem({ ...configuringItem, pixelId: e.target.value })}
+                  className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="editCapiCheckbox"
+                  checked={configuringItem.serverSideEnabled}
+                  onChange={(e) =>
+                    setConfiguringItem({ ...configuringItem, serverSideEnabled: e.target.checked })
+                  }
+                  className="rounded border-[#37393e] bg-[#202124] text-blue-600 focus:ring-0"
+                />
+                <label htmlFor="editCapiCheckbox" className="text-slate-300 font-medium cursor-pointer">
+                  Conversions API (CAPI) Ativo
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#37393e]">
+                <button
+                  type="button"
+                  onClick={() => setConfiguringItem(null)}
+                  className="px-4 py-2 bg-[#202124] hover:bg-[#37393e] text-slate-300 text-xs font-bold rounded-lg border border-[#37393e] transition cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 shadow"
+                >
+                  <CheckCircle className="w-3.5 h-3.5" />
+                  <span>Salvar Alterações</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

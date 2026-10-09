@@ -12,15 +12,117 @@ import {
   Plus,
   CheckCircle2,
   Users,
+  Download,
+  X,
+  Sparkles,
 } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/utils/formatters';
+import { downloadCsv } from '@/utils/csvExport';
 
 export const WhatsAppMarketingPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'CAMPAIGNS' | 'TEMPLATES' | 'PREVIEW' | 'LGPD'>('CAMPAIGNS');
   const [selectedTemplate, setSelectedTemplate] = useState<WhatsAppTemplate>(mockWhatsAppTemplates[0]);
+  const [isNovoDisparoOpen, setIsNovoDisparoOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const [campaigns, setCampaigns] = useState([
+    {
+      id: 'wa-01',
+      name: 'Aviso Virada de Lote 48h VIP',
+      event: 'Festival XYZ 2026',
+      sent: 8420,
+      delivered: 8380,
+      readRate: '92,1%',
+      clicks: 2150,
+      sales: 184,
+      status: 'Concluído',
+    },
+    {
+      id: 'wa-02',
+      name: 'Pré-Venda Exclusiva Clientes 2025',
+      event: 'Festival XYZ 2026',
+      sent: 4500,
+      delivered: 4460,
+      readRate: '88,4%',
+      clicks: 1420,
+      sales: 120,
+      status: 'Concluído',
+    },
+    {
+      id: 'wa-03',
+      name: 'Resgate de Carrinho em 15 Minutos (Automação)',
+      event: 'Show Nacional ABC 2026',
+      sent: 1120,
+      delivered: 1105,
+      readRate: '94,6%',
+      clicks: 410,
+      sales: 61,
+      status: 'Ativa / Em Execução',
+    },
+  ]);
+
+  // Modal Form State
+  const [newCampaignName, setNewCampaignName] = useState('Virada de Lote WhatsApp');
+  const [newSelectedTplId, setNewSelectedTplId] = useState(mockWhatsAppTemplates[0].id);
+  const [newEventName, setNewEventName] = useState('Festival XYZ 2026');
+  const [newAudience, setNewAudience] = useState('TODOS_COMPRADORES');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleLaunchCampaign = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    await new Promise((r) => setTimeout(r, 600));
+
+    const tpl = mockWhatsAppTemplates.find((t) => t.id === newSelectedTplId) || mockWhatsAppTemplates[0];
+    const newCamp = {
+      id: `wa-${Date.now()}`,
+      name: newCampaignName,
+      event: newEventName,
+      sent: newAudience === 'TODOS_COMPRADORES' ? 6200 : 1850,
+      delivered: newAudience === 'TODOS_COMPRADORES' ? 6170 : 1840,
+      readRate: '0,0%',
+      clicks: 0,
+      sales: 0,
+      status: 'Em Envio (Cloud API)',
+    };
+    setCampaigns((prev) => [newCamp, ...prev]);
+    setIsNovoDisparoOpen(false);
+    setSubmitting(false);
+    setToastMessage(`Campanha "${newCampaignName}" aprovada e fila de disparo inicializada na Meta Cloud API!`);
+    setTimeout(() => setToastMessage(null), 5000);
+  };
+
+  const handleExportCsv = () => {
+    const headers = ['Campanha', 'Evento', 'Disparos', 'Entregues', 'Taxa Leitura', 'Cliques', 'Vendas', 'Status'];
+    const rows = campaigns.map((c) => [
+      c.name,
+      c.event,
+      c.sent,
+      c.delivered,
+      c.readRate,
+      c.clicks,
+      c.sales,
+      c.status,
+    ]);
+    downloadCsv(headers, rows, `campanhas-whatsapp-${new Date().toISOString().slice(0, 10)}.csv`);
+    setToastMessage('Relatório de campanhas WhatsApp exportado com sucesso (CSV)!');
+    setTimeout(() => setToastMessage(null), 4000);
+  };
 
   return (
     <div className="space-y-6">
+      {toastMessage && (
+        <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400 text-xs flex items-center justify-between animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+            <span>{toastMessage}</span>
+          </div>
+          <button onClick={() => setToastMessage(null)} className="text-emerald-400 hover:text-white">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -37,13 +139,23 @@ export const WhatsAppMarketingPage: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => alert('Abrindo modal de novo disparo de WhatsApp em massa...')}
-          className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Novo Disparo de WhatsApp</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExportCsv}
+            className="flex items-center gap-1.5 px-3 py-2 bg-[#2c2d33] hover:bg-[#35363c] text-white text-xs font-semibold rounded-lg border border-[#37393e] transition cursor-pointer"
+          >
+            <Download className="w-4 h-4" />
+            <span>Exportar CSV</span>
+          </button>
+
+          <button
+            onClick={() => setIsNovoDisparoOpen(true)}
+            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Novo Disparo de WhatsApp</span>
+          </button>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -120,39 +232,8 @@ export const WhatsAppMarketingPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#37393e]">
-              {[
-                {
-                  name: 'Aviso Virada de Lote 48h VIP',
-                  event: 'Festival XYZ 2026',
-                  sent: 8420,
-                  delivered: 8380,
-                  readRate: '92,1%',
-                  clicks: 2150,
-                  sales: 184,
-                  status: 'Concluído',
-                },
-                {
-                  name: 'Pré-Venda Exclusiva Clientes 2025',
-                  event: 'Festival XYZ 2026',
-                  sent: 4500,
-                  delivered: 4460,
-                  readRate: '88,4%',
-                  clicks: 1420,
-                  sales: 120,
-                  status: 'Concluído',
-                },
-                {
-                  name: 'Resgate de Carrinho em 15 Minutos (Automação)',
-                  event: 'Show Nacional ABC 2026',
-                  sent: 1120,
-                  delivered: 1105,
-                  readRate: '94,6%',
-                  clicks: 410,
-                  sales: 61,
-                  status: 'Ativa / Em Execução',
-                },
-              ].map((c, i) => (
-                <tr key={i} className="hover:bg-[#25262c] transition">
+              {campaigns.map((c) => (
+                <tr key={c.id} className="hover:bg-[#25262c] transition">
                   <td className="p-3.5 font-bold text-white">{c.name}</td>
                   <td className="p-3.5 text-slate-300">{c.event}</td>
                   <td className="p-3.5 font-mono text-slate-200">{formatNumber(c.sent)}</td>
@@ -289,6 +370,117 @@ export const WhatsAppMarketingPage: React.FC = () => {
           <p className="text-slate-300 leading-relaxed">
             Todos os contatos disparados possuem consentimento explícito registrado durante a compra de ingressos ou cadastro no portal DiskIngressos. O comando de descadastro (opt-out automático respondendo "SAIR") é processado instantaneamente pelo bot de atendimento.
           </p>
+        </div>
+      )}
+
+      {/* Modal Novo Disparo WhatsApp */}
+      {isNovoDisparoOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#2c2d33] border border-[#37393e] rounded-xl w-full max-w-lg shadow-2xl overflow-hidden text-slate-200">
+            <div className="p-4 bg-[#232429] border-b border-[#37393e] flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <MessageSquare className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">Novo Disparo em Massa WhatsApp</h3>
+                  <p className="text-[11px] text-slate-400">Meta Cloud API com entrega homologada</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsNovoDisparoOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#37393e] transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleLaunchCampaign} className="p-5 space-y-4 text-xs">
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Nome da Campanha *</label>
+                <input
+                  type="text"
+                  required
+                  value={newCampaignName}
+                  onChange={(e) => setNewCampaignName(e.target.value)}
+                  placeholder="Ex: Virada de Lote 48h VIP"
+                  className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Template Aprovado pela Meta *</label>
+                <select
+                  value={newSelectedTplId}
+                  onChange={(e) => setNewSelectedTplId(e.target.value)}
+                  className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500"
+                >
+                  {mockWhatsAppTemplates.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name} ({t.category})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Evento *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newEventName}
+                    onChange={(e) => setNewEventName(e.target.value)}
+                    className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Segmento / Público *</label>
+                  <select
+                    value={newAudience}
+                    onChange={(e) => setNewAudience(e.target.value)}
+                    className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-white focus:outline-none focus:border-emerald-500"
+                  >
+                    <option value="TODOS_COMPRADORES">Todos os Compradores (Base Ativa)</option>
+                    <option value="VIP">Clientes VIP (Gasto Alto)</option>
+                    <option value="CARRINHOS">Carrinhos Pendentes</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Template Preview Snippet */}
+              {(() => {
+                const currentTpl = mockWhatsAppTemplates.find((t) => t.id === newSelectedTplId);
+                return (
+                  <div className="bg-[#202124] p-3 rounded-lg border border-[#37393e] space-y-1">
+                    <span className="text-slate-400 font-semibold text-[10px] block">Texto Modelo (com tags):</span>
+                    <p className="text-emerald-400 font-mono text-[11px] leading-relaxed">
+                      {currentTpl?.bodyText}
+                    </p>
+                  </div>
+                );
+              })()}
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#37393e]">
+                <button
+                  type="button"
+                  onClick={() => setIsNovoDisparoOpen(false)}
+                  className="px-4 py-2 bg-[#202124] hover:bg-[#37393e] text-slate-300 text-xs font-bold rounded-lg border border-[#37393e] transition cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 shadow"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>{submitting ? 'Enfileirando...' : 'Iniciar Disparo'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

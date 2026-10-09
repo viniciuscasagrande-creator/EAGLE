@@ -3,6 +3,8 @@ import { keeperAdapter } from '@/services/api/keeperAdapter';
 import { FinancialLedgerEntry } from '@/types/finance';
 import { Download, Search, Lock, AlertTriangle, RotateCw } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '@/utils/formatters';
+import { downloadCsv } from '@/utils/csvExport';
+
 
 export const ExtratoLedgerPage: React.FC = () => {
   const [entries, setEntries] = useState<FinancialLedgerEntry[]>([]);
@@ -75,14 +77,29 @@ export const ExtratoLedgerPage: React.FC = () => {
             <span>Atualizar</span>
           </button>
           <button
-            onClick={() => alert('Exportação de extrato oficial em formato CSV gerada.')}
+            onClick={() => {
+              downloadCsv(
+                'extrato-ledger-diskingressos',
+                ['ID Lançamento', 'Tipo de Partida', 'Direção', 'Valor (R$)', 'Saldo Após (R$)', 'Histórico Descritivo', 'Data/Hora'],
+                filteredEntries.map((e) => [
+                  e.id,
+                  e.entryType,
+                  e.direction,
+                  e.amount,
+                  e.balanceAfter,
+                  e.description,
+                  formatDateTime(e.createdAt),
+                ])
+              );
+            }}
             className="flex items-center gap-1.5 px-3.5 py-2 bg-[#2c2d33] hover:bg-[#35363c] text-white text-xs font-semibold rounded-lg border border-[#37393e] transition cursor-pointer"
           >
             <Download className="w-4 h-4" />
-            <span>Exportar Extrato OFX/CSV</span>
+            <span>Exportar Extrato (CSV)</span>
           </button>
         </div>
       </div>
+
 
       {isOffline && (
         <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs">

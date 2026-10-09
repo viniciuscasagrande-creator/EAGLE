@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { MetricKpiCard } from '@/components/cards/MetricKpiCard';
 import {
   BarChart3,
@@ -8,10 +8,15 @@ import {
   DollarSign,
   Download,
   Filter,
+  CheckCircle2,
+  X,
 } from 'lucide-react';
 import { formatCurrency, formatPercent } from '@/utils/formatters';
+import { downloadCsv } from '@/utils/csvExport';
 
 export const AnalyticsMarketingPage: React.FC = () => {
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
   const channels = [
     { name: 'Meta Ads (Instagram & Facebook)', share: 44.5, spent: 7550, revenue: 70530, roas: 9.34, color: 'bg-blue-500' },
     { name: 'Google Ads (Search & PMax)', share: 28.2, spent: 4800, revenue: 44700, roas: 9.31, color: 'bg-emerald-500' },
@@ -20,8 +25,34 @@ export const AnalyticsMarketingPage: React.FC = () => {
     { name: 'Spotify Ads (Áudio Streaming)', share: 3.6, spent: 2400, revenue: 38900, roas: 16.2, color: 'bg-teal-500' },
   ];
 
+  const handleExportCsv = () => {
+    const headers = ['Canal de Mídia', 'Share de Mídia (%)', 'Investimento (R$)', 'Receita Atribuída (R$)', 'ROAS'];
+    const rows = channels.map((c) => [
+      c.name,
+      `${c.share.toFixed(1)}%`,
+      c.spent.toFixed(2),
+      c.revenue.toFixed(2),
+      `${c.roas.toFixed(2)}x`,
+    ]);
+    downloadCsv(headers, rows, `analytics-marketing-performance-${new Date().toISOString().slice(0, 10)}.csv`);
+    setToastMessage('Relatório analítico multicanal exportado com sucesso (CSV)!');
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
   return (
     <div className="space-y-6">
+      {toastMessage && (
+        <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-400 text-xs flex items-center justify-between animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+            <span>{toastMessage}</span>
+          </div>
+          <button onClick={() => setToastMessage(null)} className="text-blue-400 hover:text-white">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -38,7 +69,7 @@ export const AnalyticsMarketingPage: React.FC = () => {
         </div>
 
         <button
-          onClick={() => alert('Exportando relatório analítico de marketing (CSV/PDF)...')}
+          onClick={handleExportCsv}
           className="flex items-center gap-2 bg-[#2c2d33] hover:bg-[#37393e] border border-[#37393e] text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
         >
           <Download className="w-4 h-4 text-slate-400" />

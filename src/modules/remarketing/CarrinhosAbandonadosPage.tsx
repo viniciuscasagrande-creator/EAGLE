@@ -10,13 +10,18 @@ import {
   CheckCircle,
   Clock,
   XCircle,
+  Download,
+  CheckCircle2,
+  X,
 } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '@/utils/formatters';
+import { downloadCsv } from '@/utils/csvExport';
 
 export const CarrinhosAbandonadosPage: React.FC = () => {
   const [carts, setCarts] = useState<AbandonedCart[]>(mockAbandonedCarts);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const filteredCarts = carts.filter((c) => {
     const matchesSearch =
@@ -32,12 +37,46 @@ export const CarrinhosAbandonadosPage: React.FC = () => {
   const totalRecoveredAmount = recoveredCarts.reduce((acc, c) => acc + c.cartValue, 0);
 
   const handleSendRecovery = (cart: AbandonedCart) => {
-    alert(`Disparando mensagem de recuperação via WhatsApp oficial DiskIngressos para ${cart.customerName} (${cart.customerPhone}) com link direto de checkout.`);
     setCarts((prev) =>
       prev.map((item) =>
         item.id === cart.id ? { ...item, recoveryStatus: 'RECOVERY_SENT' as const } : item
       )
     );
+    setToastMessage(`Disparo de resgate enviado via WhatsApp para ${cart.customerName} (${cart.customerPhone})!`);
+    setTimeout(() => setToastMessage(null), 5000);
+  };
+
+  const handleBulkRecovery = () => {
+    const pendingCarts = carts.filter((c) => c.recoveryStatus === 'PENDING');
+    if (pendingCarts.length === 0) {
+      setToastMessage('Não há carrinhos pendentes para disparo no momento.');
+      setTimeout(() => setToastMessage(null), 4000);
+      return;
+    }
+    setCarts((prev) =>
+      prev.map((c) => (c.recoveryStatus === 'PENDING' ? { ...c, recoveryStatus: 'RECOVERY_SENT' } : c))
+    );
+    setToastMessage(`Disparo em massa de WhatsApp efetuado com sucesso para ${pendingCarts.length} carrinhos pendentes!`);
+    setTimeout(() => setToastMessage(null), 5000);
+  };
+
+  const handleExportCsv = () => {
+    const headers = ['ID', 'Cliente', 'E-mail', 'Telefone', 'Evento', 'Setor', 'Qtd Ingressos', 'Valor (R$)', 'Data Abandono', 'Status'];
+    const rows = filteredCarts.map((c) => [
+      c.id,
+      c.customerName,
+      c.customerEmail,
+      c.customerPhone,
+      c.eventName,
+      c.sectorName,
+      c.ticketsCount,
+      c.cartValue.toFixed(2),
+      c.abandonedAt,
+      c.recoveryStatus,
+    ]);
+    downloadCsv(headers, rows, `carrinhos-abandonados-${new Date().toISOString().slice(0, 10)}.csv`);
+    setToastMessage('Relatório de carrinhos abandonados exportado com sucesso (CSV)!');
+    setTimeout(() => setToastMessage(null), 4000);
   };
 
   const getRecoveryBadge = (status: AbandonedCart['recoveryStatus']) => {
@@ -81,6 +120,18 @@ export const CarrinhosAbandonadosPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {toastMessage && (
+        <div className="p-3 bg-pink-500/10 border border-pink-500/20 rounded-lg text-pink-400 text-xs flex items-center justify-between animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+            <span>{toastMessage}</span>
+          </div>
+          <button onClick={() => setToastMessage(null)} className="text-pink-400 hover:text-white">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -97,13 +148,23 @@ export const CarrinhosAbandonadosPage: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => alert('Disparando automação em massa para todos os carrinhos pendentes...')}
-          className="flex items-center gap-2 bg-pink-600 hover:bg-pink-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
-        >
-          <Send className="w-4 h-4" />
-          <span>Disparar Recuperação em Massa</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExportCsv}
+            className="flex items-center gap-1.5 px-3 py-2 bg-[#2c2d33] hover:bg-[#35363c] text-white text-xs font-semibold rounded-lg border border-[#37393e] transition cursor-pointer"
+          >
+            <Download className="w-4 h-4" />
+            <span>Exportar CSV</span>
+          </button>
+
+          <button
+            onClick={handleBulkRecovery}
+            className="flex items-center gap-2 bg-pink-600 hover:bg-pink-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
+          >
+            <Send className="w-4 h-4" />
+            <span>Disparar Recuperação em Massa</span>
+          </button>
+        </div>
       </div>
 
       {/* KPI Cards */}

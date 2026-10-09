@@ -11,15 +11,29 @@ import {
   CheckCircle2,
   Settings,
   Plus,
+  X,
 } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/utils/formatters';
 
 export const SpotifyAdsPage: React.FC = () => {
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'CAMPAIGNS' | 'CAPI' | 'SETTINGS'>('CAMPAIGNS');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   return (
     <div className="space-y-6">
+      {toastMessage && (
+        <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400 text-xs flex items-center justify-between animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+            <span>{toastMessage}</span>
+          </div>
+          <button onClick={() => setToastMessage(null)} className="text-emerald-400 hover:text-white">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -217,7 +231,11 @@ export const SpotifyAdsPage: React.FC = () => {
       <SpotifyConnectModal
         isOpen={isConnectModalOpen}
         onClose={() => setIsConnectModalOpen(false)}
-        onConnected={() => alert('Spotify Ads & CAPI reconectado com sucesso!')}
+        onConnected={() => {
+          setIsConnectModalOpen(false);
+          setToastMessage('Spotify Ads & CAPI reconectado com sucesso!');
+          setTimeout(() => setToastMessage(null), 5000);
+        }}
       />
     </div>
   );

@@ -7,13 +7,91 @@ import {
   Search,
   CheckCircle,
   Pause,
+  Play,
+  Download,
+  CheckCircle2,
+  X,
+  Sparkles,
 } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/utils/formatters';
+import { downloadCsv } from '@/utils/csvExport';
 
 export const CampanhasPage: React.FC = () => {
-  const [campaigns] = useState<MarketingCampaign[]>(mockMarketingCampaigns);
+  const [campaigns, setCampaigns] = useState<MarketingCampaign[]>(mockMarketingCampaigns);
   const [channelFilter, setChannelFilter] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Form State
+  const [name, setName] = useState('Conversão Feed & Reels');
+  const [channel, setChannel] = useState<'META_ADS' | 'GOOGLE_ADS' | 'TIKTOK_ADS' | 'SPOTIFY_ADS'>('META_ADS');
+  const [eventName, setEventName] = useState('Festival XYZ 2026');
+  const [dailyBudget, setDailyBudget] = useState('150.00');
+  const [submitting, setSubmitting] = useState(false);
+
+  const toggleCampaignStatus = (id: string) => {
+    setCampaigns((prev) =>
+      prev.map((c) => {
+        if (c.id === id) {
+          const newStatus = c.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
+          setToastMessage(`Campanha "${c.name}" foi ${newStatus === 'ACTIVE' ? 'ativada' : 'pausada'} com sucesso.`);
+          setTimeout(() => setToastMessage(null), 4000);
+          return { ...c, status: newStatus as any };
+        }
+        return c;
+      })
+    );
+  };
+
+  const handleCreateCampaign = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    await new Promise((r) => setTimeout(r, 600));
+
+    const newCamp: MarketingCampaign = {
+      id: `camp-${Date.now()}`,
+      name,
+      channel,
+      eventName,
+      eventId: 'evt-xyz',
+      budgetSpent: 0,
+      impressions: 0,
+      clicks: 0,
+      ctr: 0,
+      conversions: 0,
+      attributedRevenue: 0,
+      roas: 0,
+      status: 'ACTIVE',
+      startDate: new Date().toISOString().slice(0, 10),
+      endDate: '2026-12-31',
+    };
+
+    setCampaigns((prev) => [newCamp, ...prev]);
+    setIsModalOpen(false);
+    setSubmitting(false);
+    setToastMessage(`Nova campanha "${name}" criada e sincronizada com sucesso no canal ${channel}!`);
+    setTimeout(() => setToastMessage(null), 5000);
+  };
+
+  const handleExportCsv = () => {
+    const headers = ['Campanha', 'Evento', 'Canal', 'Investimento (R$)', 'Cliques', 'CTR (%)', 'Conversões', 'Receita Atribuída (R$)', 'ROAS', 'Status'];
+    const rows = filteredCampaigns.map((c) => [
+      c.name,
+      c.eventName,
+      c.channel,
+      c.budgetSpent.toFixed(2),
+      c.clicks,
+      `${c.ctr}%`,
+      c.conversions,
+      c.attributedRevenue.toFixed(2),
+      `${c.roas}x`,
+      c.status === 'ACTIVE' ? 'Ativa' : 'Pausada',
+    ]);
+    downloadCsv(headers, rows, `campanhas-midia-trafego-${new Date().toISOString().slice(0, 10)}.csv`);
+    setToastMessage('Relatório de campanhas de tráfego exportado com sucesso (CSV)!');
+    setTimeout(() => setToastMessage(null), 4000);
+  };
 
   const filteredCampaigns = campaigns.filter((c) => {
     const matchesSearch =
@@ -30,6 +108,18 @@ export const CampanhasPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {toastMessage && (
+        <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-400 text-xs flex items-center justify-between animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+            <span>{toastMessage}</span>
+          </div>
+          <button onClick={() => setToastMessage(null)} className="text-blue-400 hover:text-white">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -38,7 +128,7 @@ export const CampanhasPage: React.FC = () => {
               Campanhas de Tráfego & Mídia Paga
             </h1>
             <span className="px-2 py-0.5 rounded text-xs font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-              Meta Ads • Google Ads • TikTok
+              Meta Ads • Google Ads • TikTok • Spotify
             </span>
           </div>
           <p className="text-sm text-slate-400">
@@ -46,13 +136,23 @@ export const CampanhasPage: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => alert('Abrir criador de anúncio integrado.')}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Criar Campanha</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExportCsv}
+            className="flex items-center gap-1.5 px-3 py-2 bg-[#2c2d33] hover:bg-[#35363c] text-white text-xs font-semibold rounded-lg border border-[#37393e] transition cursor-pointer"
+          >
+            <Download className="w-4 h-4" />
+            <span>Exportar CSV</span>
+          </button>
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Criar Campanha</span>
+          </button>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -167,16 +267,18 @@ export const CampanhasPage: React.FC = () => {
                     </span>
                   </td>
                   <td className="p-3.5 text-right">
-                    <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                    <button
+                      onClick={() => toggleCampaignStatus(camp.id)}
+                      title="Clique para alternar status (Ativar / Pausar)"
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold cursor-pointer transition ${
                         camp.status === 'ACTIVE'
-                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                          : 'bg-slate-700/40 text-slate-400'
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
+                          : 'bg-slate-700/40 text-slate-400 hover:bg-slate-700/70 border border-slate-600'
                       }`}
                     >
-                      {camp.status === 'ACTIVE' ? <CheckCircle className="w-3 h-3" /> : <Pause className="w-3 h-3" />}
-                      {camp.status === 'ACTIVE' ? 'Ativa' : 'Pausada'}
-                    </span>
+                      {camp.status === 'ACTIVE' ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3 text-emerald-400" />}
+                      <span>{camp.status === 'ACTIVE' ? 'Ativa' : 'Pausada'}</span>
+                    </button>
                   </td>
                 </tr>
               );
@@ -184,6 +286,112 @@ export const CampanhasPage: React.FC = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Modal Nova Campanha */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#2c2d33] border border-[#37393e] rounded-xl w-full max-w-md shadow-2xl overflow-hidden text-slate-200">
+            <div className="p-4 bg-[#232429] border-b border-[#37393e] flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  <Megaphone className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">Criar Nova Campanha de Tráfego</h3>
+                  <p className="text-[11px] text-slate-400">Sincronização direta com a API do canal de anúncios</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#37393e] transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateCampaign} className="p-5 space-y-4 text-xs">
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Nome da Campanha *</label>
+                <input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Ex: Campanha Virada Lote 1 - Feed & Stories"
+                  className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Canal de Mídia *</label>
+                <select
+                  value={channel}
+                  onChange={(e) => setChannel(e.target.value as any)}
+                  className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500"
+                >
+                  <option value="META_ADS">Meta Ads (Instagram & Facebook)</option>
+                  <option value="GOOGLE_ADS">Google Ads (Search & Performance Max)</option>
+                  <option value="TIKTOK_ADS">TikTok Ads (Spark & Feed)</option>
+                  <option value="SPOTIFY_ADS">Spotify Ads (Áudio & CAPI)</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Evento *</label>
+                  <input
+                    type="text"
+                    required
+                    value={eventName}
+                    onChange={(e) => setEventName(e.target.value)}
+                    className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Orçamento Diário (R$) *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={dailyBudget}
+                    onChange={(e) => setDailyBudget(e.target.value)}
+                    className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="p-3 bg-[#202124] rounded-lg border border-[#37393e] space-y-1 text-slate-400">
+                <div className="font-semibold text-white flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-cyan-400" />
+                  <span>Pixel DiskIngressos CAPI Vinculado</span>
+                </div>
+                <p className="text-[11px]">
+                  Todos os eventos de InitiateCheckout e Purchase serão transmitidos com 100% de deduplicação e alta nota de correspondência (EMQ 9.2).
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#37393e]">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 bg-[#202124] hover:bg-[#37393e] text-slate-300 text-xs font-bold rounded-lg border border-[#37393e] transition cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 shadow"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>{submitting ? 'Publicando...' : 'Publicar Campanha'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

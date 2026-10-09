@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { AdvanceRequest } from '@/types/finance';
-import { mockAdvanceRequests } from '@/services/api/mockSeedData';
-import { CheckCircle, Clock, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { AdvanceRequest, EventWalletPosition } from '@/types/finance';
+import { mockAdvanceRequests, mockWallets } from '@/services/api/mockSeedData';
+import { CheckCircle, Clock, ShieldCheck, AlertTriangle, Plus } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '@/utils/formatters';
+import { keeperAdapter } from '@/services/api/keeperAdapter';
+import { SolicitarAntecipacaoModal } from '@/components/modals/SolicitarAntecipacaoModal';
 
 export const AntecipacoesPage: React.FC = () => {
-  const [advances, setAdvances] = useState<AdvanceRequest[]>([]);
+  const [advances, setAdvances] = useState<AdvanceRequest[]>(mockAdvanceRequests);
+  const [wallets, setWallets] = useState<EventWalletPosition[]>(mockWallets);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    // Carregar histórico oficial de antecipações
-    setAdvances(mockAdvanceRequests);
+    keeperAdapter.getEventWallets().then((w) => {
+      if (w && w.length > 0) setWallets(w);
+    }).catch(() => {});
   }, []);
 
   return (
@@ -28,7 +34,37 @@ export const AntecipacoesPage: React.FC = () => {
             Linha de crédito rotativo sobre saldo futuro de vendas de eventos com validação contábil central
           </p>
         </div>
+
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Solicitar Antecipação</span>
+        </button>
       </div>
+
+      {successMessage && (
+        <div className="p-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center gap-2 animate-in fade-in">
+          <CheckCircle className="w-4 h-4 flex-shrink-0" />
+          <span>{successMessage}</span>
+        </div>
+      )}
+
+      <SolicitarAntecipacaoModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        wallets={wallets}
+        onConfirm={async (payload) => {
+          const res = await keeperAdapter.requestAdvance('prod-01', payload.eventId, {
+            requestedAmount: payload.requestedAmount,
+          });
+          setAdvances((prev) => [res, ...prev]);
+          setSuccessMessage(`Solicitação ${res.advanceNumber} de ${formatCurrency(res.requestedAmount)} enviada com sucesso para análise no Keeper ERP.`);
+          setTimeout(() => setSuccessMessage(null), 6000);
+        }}
+      />
+
 
       <div className="p-4 rounded-lg bg-[#2c2d33] border border-[#37393e] flex items-start gap-3 text-xs">
         <ShieldCheck className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />

@@ -12,6 +12,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { formatDateTime } from '@/utils/formatters';
+import { downloadCsv } from '@/utils/csvExport';
 
 interface ConsentRecord {
   id: string;
@@ -75,6 +76,7 @@ const mockConsentRecords: ConsentRecord[] = [
 export const ConsentimentoLgpdPage: React.FC = () => {
   const [records] = useState<ConsentRecord[]>(mockConsentRecords);
   const [searchTerm, setSearchTerm] = useState('');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const filteredRecords = records.filter(
     (r) =>
@@ -82,8 +84,48 @@ export const ConsentimentoLgpdPage: React.FC = () => {
       r.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleExportAudit = () => {
+    const headers = [
+      'ID Registro',
+      'Titular dos Dados',
+      'Documento Mascarado',
+      'E-mail',
+      'Opt-In WhatsApp',
+      'Opt-In E-mail',
+      'Endereço IP',
+      'Data/Hora Consentimento',
+      'Versão dos Termos',
+    ];
+    const rows = filteredRecords.map((r) => [
+      r.id,
+      r.userName,
+      r.document,
+      r.email,
+      r.whatsappOptIn ? 'Autorizado' : 'Não Autorizado',
+      r.emailOptIn ? 'Autorizado' : 'Não Autorizado',
+      r.ipAddress,
+      formatDateTime(r.consentedAt),
+      r.policyVersion,
+    ]);
+    downloadCsv(headers, rows, `trilha-auditoria-lgpd-${new Date().toISOString().slice(0, 10)}.csv`);
+    setToastMessage('Trilha de auditoria LGPD exportada com sucesso (CSV assinado)!');
+    setTimeout(() => setToastMessage(null), 5000);
+  };
+
   return (
     <div className="space-y-6">
+      {toastMessage && (
+        <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400 text-xs flex items-center justify-between animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 flex-shrink-0" />
+            <span>{toastMessage}</span>
+          </div>
+          <button onClick={() => setToastMessage(null)} className="text-emerald-400 hover:text-white">
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -101,7 +143,7 @@ export const ConsentimentoLgpdPage: React.FC = () => {
         </div>
 
         <button
-          onClick={() => alert('Exportando trilha completa de auditoria LGPD (PDF/CSV assinado)...')}
+          onClick={handleExportAudit}
           className="flex items-center gap-1.5 px-3.5 py-2 bg-[#2c2d33] hover:bg-[#35363c] text-white text-xs font-semibold rounded-lg border border-[#37393e] transition cursor-pointer"
         >
           <Download className="w-4 h-4" />
