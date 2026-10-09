@@ -105,8 +105,43 @@ export const AppRoutes: React.FC = () => {
           <Route path="/eventos/portaria" element={<PortariaCheckinPage />} />
           <Route path="/eventos/:id/financeiro" element={<DashboardFinanceiroPage />} />
           <Route path="/eventos/:id/comercial" element={<DashboardComercialPage />} />
+
+          {/* Submenus de Marketing no contexto do Evento */}
           <Route path="/eventos/:id/marketing" element={<DashboardMarketingPage />} />
+          <Route path="/eventos/:id/marketing/campanhas" element={<CampanhasPage />} />
+          <Route path="/eventos/:id/marketing/campanhas-prontas" element={<CampanhasProntasPage />} />
+          <Route path="/eventos/:id/marketing/status-real" element={<StatusRealCampanhasPage />} />
+          <Route path="/eventos/:id/marketing/meta-ads" element={<MetaAdsPage />} />
+          <Route path="/eventos/:id/marketing/ga4" element={<GoogleAnalytics4Page />} />
+          <Route path="/eventos/:id/marketing/tiktok-ads" element={<TikTokAdsPage />} />
+          <Route path="/eventos/:id/marketing/spotify-ads" element={<SpotifyAdsPage />} />
+          <Route path="/eventos/:id/marketing/whatsapp" element={<WhatsAppMarketingPage />} />
+          <Route path="/eventos/:id/marketing/email" element={<EmailMarketingPage />} />
+          <Route path="/eventos/:id/marketing/automacoes" element={<AutomacoesJornadasPage />} />
+          <Route path="/eventos/:id/marketing/cupons" element={<CuponsMarketingPage />} />
+          <Route path="/eventos/:id/marketing/utm-links" element={<CentralUtmConversoesPage />} />
+          <Route path="/eventos/:id/marketing/afiliados" element={<AfiliadosMarketingPage />} />
+          <Route path="/eventos/:id/marketing/pixels" element={<PixelsConversoesPage />} />
+          <Route path="/eventos/:id/marketing/atribuicao" element={<AtribuicaoMulticanalPage />} />
+          <Route path="/eventos/:id/marketing/relatorios" element={<RelatoriosMarketingPage />} />
+          <Route path="/eventos/:id/marketing/analytics" element={<AnalyticsMarketingPage />} />
+          <Route path="/eventos/:id/marketing/integracoes" element={<IntegracoesAdsPage />} />
+          <Route path="/eventos/:id/marketing/publicos" element={<PublicosCriativosPage />} />
+
+          {/* Submenus de Remarketing no contexto do Evento */}
           <Route path="/eventos/:id/remarketing" element={<HubRemarketingPage />} />
+          <Route path="/eventos/:id/remarketing/dashboard" element={<DashboardRemarketingPage />} />
+          <Route path="/eventos/:id/remarketing/carrinhos" element={<CarrinhosAbandonadosPage />} />
+          <Route path="/eventos/:id/remarketing/carrinhos-abandonados" element={<CarrinhosAbandonadosPage />} />
+          <Route path="/eventos/:id/remarketing/whatsapp" element={<WhatsAppRemarketingPage />} />
+          <Route path="/eventos/:id/remarketing/email" element={<EmailRemarketingPage />} />
+          <Route path="/eventos/:id/remarketing/fluxos" element={<FluxosRecuperacaoPage />} />
+          <Route path="/eventos/:id/remarketing/recuperacao-pagamento" element={<RecuperacaoPagamentoPage />} />
+          <Route path="/eventos/:id/remarketing/clientes-inativos" element={<ClientesInativosPage />} />
+          <Route path="/eventos/:id/remarketing/relatorios" element={<RelatoriosRemarketingPage />} />
+          <Route path="/eventos/:id/remarketing/campanhas" element={<CampanhasDisparosPage />} />
+          <Route path="/eventos/:id/remarketing/consentimento" element={<ConsentimentoLgpdPage />} />
+
           <Route path="/eventos/:id/relatorios" element={<RelatoriosConsolidadosPage />} />
           <Route path="/eventos/:id/configuracoes" element={<ConfiguracoesProdutorPage />} />
 

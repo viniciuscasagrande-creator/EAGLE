@@ -13,12 +13,45 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/utils/formatters';
+import { Key, Zap, X } from 'lucide-react';
 
 export const GoogleAnalytics4Page: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'FUNNEL' | 'EVENTS_LOG' | 'SETTINGS'>('OVERVIEW');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [showSecret, setShowSecret] = useState(false);
+
+  // GA4 Credentials State
+  const [ga4Settings, setGa4Settings] = useState({
+    measurementId: 'G-78X889021B',
+    apiSecret: 'sec_9847291028471029482',
+    gtmContainerId: 'GTM-TX982LK',
+  });
+
+  const handleSaveGa4 = (e: React.FormEvent) => {
+    e.preventDefault();
+    setToastMessage('Propriedade GA4 e API Secret salvos com sucesso!');
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  const handleTestGa4Event = () => {
+    setToastMessage('Evento de teste "purchase (R$ 180,00)" enviado para o Google Analytics 4 via Measurement Protocol!');
+    setTimeout(() => setToastMessage(null), 5000);
+  };
 
   return (
     <div className="space-y-6">
+      {toastMessage && (
+        <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-300 text-xs flex items-center justify-between animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+            <span>{toastMessage}</span>
+          </div>
+          <button onClick={() => setToastMessage(null)} className="text-slate-400 hover:text-white">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -35,9 +68,19 @@ export const GoogleAnalytics4Page: React.FC = () => {
           </p>
         </div>
 
-        <div className="bg-[#2c2d33] border border-[#37393e] px-3.5 py-2 rounded-lg text-xs flex items-center gap-2">
-          <span className="text-slate-400">Measurement ID:</span>
-          <span className="font-mono font-bold text-amber-400">G-78X889021B</span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setActiveTab('SETTINGS')}
+            className="flex items-center gap-1.5 px-3 py-2 bg-[#2c2d33] hover:bg-[#35363c] border border-[#37393e] text-slate-200 rounded-lg text-xs font-semibold transition cursor-pointer"
+          >
+            <Key className="w-3.5 h-3.5 text-amber-400" />
+            <span>Tokens & Measurement ID</span>
+          </button>
+
+          <div className="bg-[#2c2d33] border border-[#37393e] px-3.5 py-2 rounded-lg text-xs flex items-center gap-2">
+            <span className="text-slate-400">Measurement ID:</span>
+            <span className="font-mono font-bold text-amber-400">{ga4Settings.measurementId}</span>
+          </div>
         </div>
       </div>
 
@@ -234,27 +277,78 @@ export const GoogleAnalytics4Page: React.FC = () => {
       )}
 
       {activeTab === 'SETTINGS' && (
-        <div className="bg-[#2c2d33] border border-[#37393e] rounded-xl p-6 shadow-md text-xs space-y-4 max-w-xl">
-          <h3 className="font-bold text-white text-sm">Configuração da Propriedade Google Analytics 4</h3>
+        <form onSubmit={handleSaveGa4} className="bg-[#2c2d33] border border-[#37393e] rounded-xl p-6 shadow-md text-xs space-y-4 max-w-xl">
+          <div className="flex items-center justify-between pb-3 border-b border-[#37393e]">
+            <div>
+              <h3 className="font-bold text-white text-sm">Configuração da Propriedade Google Analytics 4</h3>
+              <p className="text-slate-400">Insira o Measurement ID e a API Secret do Measurement Protocol</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleTestGa4Event}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 text-emerald-300 rounded-lg font-semibold transition cursor-pointer"
+            >
+              <Zap className="w-3.5 h-3.5" />
+              <span>Simular Compra</span>
+            </button>
+          </div>
+
           <div>
-            <label className="text-slate-300 font-semibold block mb-1">ID da Métrica (Measurement ID)</label>
+            <label className="text-slate-300 font-semibold block mb-1">ID da Métrica (Measurement ID) *</label>
             <input
               type="text"
-              readOnly
-              value="G-78X889021B"
-              className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-white font-mono"
+              required
+              value={ga4Settings.measurementId}
+              onChange={(e) => setGa4Settings({ ...ga4Settings, measurementId: e.target.value })}
+              placeholder="G-XXXXXXXXXX"
+              className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-amber-500"
             />
           </div>
+
           <div>
-            <label className="text-slate-300 font-semibold block mb-1">Protocolo de Medição API Secret</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-slate-300 font-semibold">Protocolo de Medição API Secret *</label>
+              <button
+                type="button"
+                onClick={() => setShowSecret(!showSecret)}
+                className="text-[11px] text-amber-400 hover:underline cursor-pointer"
+              >
+                {showSecret ? 'Ocultar' : 'Mostrar'}
+              </button>
+            </div>
             <input
-              type="password"
-              readOnly
-              value="••••••••••••••••••••••••"
-              className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-white font-mono"
+              type={showSecret ? 'text' : 'password'}
+              required
+              value={ga4Settings.apiSecret}
+              onChange={(e) => setGa4Settings({ ...ga4Settings, apiSecret: e.target.value })}
+              className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-amber-500"
+            />
+            <p className="text-[11px] text-slate-400 mt-1">
+              Gerado em: Google Analytics &gt; Administrador &gt; Fluxos de Dados &gt; Protocolo de Medição API Secret.
+            </p>
+          </div>
+
+          <div>
+            <label className="text-slate-300 font-semibold block mb-1">ID do Contêiner Google Tag Manager (GTM)</label>
+            <input
+              type="text"
+              value={ga4Settings.gtmContainerId}
+              onChange={(e) => setGa4Settings({ ...ga4Settings, gtmContainerId: e.target.value })}
+              placeholder="GTM-XXXXXXX"
+              className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-white font-mono focus:outline-none focus:border-amber-500"
             />
           </div>
-        </div>
+
+          <div className="pt-3 border-t border-[#37393e] flex items-center justify-between">
+            <span className="text-[11px] text-slate-400">Eventos `page_view`, `begin_checkout` e `purchase` integrados.</span>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg shadow transition cursor-pointer"
+            >
+              Salvar Configuração GA4
+            </button>
+          </div>
+        </form>
       )}
     </div>
   );

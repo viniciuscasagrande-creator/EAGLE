@@ -36,6 +36,8 @@ export const Sidebar: React.FC = () => {
     comercial: false,
     marketing: true,
     remarketing: true,
+    eventMarketing: true,
+    eventRemarketing: false,
   });
 
   const { selectedEvent, clearSelectedEvent } = useEventContext();
@@ -45,14 +47,16 @@ export const Sidebar: React.FC = () => {
   // Auto-expand the active section based on current URL path
   useEffect(() => {
     const path = location.pathname;
+    if (path.includes('/marketing')) {
+      setOpenSubmenus((prev) => ({ ...prev, marketing: true, eventMarketing: true }));
+    } else if (path.includes('/remarketing')) {
+      setOpenSubmenus((prev) => ({ ...prev, remarketing: true, eventRemarketing: true }));
+    }
+
     if (path.startsWith('/eventos')) {
       setOpenSubmenus((prev) => ({ ...prev, eventos: true }));
     } else if (path.startsWith('/comercial')) {
       setOpenSubmenus((prev) => ({ ...prev, comercial: true }));
-    } else if (path.startsWith('/marketing')) {
-      setOpenSubmenus((prev) => ({ ...prev, marketing: true }));
-    } else if (path.startsWith('/remarketing')) {
-      setOpenSubmenus((prev) => ({ ...prev, remarketing: true }));
     } else if (path.startsWith('/financeiro')) {
       setOpenSubmenus((prev) => ({ ...prev, financeiro: true }));
     }
@@ -219,21 +223,233 @@ export const Sidebar: React.FC = () => {
             {!collapsed && <span>Comercial do Evento</span>}
           </NavLink>
 
-          <NavLink
-            to={`/eventos/${selectedEvent.id}/marketing`}
-            className={({ isActive }) => getLevel2LinkClass(isActive)}
-          >
-            <Megaphone className="w-4 h-4 flex-shrink-0 text-indigo-400" />
-            {!collapsed && <span>Marketing do Evento</span>}
-          </NavLink>
+          {/* Marketing do Evento com Submenus */}
+          <div>
+            <button
+              onClick={() => toggleSubmenu('eventMarketing')}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                location.pathname.includes(`/eventos/${selectedEvent.id}/marketing`)
+                  ? 'text-indigo-300 bg-indigo-500/10 border border-indigo-500/20'
+                  : 'text-slate-300 hover:bg-[#25262c] hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Megaphone className="w-4 h-4 flex-shrink-0 text-indigo-400" />
+                {!collapsed && <span>Marketing do Evento</span>}
+              </div>
+              {!collapsed && (
+                <ChevronDown
+                  className={`w-3.5 h-3.5 transition-transform ${
+                    openSubmenus.eventMarketing ? 'rotate-180' : ''
+                  }`}
+                />
+              )}
+            </button>
 
-          <NavLink
-            to={`/eventos/${selectedEvent.id}/remarketing`}
-            className={({ isActive }) => getLevel2LinkClass(isActive)}
-          >
-            <Repeat className="w-4 h-4 flex-shrink-0 text-pink-400" />
-            {!collapsed && <span>Remarketing do Evento</span>}
-          </NavLink>
+            {openSubmenus.eventMarketing && !collapsed && (
+              <div className="ml-7 mt-1 space-y-0.5 border-l border-[#37393e] pl-2 max-h-[300px] overflow-y-auto pr-1">
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/marketing`}
+                  end
+                  className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+                >
+                  Dashboard Marketing
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/marketing/campanhas`}
+                  className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+                >
+                  Campanhas Multicanais
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/marketing/campanhas-prontas`}
+                  className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+                >
+                  Campanhas Prontas
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/marketing/status-real`}
+                  className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+                >
+                  Status Real Campanhas
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/marketing/meta-ads`}
+                  className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+                >
+                  Meta Ads & Pixel Token
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/marketing/ga4`}
+                  className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+                >
+                  Google Analytics 4
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/marketing/tiktok-ads`}
+                  className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+                >
+                  TikTok Ads & Token
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/marketing/spotify-ads`}
+                  className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+                >
+                  Spotify Ads & CAPI
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/marketing/whatsapp`}
+                  className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+                >
+                  WhatsApp Marketing
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/marketing/email`}
+                  className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+                >
+                  E-mail Marketing
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/marketing/automacoes`}
+                  className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+                >
+                  Automações & Jornadas
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/marketing/cupons`}
+                  className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+                >
+                  Cupons & Descontos
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/marketing/utm-links`}
+                  className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+                >
+                  Central UTM & Links
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/marketing/afiliados`}
+                  className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+                >
+                  Afiliados & Promotores
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/marketing/pixels`}
+                  className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+                >
+                  Pixels & Conversões CAPI
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/marketing/integracoes`}
+                  className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+                >
+                  Tokens & Integrações Ads
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/marketing/atribuicao`}
+                  className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+                >
+                  Atribuição Multicanal
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/marketing/relatorios`}
+                  className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+                >
+                  Relatórios de Marketing
+                </NavLink>
+              </div>
+            )}
+          </div>
+
+          {/* Remarketing do Evento com Submenus */}
+          <div>
+            <button
+              onClick={() => toggleSubmenu('eventRemarketing')}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                location.pathname.includes(`/eventos/${selectedEvent.id}/remarketing`)
+                  ? 'text-pink-300 bg-pink-500/10 border border-pink-500/20'
+                  : 'text-slate-300 hover:bg-[#25262c] hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Repeat className="w-4 h-4 flex-shrink-0 text-pink-400" />
+                {!collapsed && <span>Remarketing do Evento</span>}
+              </div>
+              {!collapsed && (
+                <ChevronDown
+                  className={`w-3.5 h-3.5 transition-transform ${
+                    openSubmenus.eventRemarketing ? 'rotate-180' : ''
+                  }`}
+                />
+              )}
+            </button>
+
+            {openSubmenus.eventRemarketing && !collapsed && (
+              <div className="ml-7 mt-1 space-y-0.5 border-l border-[#37393e] pl-2 max-h-[280px] overflow-y-auto pr-1">
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/remarketing`}
+                  end
+                  className={({ isActive }) => getRemarketingSubmenuLinkClass(isActive)}
+                >
+                  Hub Remarketing
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/remarketing/dashboard`}
+                  className={({ isActive }) => getRemarketingSubmenuLinkClass(isActive)}
+                >
+                  Dashboard Remarketing
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/remarketing/carrinhos`}
+                  className={({ isActive }) => getRemarketingSubmenuLinkClass(isActive)}
+                >
+                  Carrinhos Abandonados
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/remarketing/whatsapp`}
+                  className={({ isActive }) => getRemarketingSubmenuLinkClass(isActive)}
+                >
+                  WhatsApp Remarketing
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/remarketing/email`}
+                  className={({ isActive }) => getRemarketingSubmenuLinkClass(isActive)}
+                >
+                  E-mail Remarketing
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/remarketing/fluxos`}
+                  className={({ isActive }) => getRemarketingSubmenuLinkClass(isActive)}
+                >
+                  Fluxos de Recuperação
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/remarketing/recuperacao-pagamento`}
+                  className={({ isActive }) => getRemarketingSubmenuLinkClass(isActive)}
+                >
+                  Recuperação Pagamento
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/remarketing/campanhas`}
+                  className={({ isActive }) => getRemarketingSubmenuLinkClass(isActive)}
+                >
+                  Disparos & Campanhas
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/remarketing/consentimento`}
+                  className={({ isActive }) => getRemarketingSubmenuLinkClass(isActive)}
+                >
+                  Consentimento LGPD
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/remarketing/relatorios`}
+                  className={({ isActive }) => getRemarketingSubmenuLinkClass(isActive)}
+                >
+                  Relatórios Remarketing
+                </NavLink>
+              </div>
+            )}
+          </div>
 
           <NavLink
             to={`/eventos/${selectedEvent.id}/relatorios`}
