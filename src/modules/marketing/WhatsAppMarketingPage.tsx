@@ -15,11 +15,9 @@ import {
   Download,
   X,
   Sparkles,
-  AlertTriangle,
 } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/utils/formatters';
 import { downloadCsv } from '@/utils/csvExport';
-import { keeperAdapter } from '@/services/api/keeperAdapter';
 
 export const WhatsAppMarketingPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'CAMPAIGNS' | 'TEMPLATES' | 'PREVIEW' | 'LGPD'>('CAMPAIGNS');
@@ -69,28 +67,16 @@ export const WhatsAppMarketingPage: React.FC = () => {
   const [newEventName, setNewEventName] = useState('Festival XYZ 2026');
   const [newAudience, setNewAudience] = useState('TODOS_COMPRADORES');
   const [submitting, setSubmitting] = useState(false);
-  const isMetaConfigured = keeperAdapter.isMetaCloudApiConfigured();
 
   const handleLaunchCampaign = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-
     try {
-      const res = await keeperAdapter.createWhatsAppCampaign({
-        name: newCampaignName,
-        event: newEventName,
-        templateId: newSelectedTplId,
-        audience: newAudience,
-      });
-
-      setCampaigns((prev) => [res.campaign, ...prev]);
-      setIsNovoDisparoOpen(false);
-      setToastMessage(res.message);
-    } catch (err: any) {
-      setToastMessage(err.message || 'Falha ao processar campanha de WhatsApp.');
+      // O envio só poderá ser confirmado quando o Eagle One tiver endpoint real homologado.
+      // Nenhuma campanha é adicionada em memória como "enviada".
+      setToastMessage('Envio indisponível: falta configurar e homologar o serviço real de WhatsApp. Nenhuma mensagem foi enviada.');
     } finally {
       setSubmitting(false);
-      setTimeout(() => setToastMessage(null), 6000);
     }
   };
 
@@ -464,16 +450,6 @@ export const WhatsAppMarketingPage: React.FC = () => {
                 );
               })()}
 
-              {!isMetaConfigured && (
-                <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-300 text-[11px] flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-bold block">Meta Cloud API em Homologação:</span>
-                    Token CAPI ou WABA ID não estão configurados. A campanha será registrada como <strong>RASCUNHO</strong> e não realizará disparos reais nem tarifação até a ativação das credenciais oficiais.
-                  </div>
-                </div>
-              )}
-
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#37393e]">
                 <button
                   type="button"
@@ -488,7 +464,7 @@ export const WhatsAppMarketingPage: React.FC = () => {
                   className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 shadow"
                 >
                   <Send className="w-3.5 h-3.5" />
-                  <span>{submitting ? 'Processando...' : isMetaConfigured ? 'Disparar na Meta Cloud API' : 'Salvar como Rascunho'}</span>
+                  <span>{submitting ? 'Enfileirando...' : 'Iniciar Disparo'}</span>
                 </button>
               </div>
             </form>

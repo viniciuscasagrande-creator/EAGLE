@@ -405,38 +405,13 @@ export const keeperAdapter = {
   // ==========================================
 
   /**
-   * Carteiras dos Eventos (Regra estrita: nunca simula saldos nem forja repasses)
+   * Carteiras dos Eventos (Regra estrita: nunca simula saldos)
    * Consome GET /financeiro/settlement/wallets
    */
   async getEventWallets(): Promise<EventWalletPosition[]> {
-    const cacheKey = 'wallets';
-    try {
-      const data = await keeperRequest<EventWalletPosition[]>(
-        API_ENDPOINTS.FINANCE.WALLETS
-      );
-      if (Array.isArray(data) && data.length > 0) {
-        saveConfirmedSnapshot(cacheKey, data);
-        return data;
-      }
-    } catch (err: any) {
-      const cached = getCachedSnapshot<EventWalletPosition[]>(cacheKey);
-      if (cached?.data && Array.isArray(cached.data) && cached.data.length > 0) {
-        return cached.data;
-      }
-      throw new KeeperOfflineError(
-        'Serviço financeiro do Keeper ERP temporariamente inacessível. Saldos contábeis oficiais não podem ser calculados sem conexão.',
-        API_ENDPOINTS.FINANCE.WALLETS,
-        cached?.timestamp
-      );
-    }
-    const cached = getCachedSnapshot<EventWalletPosition[]>(cacheKey);
-    if (cached?.data && Array.isArray(cached.data) && cached.data.length > 0) {
-      return cached.data;
-    }
-    throw new KeeperOfflineError(
-      'Nenhuma posição de carteira financeira confirmada pelo servidor Keeper ERP.',
-      API_ENDPOINTS.FINANCE.WALLETS
-    );
+    const data = await keeperRequest<EventWalletPosition[]>(API_ENDPOINTS.FINANCE.WALLETS);
+    if (!Array.isArray(data)) throw new ApiError('Carteiras indisponíveis: resposta inválida.', 502);
+    return data;
   },
 
   /**
@@ -448,40 +423,14 @@ export const keeperAdapter = {
     eventId?: string;
     entryType?: string;
   }): Promise<FinancialLedgerEntry[]> {
-    const cacheKey = 'ledger';
-    try {
-      const query = new URLSearchParams();
-      if (params?.producerId) query.append('producerId', params.producerId);
-      if (params?.eventId) query.append('eventId', params.eventId);
-      if (params?.entryType) query.append('entryType', params.entryType);
-
-      const qs = query.toString() ? `?${query.toString()}` : '';
-      const data = await keeperRequest<FinancialLedgerEntry[]>(
-        `${API_ENDPOINTS.FINANCE.LEDGER}${qs}`
-      );
-      if (Array.isArray(data) && data.length > 0) {
-        saveConfirmedSnapshot(cacheKey, data);
-        return data;
-      }
-    } catch (err: any) {
-      const cached = getCachedSnapshot<FinancialLedgerEntry[]>(cacheKey);
-      if (cached?.data && Array.isArray(cached.data) && cached.data.length > 0) {
-        return cached.data;
-      }
-      throw new KeeperOfflineError(
-        'Extrato Ledger contábil indisponível no servidor Keeper ERP.',
-        API_ENDPOINTS.FINANCE.LEDGER,
-        cached?.timestamp
-      );
-    }
-    const cached = getCachedSnapshot<FinancialLedgerEntry[]>(cacheKey);
-    if (cached?.data && Array.isArray(cached.data) && cached.data.length > 0) {
-      return cached.data;
-    }
-    throw new KeeperOfflineError(
-      'Nenhum lançamento no Ledger contábil confirmado pelo Keeper ERP.',
-      API_ENDPOINTS.FINANCE.LEDGER
-    );
+    const query = new URLSearchParams();
+    if (params?.producerId) query.set('producerId', params.producerId);
+    if (params?.eventId) query.set('eventId', params.eventId);
+    if (params?.entryType) query.set('entryType', params.entryType);
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    const data = await keeperRequest<FinancialLedgerEntry[]>(`${API_ENDPOINTS.FINANCE.LEDGER}${qs}`);
+    if (!Array.isArray(data)) throw new ApiError('Extrato indisponível: resposta inválida.', 502);
+    return data;
   },
 
   /**
@@ -489,34 +438,9 @@ export const keeperAdapter = {
    * Consome GET /financeiro/settlement/schedules
    */
   async getPayoutRequests(): Promise<PayoutRequest[]> {
-    const cacheKey = 'payout_schedules';
-    try {
-      const data = await keeperRequest<PayoutRequest[]>(
-        API_ENDPOINTS.FINANCE.SCHEDULES
-      );
-      if (Array.isArray(data) && data.length > 0) {
-        saveConfirmedSnapshot(cacheKey, data);
-        return data;
-      }
-    } catch (err: any) {
-      const cached = getCachedSnapshot<PayoutRequest[]>(cacheKey);
-      if (cached?.data && Array.isArray(cached.data) && cached.data.length > 0) {
-        return cached.data;
-      }
-      throw new KeeperOfflineError(
-        'Agenda de repasses indisponível no servidor Keeper ERP.',
-        API_ENDPOINTS.FINANCE.SCHEDULES,
-        cached?.timestamp
-      );
-    }
-    const cached = getCachedSnapshot<PayoutRequest[]>(cacheKey);
-    if (cached?.data && Array.isArray(cached.data) && cached.data.length > 0) {
-      return cached.data;
-    }
-    throw new KeeperOfflineError(
-      'Nenhum agendamento de repasse confirmado pelo Keeper ERP.',
-      API_ENDPOINTS.FINANCE.SCHEDULES
-    );
+    const data = await keeperRequest<PayoutRequest[]>(API_ENDPOINTS.FINANCE.SCHEDULES);
+    if (!Array.isArray(data)) throw new ApiError('Resposta inválida de repasses.', 502);
+    return data;
   },
 
   async getPayoutSchedules(): Promise<PayoutRequest[]> {
@@ -589,20 +513,11 @@ export const keeperAdapter = {
    * Consulta as regras comerciais e alíquotas de taxas oficiais do Keeper
    */
   async getCommercialRules(): Promise<EventFeeRuleSummary[]> {
-    try {
-      const data = await keeperRequest<EventFeeRuleSummary[]>(
-        API_ENDPOINTS.FINANCE.COMMERCIAL_RULES
-      );
-      if (Array.isArray(data) && data.length > 0) return data;
-    } catch {
-      // offline fallback
-    }
-    return [
-      { id: '1', feeCode: 'DISK_FEE', feeName: 'Taxa DiskIngressos', calculationType: 'PERCENTAGE', rate: 10.0, fixedAmount: 0, payer: 'CUSTOMER', basisType: 'Valor Face do Ingresso', validFrom: '01/08/2026', isActive: true },
-      { id: '2', feeCode: 'SPREAD', feeName: 'Spread Financeiro (Cartão/PIX)', calculationType: 'PERCENTAGE', rate: 2.5, fixedAmount: 0, payer: 'PRODUCER', basisType: 'Volume Bruto Processado', validFrom: '01/10/2026', isActive: true },
-      { id: '3', feeCode: 'RESERVA', feeName: 'Reserva de Contingência', calculationType: 'PERCENTAGE', rate: 10.0, fixedAmount: 0, payer: 'PRODUCER', basisType: 'Saldo Líquido da Carteira', validFrom: '01/09/2026', isActive: true },
-      { id: '4', feeCode: 'MDR_PARCELADO', feeName: 'Juros Parcelamento Cartão (Até 12x)', calculationType: 'PERCENTAGE', rate: 1.99, fixedAmount: 0, payer: 'CUSTOMER', basisType: 'Juros ao Comprador', validFrom: '01/01/2026', isActive: true },
-    ];
+    const data = await keeperRequest<EventFeeRuleSummary[]>(
+      API_ENDPOINTS.FINANCE.COMMERCIAL_RULES
+    );
+    if (!Array.isArray(data)) throw new ApiError('Resposta inválida de taxas comerciais.', 502);
+    return data;
   },
 
   // ==========================================

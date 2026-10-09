@@ -17,7 +17,6 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/utils/formatters';
-import { keeperAdapter } from '@/services/api/keeperAdapter';
 
 export const EmailMarketingPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'CAMPAIGNS' | 'TEMPLATES' | 'LGPD'>('CAMPAIGNS');
@@ -61,23 +60,16 @@ export const EmailMarketingPage: React.FC = () => {
     },
   ]);
 
-  const handleCreateEmail = async (payload: {
+  const handleCreateEmail = async (_payload: {
     subject: string;
     template: string;
     event: string;
     audience: string;
     message: string;
   }) => {
-    try {
-      const res = await keeperAdapter.createEmailCampaign(payload);
-      setCampaigns((prev) => [res.campaign, ...prev]);
-      setBannerMessage(res.message);
-    } catch (err: any) {
-      setBannerMessage(err.message || 'Falha ao processar campanha de e-mail.');
-    } finally {
-      setIsNovoEmailOpen(false);
-      setTimeout(() => setBannerMessage(null), 6000);
-    }
+    // Desabilitado até existir serviço de e-mail autenticado e endpoint homologado.
+    setBannerMessage('Envio indisponível: integração de e-mail não homologada. Nenhum e-mail foi enviado.');
+    setTimeout(() => setBannerMessage(null), 6000);
   };
 
   return (

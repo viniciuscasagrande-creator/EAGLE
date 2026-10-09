@@ -42,7 +42,7 @@ export const LoginPage: React.FC = () => {
       if (success) {
         navigate(from, { replace: true });
       } else {
-        setErrorMessage('Credenciais inválidas. Verifique seu e-mail e senha.');
+        setErrorMessage('Não foi possível autenticar. Verifique as credenciais e a disponibilidade do serviço de autenticação.');
       }
     } catch (err: any) {
       setErrorMessage(
@@ -53,11 +53,6 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleFillDemo = () => {
-    setEmail('produtor@diskingressos.com.br');
-    setPassword('disk@produtor2026');
-    setErrorMessage(null);
-  };
 
   return (
     <div className="min-h-screen bg-[#0a0f1d] flex flex-col justify-center items-center p-4 relative overflow-hidden">
@@ -181,14 +176,7 @@ export const LoginPage: React.FC = () => {
 
         {/* Quick Demo Fill for Auditors */}
         <div className="mt-6 pt-5 border-t border-slate-800 text-center">
-          <button
-            type="button"
-            onClick={handleFillDemo}
-            className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-blue-400 transition"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-            <span>Preencher credenciais de homologação</span>
-          </button>
+          
         </div>
 
         {/* Security Footer */}
