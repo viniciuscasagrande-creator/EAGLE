@@ -27,6 +27,9 @@ import {
   CommercialOpportunity,
   CommercialProposal,
   CommercialPartner,
+  CorporateOrder,
+  CorporateAttendee,
+  PartnerSettlement,
 } from '@/types/commercial';
 import { MarketingCampaign, ReadyCampaignInstance } from '@/types/marketing';
 import { AbandonedCart, RecoveryOpportunity } from '@/types/remarketing';
@@ -587,15 +590,20 @@ export const keeperAdapter = {
     const newClient: CommercialClient = {
       id: `cli-${Date.now()}`,
       name: client.name || 'Nova Empresa Cliente',
+      tradeName: client.tradeName || client.name,
       document: client.document || '00.000.000/0001-00',
       contactName: client.contactName || 'Contato Principal',
+      contactRole: client.contactRole || 'Diretor / Coordenador',
       email: client.email || 'contato@empresa.com.br',
       phone: client.phone || '(41) 99999-0000',
       city: client.city || 'Curitiba/PR',
+      address: client.address || 'Av. República Argentina, 1200 - Água Verde',
       category: client.category || 'EMPRESA',
       totalOrders: 0,
       totalVolume: 0,
       lastPurchaseDate: new Date().toISOString(),
+      tags: client.tags || ['Novo Lead', 'Corporativo'],
+      notes: client.notes || 'Cliente cadastrado via Eagle One Comercial.',
     };
 
     try {
@@ -609,6 +617,13 @@ export const keeperAdapter = {
     const updated = [newClient, ...list];
     saveStoredCollection('commercial_clients', updated);
     return newClient;
+  },
+
+  async updateCommercialClient(id: string, updates: Partial<CommercialClient>): Promise<CommercialClient[]> {
+    const list = getStoredCollection<CommercialClient>('commercial_clients', mockCommercialClients);
+    const updated = list.map((c) => (c.id === id ? { ...c, ...updates } : c));
+    saveStoredCollection('commercial_clients', updated);
+    return updated;
   },
 
   async getCommercialOpportunities(): Promise<CommercialOpportunity[]> {
@@ -634,6 +649,7 @@ export const keeperAdapter = {
       assignedTo: opp.assignedTo || 'Vinicius Casagrande',
       probability: opp.probability || 30,
       closeDate: opp.closeDate || '2026-11-15',
+      notes: opp.notes || 'Iniciado contato comercial pelo Eagle One.',
     };
 
     try {
@@ -649,16 +665,36 @@ export const keeperAdapter = {
     return newOpp;
   },
 
-  async updateCommercialOpportunityStage(id: string, stage: CommercialOpportunity['stage']): Promise<CommercialOpportunity[]> {
+  async updateCommercialOpportunity(id: string, updates: Partial<CommercialOpportunity>): Promise<CommercialOpportunity[]> {
+    const list = getStoredCollection<CommercialOpportunity>('commercial_opportunities', mockCommercialOpportunities);
+    const updated = list.map((item) => (item.id === id ? { ...item, ...updates } : item));
+    saveStoredCollection('commercial_opportunities', updated);
+    return updated;
+  },
+
+  async updateCommercialOpportunityStage(
+    id: string,
+    stage: CommercialOpportunity['stage'],
+    lossReason?: string
+  ): Promise<CommercialOpportunity[]> {
     try {
       await keeperRequest<any>(API_ENDPOINTS.COMMERCIAL.OPPORTUNITY_STAGE(id), {
         method: 'PATCH',
-        body: JSON.stringify({ stage }),
+        body: JSON.stringify({ stage, lossReason }),
       });
     } catch {}
 
     const list = getStoredCollection<CommercialOpportunity>('commercial_opportunities', mockCommercialOpportunities);
-    const updated = list.map((item) => (item.id === id ? { ...item, stage } : item));
+    const updated = list.map((item) =>
+      item.id === id
+        ? {
+            ...item,
+            stage,
+            lossReason: lossReason || item.lossReason,
+            probability: stage === 'FECHADO_GANHO' ? 100 : stage === 'FECHADO_PERDIDO' ? 0 : item.probability,
+          }
+        : item
+    );
     saveStoredCollection('commercial_opportunities', updated);
     return updated;
   },
@@ -688,6 +724,18 @@ export const keeperAdapter = {
       status: 'ENVIADA',
       validUntil: prop.validUntil || '2026-10-31',
       createdAt: new Date().toISOString(),
+      paymentTerms: prop.paymentTerms || 'Faturamento a Prazo 28 DDL com NF-e',
+      notes: prop.notes || 'Incluso acesso exclusivo, credenciais nominais e suporte dedicado.',
+      publicToken: `prop_${Math.random().toString(36).substring(2, 10)}`,
+      items: prop.items || [
+        {
+          id: `item-1`,
+          sectorName: 'Camarote Corporativo',
+          quantity: prop.totalTickets || 100,
+          unitPrice: ((prop.totalAmount || 35000) / (prop.totalTickets || 100)),
+          total: prop.totalAmount || 35000,
+        },
+      ],
     };
 
     try {
@@ -717,22 +765,139 @@ export const keeperAdapter = {
     return updated;
   },
 
-  async getPartners(): Promise<any[]> {
-    const defaultPartners = [
-      { id: 'part-01', name: 'OAB Seção Paraná', category: 'Conselho de Classe Profissional', couponCode: 'OABPR20', discountType: 'PERCENT', discountValue: 20, commissionRate: 5, ticketsSold: 420, grossSalesGenerated: 63000.0, commissionEarned: 3150.0, status: 'ACTIVE' },
-      { id: 'part-02', name: 'Clube Gazeta do Povo', category: 'Clube de Assinantes & Benefícios', couponCode: 'CLUBEGAZETA', discountType: 'PERCENT', discountValue: 15, commissionRate: 0, ticketsSold: 680, grossSalesGenerated: 102000.0, commissionEarned: 0, status: 'ACTIVE' },
-      { id: 'part-03', name: 'Associação dos Funcionários Copel', category: 'Grêmio Corporativo', couponCode: 'COPELIANOS', discountType: 'PERCENT', discountValue: 25, commissionRate: 3, ticketsSold: 310, grossSalesGenerated: 46500.0, commissionEarned: 1395.0, status: 'ACTIVE' },
+  async duplicateCommercialProposal(id: string): Promise<CommercialProposal> {
+    const list = getStoredCollection<CommercialProposal>('commercial_proposals', mockCommercialProposals);
+    const origin = list.find((p) => p.id === id);
+    if (!origin) throw new Error('Proposta de origem não encontrada.');
+
+    const num = `PROP-2026-${Math.floor(100 + Math.random() * 900)}`;
+    const cloned: CommercialProposal = {
+      ...origin,
+      id: `prop-${Date.now()}`,
+      proposalNumber: num,
+      status: 'RASCUNHO',
+      createdAt: new Date().toISOString(),
+      publicToken: `prop_${Math.random().toString(36).substring(2, 10)}`,
+      corporateOrderId: undefined,
+    };
+
+    const updated = [cloned, ...list];
+    saveStoredCollection('commercial_proposals', updated);
+    return cloned;
+  },
+
+  async convertProposalToCorporateOrder(proposalId: string): Promise<CorporateOrder> {
+    const proposals = getStoredCollection<CommercialProposal>('commercial_proposals', mockCommercialProposals);
+    const prop = proposals.find((p) => p.id === proposalId);
+    if (!prop) throw new Error('Proposta não encontrada.');
+
+    const newOrder: CorporateOrder = {
+      id: `corp-${Date.now()}`,
+      orderNumber: `CORP-2026-${Math.floor(100 + Math.random() * 900)}`,
+      companyName: prop.clientName,
+      cnpj: '02.434.341/0001-08',
+      contactName: 'Gerência de Contratos & Compras',
+      contactEmail: 'compras@empresa.com.br',
+      eventName: prop.eventName,
+      ticketQuantity: prop.totalTickets,
+      sector: 'Camarote Corporativo / VIP',
+      totalAmount: prop.totalAmount,
+      paymentTerm: prop.paymentTerms || 'Faturado 15 DDL',
+      paymentStatus: 'PENDING',
+      invoiceIssued: false,
+      dueDate: prop.validUntil,
+      createdAt: new Date().toISOString(),
+      proposalId: prop.id,
+      boletoBarcode: '34191.79001 01043.510047 91020.150008 5 95000004800000',
+      boletoDigitableLine: '34191790010104351004791020150008595000004800000',
+      pixCode: `00020126580014br.gov.bcb.pix0136diskingressos-corp-${prop.proposalNumber.toLowerCase()}520400005303986540${prop.totalAmount}5802BR5925DISKINGRESSOS CORP6008CURITIBA62070503***6304`,
+      attendees: [],
+    };
+
+    // Save corporate order
+    const corpList = await this.getCorporateOrders();
+    saveStoredCollection('corporate_orders', [newOrder, ...corpList]);
+
+    // Mark proposal as approved & link order
+    const updatedProposals = proposals.map((p) =>
+      p.id === proposalId ? { ...p, status: 'APROVADA' as const, corporateOrderId: newOrder.id } : p
+    );
+    saveStoredCollection('commercial_proposals', updatedProposals);
+
+    return newOrder;
+  },
+
+  async getPartners(): Promise<CommercialPartner[]> {
+    const defaultPartners: CommercialPartner[] = [
+      {
+        id: 'part-01',
+        name: 'OAB Seção Paraná',
+        category: 'Conselho de Classe Profissional',
+        couponCode: 'OABPR20',
+        discountType: 'PERCENT',
+        discountValue: 20,
+        commissionRate: 5,
+        ticketsSold: 420,
+        grossSalesGenerated: 63000.0,
+        commissionEarned: 3150.0,
+        commissionPaid: 2000.0,
+        status: 'ACTIVE',
+        contactName: 'Dra. Luiza Nogueira (Comissão de Benefícios)',
+        contactEmail: 'convenios@oabpr.org.br',
+        contactPhone: '(41) 3250-5700',
+        settlements: [
+          { id: 'set-1', date: '2026-09-15', amount: 2000.0, receiptNumber: 'REC-0915-OAB', notes: 'Liquidação comissões Agosto/2026' }
+        ]
+      },
+      {
+        id: 'part-02',
+        name: 'Clube Gazeta do Povo',
+        category: 'Clube de Assinantes & Benefícios',
+        couponCode: 'CLUBEGAZETA',
+        discountType: 'PERCENT',
+        discountValue: 15,
+        commissionRate: 0,
+        ticketsSold: 680,
+        grossSalesGenerated: 102000.0,
+        commissionEarned: 0,
+        commissionPaid: 0,
+        status: 'ACTIVE',
+        contactName: 'Carlos Eduardo (Parcerias Editoriais)',
+        contactEmail: 'parcerias@clube.gazetadopovo.com.br',
+        contactPhone: '(41) 3321-5000',
+        settlements: []
+      },
+      {
+        id: 'part-03',
+        name: 'Associação dos Funcionários Copel',
+        category: 'Grêmio Corporativo',
+        couponCode: 'COPELIANOS',
+        discountType: 'PERCENT',
+        discountValue: 25,
+        commissionRate: 3,
+        ticketsSold: 310,
+        grossSalesGenerated: 46500.0,
+        commissionEarned: 1395.0,
+        commissionPaid: 0,
+        status: 'ACTIVE',
+        contactName: 'Renato Rossi (Diretoria Social)',
+        contactEmail: 'social@copelianos.com.br',
+        contactPhone: '(41) 3219-4400',
+        settlements: []
+      },
     ];
     return getStoredCollection('partners', defaultPartners);
   },
 
-  async createPartner(partner: any): Promise<any> {
-    const newPart = {
+  async createPartner(partner: any): Promise<CommercialPartner> {
+    const newPart: CommercialPartner = {
       id: `part-${Date.now()}`,
       ticketsSold: 0,
       grossSalesGenerated: 0,
       commissionEarned: 0,
+      commissionPaid: 0,
       status: 'ACTIVE',
+      settlements: [],
       ...partner,
     };
     try {
@@ -747,21 +912,130 @@ export const keeperAdapter = {
     return newPart;
   },
 
-  async getCorporateOrders(): Promise<any[]> {
-    const defaultCorporate = [
-      { id: 'corp-01', orderNumber: 'CORP-2026-001', companyName: 'Renault do Brasil S.A.', cnpj: '02.434.341/0001-08', contactName: 'Juliana Prado (RH)', eventName: 'Festival de Verão Curitiba 2026', ticketQuantity: 150, sector: 'Camarote Open Bar', totalAmount: 48000.0, paymentTerm: 'Faturado 15 DDL', paymentStatus: 'PAID', invoiceIssued: true, createdAt: '2026-10-01T10:30:00' },
-      { id: 'corp-02', orderNumber: 'CORP-2026-002', companyName: 'ExxonMobil BSC Curitiba', cnpj: '03.882.119/0001-90', contactName: 'Ricardo Meireles', eventName: 'Festival de Verão Curitiba 2026', ticketQuantity: 80, sector: 'Pista Premium VIP', totalAmount: 20000.0, paymentTerm: 'Faturado 30 DDL', paymentStatus: 'PENDING', invoiceIssued: true, createdAt: '2026-09-29T14:15:00' },
+  async updatePartnerStatus(id: string, status: 'ACTIVE' | 'PAUSED'): Promise<CommercialPartner[]> {
+    const list = await this.getPartners();
+    const updated = list.map((p) => (p.id === id ? { ...p, status } : p));
+    saveStoredCollection('partners', updated);
+    return updated;
+  },
+
+  async settlePartnerCommission(id: string, amount: number, notes?: string): Promise<CommercialPartner[]> {
+    const list = await this.getPartners();
+    const updated = list.map((p) => {
+      if (p.id === id) {
+        const currentPaid = p.commissionPaid || 0;
+        const newSettlement: PartnerSettlement = {
+          id: `set-${Date.now()}`,
+          date: new Date().toISOString().split('T')[0],
+          amount,
+          receiptNumber: `REC-${Math.floor(1000 + Math.random() * 9000)}`,
+          notes: notes || 'Acerto de comissão executado via Eagle One.',
+        };
+        return {
+          ...p,
+          commissionPaid: currentPaid + amount,
+          settlements: [newSettlement, ...(p.settlements || [])],
+        };
+      }
+      return p;
+    });
+    saveStoredCollection('partners', updated);
+    return updated;
+  },
+
+  async getCorporateOrders(): Promise<CorporateOrder[]> {
+    const defaultCorporate: CorporateOrder[] = [
+      {
+        id: 'corp-01',
+        orderNumber: 'CORP-2026-001',
+        companyName: 'Renault do Brasil S.A.',
+        cnpj: '02.434.341/0001-08',
+        contactName: 'Juliana Prado (RH & Clima)',
+        contactEmail: 'juliana.prado@renault.com.br',
+        contactPhone: '(41) 3380-2000',
+        eventName: 'Festival de Verão Curitiba 2026',
+        ticketQuantity: 150,
+        sector: 'Camarote Open Bar',
+        totalAmount: 48000.0,
+        paymentTerm: 'Faturado 15 DDL',
+        paymentStatus: 'PAID',
+        invoiceIssued: true,
+        invoiceNumber: 'NFE-2026-8942',
+        invoiceKey: '41261002434341000108550010000089421008420192',
+        dueDate: '2026-10-16',
+        createdAt: '2026-10-01T10:30:00',
+        boletoBarcode: '23793.38128 60000.000003 01000.000002 1 95000004800000',
+        boletoDigitableLine: '23793381286000000000301000000002195000004800000',
+        pixCode: '00020126580014br.gov.bcb.pix0136diskingressos-corp-001520400005303986540480005802BR5925DISKINGRESSOS6008CURITIBA62070503***6304',
+        attendees: [
+          { id: 'att-1', name: 'Carlos Henrique Braga', document: '012.345.678-90', email: 'carlos.braga@renault.com.br', sector: 'Camarote Open Bar', ticketCode: 'TKT-RNLT-001', checkedIn: false },
+          { id: 'att-2', name: 'Mariana Duarte Souza', document: '234.567.890-12', email: 'mariana.souza@renault.com.br', sector: 'Camarote Open Bar', ticketCode: 'TKT-RNLT-002', checkedIn: false },
+        ]
+      },
+      {
+        id: 'corp-02',
+        orderNumber: 'CORP-2026-002',
+        companyName: 'ExxonMobil BSC Curitiba',
+        cnpj: '03.882.119/0001-90',
+        contactName: 'Ricardo Meireles (Marketing Institucional)',
+        contactEmail: 'ricardo.meireles@exxonmobil.com',
+        contactPhone: '(41) 3217-7000',
+        eventName: 'Festival de Verão Curitiba 2026',
+        ticketQuantity: 80,
+        sector: 'Pista Premium VIP',
+        totalAmount: 20000.0,
+        paymentTerm: 'Faturado 30 DDL',
+        paymentStatus: 'PENDING',
+        invoiceIssued: true,
+        invoiceNumber: 'NFE-2026-8943',
+        invoiceKey: '41261003882119000190550010000089431008420193',
+        dueDate: '2026-10-29',
+        createdAt: '2026-09-29T14:15:00',
+        boletoBarcode: '34191.79001 01043.510047 91020.150008 5 95000002000000',
+        boletoDigitableLine: '34191790010104351004791020150008595000002000000',
+        pixCode: '00020126580014br.gov.bcb.pix0136diskingressos-corp-002520400005303986540200005802BR5925DISKINGRESSOS6008CURITIBA62070503***6304',
+        attendees: []
+      },
+      {
+        id: 'corp-03',
+        orderNumber: 'CORP-2026-003',
+        companyName: 'Associação Médica Paranaense',
+        cnpj: '76.123.456/0001-12',
+        contactName: 'Dr. Fernando Lins (Diretoria Social)',
+        contactEmail: 'social@amp.org.br',
+        contactPhone: '(41) 3242-9393',
+        eventName: 'Stand-up Especial 2026',
+        ticketQuantity: 200,
+        sector: 'Plateia Central',
+        totalAmount: 30000.0,
+        paymentTerm: 'À vista PIX',
+        paymentStatus: 'PAID',
+        invoiceIssued: true,
+        invoiceNumber: 'NFE-2026-8944',
+        invoiceKey: '41261076123456000112550010000089441008420194',
+        dueDate: '2026-10-02',
+        createdAt: '2026-10-02T16:00:00',
+        boletoBarcode: '34191.79001 01043.510047 91020.150008 5 95000003000000',
+        boletoDigitableLine: '34191790010104351004791020150008595000003000000',
+        pixCode: '00020126580014br.gov.bcb.pix0136diskingressos-corp-003520400005303986540300005802BR5925DISKINGRESSOS6008CURITIBA62070503***6304',
+        attendees: []
+      },
     ];
     return getStoredCollection('corporate_orders', defaultCorporate);
   },
 
-  async createCorporateOrder(order: any): Promise<any> {
-    const newOrder = {
+  async createCorporateOrder(order: any): Promise<CorporateOrder> {
+    const newOrder: CorporateOrder = {
       id: `corp-${Date.now()}`,
       orderNumber: `CORP-2026-${Math.floor(100 + Math.random() * 900)}`,
       paymentStatus: 'PENDING',
       invoiceIssued: false,
+      dueDate: new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0],
       createdAt: new Date().toISOString(),
+      boletoBarcode: `34191.79001 01043.510047 91020.150008 5 9500000${Math.floor(order.totalAmount || 10000)}`,
+      boletoDigitableLine: `3419179001010435100479102015000859500000${Math.floor(order.totalAmount || 10000)}`,
+      pixCode: `00020126580014br.gov.bcb.pix0136diskingressos-corp-${Date.now()}520400005303986540${order.totalAmount || 10000}5802BR5925DISKINGRESSOS6008CURITIBA62070503***6304`,
+      attendees: [],
       ...order,
     };
     try {
@@ -774,6 +1048,31 @@ export const keeperAdapter = {
     const updated = [newOrder, ...list];
     saveStoredCollection('corporate_orders', updated);
     return newOrder;
+  },
+
+  async updateCorporateOrderStatus(
+    id: string,
+    updates: Partial<CorporateOrder>
+  ): Promise<CorporateOrder[]> {
+    const list = await this.getCorporateOrders();
+    const updated = list.map((order) => (order.id === id ? { ...order, ...updates } : order));
+    saveStoredCollection('corporate_orders', updated);
+    return updated;
+  },
+
+  async importCorporateAttendees(orderId: string, attendees: CorporateAttendee[]): Promise<CorporateOrder[]> {
+    const list = await this.getCorporateOrders();
+    const updated = list.map((order) => {
+      if (order.id === orderId) {
+        return {
+          ...order,
+          attendees: [...(order.attendees || []), ...attendees],
+        };
+      }
+      return order;
+    });
+    saveStoredCollection('corporate_orders', updated);
+    return updated;
   },
 
   // ==========================================
