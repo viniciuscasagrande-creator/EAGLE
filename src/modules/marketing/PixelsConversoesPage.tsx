@@ -55,7 +55,7 @@ export const PixelsConversoesPage: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
   const { selectedEvent, selectEventById, allEvents } = useEventContext();
   const eventList = allEvents.length > 0 ? allEvents : mockEvents;
-  const [localEventId, setLocalEventId] = useState<string>(id || selectedEvent?.id || eventList[0]?.id || '');
+  const [localEventId, setLocalEventId] = useState<string>(id || selectedEvent?.id || '');
   const [pixels, setPixels] = useState<PixelItem[]>(initialPixels);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -75,12 +75,10 @@ export const PixelsConversoesPage: React.FC = () => {
       selectEventById(id);
     } else if (selectedEvent) {
       setLocalEventId(selectedEvent.id);
-    } else if (!localEventId && eventList[0]) {
-      setLocalEventId(eventList[0].id);
     }
-  }, [id, selectedEvent, eventList]);
+  }, [id, selectedEvent]);
 
-  const activeEvent = eventList.find((e) => e.id === (id || selectedEvent?.id || localEventId)) || eventList[0];
+  const activeEvent = localEventId ? eventList.find((e) => e.id === localEventId) || null : null;
 
   const handleAddPixel = (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,37 +149,69 @@ export const PixelsConversoesPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <select
-            value={activeEvent?.id || ''}
-            onChange={(e) => {
-              setLocalEventId(e.target.value);
-              selectEventById(e.target.value);
-            }}
-            className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-2 text-xs text-white font-medium focus:outline-none focus:border-blue-500"
-          >
-            {eventList.map((ev) => (
-              <option key={ev.id} value={ev.id}>
-                {ev.name} ({ev.city})
-              </option>
-            ))}
-          </select>
+        {activeEvent && (
+          <div className="flex items-center gap-2">
+            <select
+              value={activeEvent.id}
+              onChange={(e) => {
+                setLocalEventId(e.target.value);
+                selectEventById(e.target.value);
+              }}
+              className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-2 text-xs text-white font-medium focus:outline-none focus:border-blue-500"
+            >
+              {eventList.map((ev) => (
+                <option key={ev.id} value={ev.id}>
+                  {ev.name} ({ev.city})
+                </option>
+              ))}
+            </select>
 
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shadow transition cursor-pointer self-start sm:self-auto"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Adicionar Novo Pixel</span>
-          </button>
-        </div>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shadow transition cursor-pointer self-start sm:self-auto"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Adicionar Novo Pixel</span>
+            </button>
+          </div>
+        )}
       </div>
 
-      <div className="space-y-4">
-        <div className="bg-[#2c2d33] border border-[#37393e] rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2.5">
-            <img
-              src={activeEvent?.imageUrl || 'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?auto=format&fit=crop&w=400&q=80'}
+      {!activeEvent ? (
+        <div className="rounded-2xl border border-[#37393e] bg-[#2c2d33] p-12 text-center text-slate-300 space-y-4 shadow-xl">
+          <div className="w-14 h-14 rounded-2xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center mx-auto">
+            <Radio className="w-7 h-7" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-lg font-bold text-white">Selecione um Evento para Configurar Pixels</h3>
+            <p className="text-xs text-slate-400 max-w-md mx-auto">
+              Pixels e tags de conversão operam no contexto de cada evento específico para monitorar checkouts e campanhas ativas.
+            </p>
+          </div>
+          <div className="max-w-xs mx-auto">
+            <select
+              value=""
+              onChange={(e) => {
+                setLocalEventId(e.target.value);
+                selectEventById(e.target.value);
+              }}
+              className="w-full bg-[#202124] border border-[#37393e] rounded-xl p-3 text-xs text-white focus:outline-none focus:border-blue-500 cursor-pointer"
+            >
+              <option value="" disabled>Escolha um evento na lista...</option>
+              {eventList.map((ev) => (
+                <option key={ev.id} value={ev.id}>
+                  {ev.name} ({ev.city})
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="bg-[#2c2d33] border border-[#37393e] rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2.5">
+              <img
+                src={activeEvent.imageUrl || 'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?auto=format&fit=crop&w=400&q=80'}
                 alt={activeEvent.name}
                 className="w-10 h-10 rounded-lg object-cover ring-1 ring-blue-500/40"
               />
@@ -199,7 +229,7 @@ export const PixelsConversoesPage: React.FC = () => {
               }}
               className="bg-[#202124] border border-[#37393e] rounded-lg p-2 text-xs text-white"
             >
-              {mockEvents.map((ev) => (
+              {eventList.map((ev) => (
                 <option key={ev.id} value={ev.id}>
                   Trocar Evento: {ev.name}
                 </option>
@@ -261,6 +291,7 @@ export const PixelsConversoesPage: React.FC = () => {
             <span className="text-blue-400 font-mono">Deduplicação CAPI Ativa</span>
           </div>
         </div>
+      )}
 
       {/* Modal: Adicionar Novo Pixel */}
       {isModalOpen && (
