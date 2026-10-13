@@ -71,6 +71,11 @@ export const API_ENDPOINTS = {
     CONFIRMAR_VENDA_LEDGER: '/remarketing/confirmar-venda-ledger',
     INACTIVE_CLIENTS: '/remarketing/inativos',
     LGPD_CONSENTS: '/remarketing/lgpd',
+    PRODUCER_CARTS: '/producer/remarketing/carts',
+    PRODUCER_RECOVER_CART: (id: string) => `/producer/remarketing/carts/${encodeURIComponent(id)}/recover`,
+    PRODUCER_RECOVER_BATCH: '/producer/remarketing/carts/recover-batch',
+    PRODUCER_RULES: '/producer/remarketing/rules',
+    PRODUCER_RULE_DETAIL: (id: string) => `/producer/remarketing/rules/${encodeURIComponent(id)}`,
   },
 
   // Financeiro & Keeper Core Settlement (Motor Oficial)

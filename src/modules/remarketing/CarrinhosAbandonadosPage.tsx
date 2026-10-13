@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { mockAbandonedCarts, mockEvents } from '@/services/api/mockSeedData';
+import React, { useEffect, useState } from 'react';
+import { remarketingApi } from '@/services/api/remarketing';
+import { mockEvents } from '@/services/api/mockSeedData';
 import { AbandonedCart } from '@/types/marketing';
 import { useEventContext } from '@/contexts/EventContext';
 import {
@@ -16,6 +17,7 @@ import {
   X,
   AlertCircle,
   RotateCcw,
+  Sparkles,
 } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '@/utils/formatters';
 import { downloadCsv } from '@/utils/csvExport';
@@ -23,10 +25,32 @@ import { downloadCsv } from '@/utils/csvExport';
 export const CarrinhosAbandonadosPage: React.FC = () => {
   const { selectedEvent, selectEventById } = useEventContext();
   const [selectedEventId, setSelectedEventId] = useState<string>(selectedEvent?.id || 'ev-101');
-  const [carts, setCarts] = useState<AbandonedCart[]>(mockAbandonedCarts);
+  const [carts, setCarts] = useState<AbandonedCart[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const [loading, setLoading] = useState(true);
+  const [requestError, setRequestError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+
+  const refreshCarts = async () => {
+    try {
+      const data = await remarketingApi.listCarts();
+      if (!Array.isArray(data)) throw new Error('Resposta inválida da API');
+      setCarts(data as AbandonedCart[]);
+      setRequestError(null);
+    } catch (error) {
+      setCarts([]);
+      setRequestError(error instanceof Error ? error.message : 'Consulta indisponível');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void refreshCarts();
+  }, []);
 
   const activeEvent = mockEvents.find((e) => e.id === selectedEventId);
 
@@ -40,36 +64,58 @@ export const CarrinhosAbandonadosPage: React.FC = () => {
     return matchesEvent && matchesSearch && matchesStatus;
   });
 
-  const totalAbandonedAmount = carts.reduce((acc, c) => acc + c.cartValue, 0);
+  const totalAbandonedAmount = carts.reduce((acc, c) => acc + (c.cartValue || 0), 0);
   const recoveredCarts = carts.filter((c) => c.recoveryStatus === 'RECOVERED');
-  const totalRecoveredAmount = recoveredCarts.reduce((acc, c) => acc + c.cartValue, 0);
+  const totalRecoveredAmount = recoveredCarts.reduce((acc, c) => acc + (c.cartValue || 0), 0);
 
-  const handleSendRecovery = (cart: AbandonedCart) => {
-    setCarts((prev) =>
-      prev.map((item) =>
-        item.id === cart.id ? { ...item, recoveryStatus: 'RECOVERY_SENT' as const } : item
-      )
-    );
-    setToastMessage(`Disparo de resgate enviado via WhatsApp para ${cart.customerName} (${cart.customerPhone})!`);
-    setTimeout(() => setToastMessage(null), 5000);
+  const handleSendRecovery = async (cart: AbandonedCart) => {
+    if (sending) return;
+    setSending(true);
+    try {
+      const result = await remarketingApi.recoverCart(cart.id);
+      if (!result?.jobId) throw new Error('API não confirmou o agendamento');
+      setToastMessage(`Recuperação agendada: ${result.jobId}. Aguardando retorno do canal.`);
+      await refreshCarts();
+      setTimeout(() => setToastMessage(null), 5000);
+    } catch (error) {
+      setToastMessage(
+        `Não foi possível agendar a recuperação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+      );
+    } finally {
+      setSending(false);
+    }
   };
 
-  const handleBulkRecovery = () => {
-    const pendingCarts = carts.filter((c) => c.recoveryStatus === 'PENDING');
-    if (pendingCarts.length === 0) {
-      setToastMessage('Não há carrinhos pendentes para disparo no momento.');
-      setTimeout(() => setToastMessage(null), 4000);
-      return;
+  const handleBulkRecovery = async () => {
+    const ids = filteredCarts.filter((c) => c.recoveryStatus === 'PENDING').map((c) => c.id);
+    if (!ids.length || sending) return;
+    setSending(true);
+    try {
+      const result = await remarketingApi.recoverBatch(ids);
+      if (!result?.jobId) throw new Error('API não confirmou o lote');
+      setToastMessage(`Lote ${result.jobId} aceito para processamento (${result.acceptedCount}). Envio não confirmado.`);
+      await refreshCarts();
+      setTimeout(() => setToastMessage(null), 5000);
+    } catch (error) {
+      setToastMessage(`Falha ao agendar lote: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    } finally {
+      setSending(false);
     }
-    setCarts((prev) =>
-      prev.map((c) => (c.recoveryStatus === 'PENDING' ? { ...c, recoveryStatus: 'RECOVERY_SENT' } : c))
-    );
-    setToastMessage(`Disparo em massa de WhatsApp efetuado com sucesso para ${pendingCarts.length} carrinhos pendentes!`);
-    setTimeout(() => setToastMessage(null), 5000);
   };
 
   const handleExportCsv = () => {
-    const headers = ['ID', 'Cliente', 'E-mail', 'Telefone', 'Evento', 'Setor', 'Qtd Ingressos', 'Valor (R$)', 'Data Abandono', 'Status'];
+    const headers = [
+      'ID',
+      'Cliente',
+      'E-mail',
+      'Telefone',
+      'Evento',
+      'Setor',
+      'Qtd Ingressos',
+      'Valor (R$)',
+      'Data Abandono',
+      'Status',
+    ];
     const rows = filteredCarts.map((c) => [
       c.id,
       c.customerName,
@@ -78,7 +124,7 @@ export const CarrinhosAbandonadosPage: React.FC = () => {
       c.eventName,
       c.sectorName,
       c.ticketsCount,
-      c.cartValue.toFixed(2),
+      (c.cartValue || 0).toFixed(2),
       c.abandonedAt,
       c.recoveryStatus,
     ]);
@@ -128,6 +174,25 @@ export const CarrinhosAbandonadosPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {loading && (
+        <div role="status" className="p-3 text-xs text-slate-300 bg-[#202124] rounded-lg border border-[#37393e] flex items-center gap-2">
+          <Clock className="w-4 h-4 animate-spin text-amber-400" />
+          <span>Carregando carrinhos do servidor...</span>
+        </div>
+      )}
+
+      {requestError && (
+        <div role="alert" className="p-3 rounded-lg border border-rose-500/40 text-rose-300 text-xs flex items-center justify-between bg-rose-500/10">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+            <span>Falha ao consultar carrinhos reais: {requestError}</span>
+          </div>
+          <button className="underline ml-2 text-rose-400 hover:text-white cursor-pointer" onClick={() => void refreshCarts()}>
+            Tentar novamente
+          </button>
+        </div>
+      )}
+
       {toastMessage && (
         <div className="p-3 bg-pink-500/10 border border-pink-500/20 rounded-lg text-pink-400 text-xs flex items-center justify-between animate-in fade-in">
           <div className="flex items-center gap-2">
@@ -167,10 +232,11 @@ export const CarrinhosAbandonadosPage: React.FC = () => {
 
           <button
             onClick={handleBulkRecovery}
+            disabled={sending}
             className="flex items-center gap-2 bg-pink-600 hover:bg-pink-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
           >
             <Send className="w-4 h-4" />
-            <span>Disparar Recuperação em Massa</span>
+            <span>{sending ? 'Processando Lote...' : 'Disparar Recuperação em Massa'}</span>
           </button>
         </div>
       </div>
@@ -182,7 +248,7 @@ export const CarrinhosAbandonadosPage: React.FC = () => {
           <div className="text-xl font-extrabold text-rose-400 mt-1">
             {formatCurrency(totalAbandonedAmount)}
           </div>
-          <span className="text-[10px] text-slate-400">{carts.length} carrinhos pendentes</span>
+          <span className="text-[10px] text-slate-400">{carts.length} carrinhos registrados</span>
         </div>
 
         <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-4 shadow-md">
@@ -196,7 +262,7 @@ export const CarrinhosAbandonadosPage: React.FC = () => {
         <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-4 shadow-md">
           <span className="text-[11px] text-slate-300 font-semibold uppercase">Taxa de Resgate</span>
           <div className="text-xl font-extrabold text-teal-400 mt-1">
-            {((recoveredCarts.length / (carts.length || 1)) * 100).toFixed(1)}%
+            {carts.length > 0 ? ((recoveredCarts.length / carts.length) * 100).toFixed(1) : '0.0'}%
           </div>
           <span className="text-[10px] text-teal-400">Eficiência de recuperação</span>
         </div>
@@ -204,7 +270,7 @@ export const CarrinhosAbandonadosPage: React.FC = () => {
         <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-4 shadow-md">
           <span className="text-[11px] text-slate-300 font-semibold uppercase">Ticket Médio Perdido</span>
           <div className="text-xl font-extrabold text-slate-200 mt-1">
-            {formatCurrency(totalAbandonedAmount / (carts.length || 1))}
+            {formatCurrency(carts.length > 0 ? totalAbandonedAmount / carts.length : 0)}
           </div>
           <span className="text-[10px] text-slate-400">Por checkout abandonado</span>
         </div>
@@ -263,7 +329,7 @@ export const CarrinhosAbandonadosPage: React.FC = () => {
                 setStatusFilter('ALL');
                 setSelectedEventId('ALL');
               }}
-              className="p-2 text-slate-400 hover:text-white hover:bg-[#202124] rounded-md transition"
+              className="p-2 text-slate-400 hover:text-white hover:bg-[#202124] rounded-md transition cursor-pointer"
               title="Limpar filtros"
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -312,7 +378,7 @@ export const CarrinhosAbandonadosPage: React.FC = () => {
                     {cart.ticketsCount} un
                   </td>
                   <td className="p-3.5 text-right font-extrabold text-rose-400 text-sm">
-                    {formatCurrency(cart.cartValue)}
+                    {formatCurrency(cart.cartValue || 0)}
                   </td>
                   <td className="p-3.5 text-slate-400">
                     {formatDateTime(cart.abandonedAt)}
@@ -324,6 +390,7 @@ export const CarrinhosAbandonadosPage: React.FC = () => {
                     {cart.recoveryStatus !== 'RECOVERED' ? (
                       <button
                         onClick={() => handleSendRecovery(cart)}
+                        disabled={sending}
                         className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow transition flex items-center gap-1.5 ml-auto cursor-pointer"
                       >
                         <MessageCircle className="w-3.5 h-3.5" />
@@ -358,7 +425,7 @@ export const CarrinhosAbandonadosPage: React.FC = () => {
                         setStatusFilter('ALL');
                         setSelectedEventId('ALL');
                       }}
-                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700 transition"
+                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700 transition cursor-pointer"
                     >
                       Exibir Todos os Eventos
                     </button>
@@ -372,3 +439,4 @@ export const CarrinhosAbandonadosPage: React.FC = () => {
     </div>
   );
 };
+export default CarrinhosAbandonadosPage;

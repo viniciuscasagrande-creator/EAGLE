@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { remarketingApi } from '@/services/api/remarketing';
 import {
   Repeat,
   Plus,
@@ -14,6 +15,7 @@ import {
   Download,
   CheckCircle2,
   X,
+  AlertCircle,
 } from 'lucide-react';
 import { formatCurrency, formatPercent } from '@/utils/formatters';
 import { downloadCsv } from '@/utils/csvExport';
@@ -31,47 +33,8 @@ interface TriggerRule {
   recoveredRevenue: number;
 }
 
-const initialRules: TriggerRule[] = [
-  {
-    id: 'rule-01',
-    name: 'Disparo 1: Alerta Rápido com Link PIX',
-    channel: 'WHATSAPP',
-    delayMinutes: 15,
-    discountOffer: 'Reserva garantida por 30 minutos',
-    status: 'ACTIVE',
-    sentCount: 1240,
-    openedRate: 94.2,
-    recoveredCount: 380,
-    recoveredRevenue: 95000.0,
-  },
-  {
-    id: 'rule-02',
-    name: 'Disparo 2: Cupom Exclusivo 5% OFF',
-    channel: 'EMAIL',
-    delayMinutes: 120, // 2 horas
-    discountOffer: 'Cupom VOLTA5 (Válido por 12h)',
-    status: 'ACTIVE',
-    sentCount: 860,
-    openedRate: 52.8,
-    recoveredCount: 145,
-    recoveredRevenue: 36250.0,
-  },
-  {
-    id: 'rule-03',
-    name: 'Disparo 3: Última Chamada Lote Virando',
-    channel: 'WHATSAPP',
-    delayMinutes: 1440, // 24 horas
-    discountOffer: 'Últimos ingressos do lote atual',
-    status: 'ACTIVE',
-    sentCount: 520,
-    openedRate: 88.5,
-    recoveredCount: 78,
-    recoveredRevenue: 19500.0,
-  },
-];
-
 export const CampanhasDisparosPage: React.FC = () => {
-  const [rules, setRules] = useState<TriggerRule[]>(initialRules);
+  const [rules, setRules] = useState<TriggerRule[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isNewRuleOpen, setIsNewRuleOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<TriggerRule | null>(null);
@@ -82,59 +45,85 @@ export const CampanhasDisparosPage: React.FC = () => {
   const [newRuleDelay, setNewRuleDelay] = useState(60);
   const [newRuleOffer, setNewRuleOffer] = useState('Cupom 10% OFF Exclusivo');
   const [submitting, setSubmitting] = useState(false);
+  const [requestError, setRequestError] = useState<string | null>(null);
 
-  const toggleStatus = (id: string) => {
-    setRules((prev) =>
-      prev.map((r) => {
-        if (r.id === id) {
-          const next = r.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
-          setToastMessage(`Régua "${r.name}" agora está ${next === 'ACTIVE' ? 'ativa' : 'pausada'}.`);
-          setTimeout(() => setToastMessage(null), 4000);
-          return { ...r, status: next };
-        }
-        return r;
-      })
-    );
+  const refreshRules = async () => {
+    try {
+      const rows = await remarketingApi.listRules();
+      if (!Array.isArray(rows)) throw new Error('Resposta inválida');
+      setRules(rows as TriggerRule[]);
+      setRequestError(null);
+    } catch (error) {
+      setRules([]);
+      setRequestError(error instanceof Error ? error.message : 'API indisponível');
+    }
+  };
+
+  useEffect(() => {
+    void refreshRules();
+  }, []);
+
+  const toggleStatus = async (id: string) => {
+    const rule = rules.find((r) => r.id === id);
+    if (!rule) return;
+    try {
+      const status = rule.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
+      await remarketingApi.updateRule(id, { status });
+      await refreshRules();
+      setToastMessage(`Status atualizado para ${status === 'ACTIVE' ? 'ativa' : 'pausada'}.`);
+      setTimeout(() => setToastMessage(null), 4000);
+    } catch (error) {
+      setToastMessage(`Falha ao atualizar: ${error instanceof Error ? error.message : 'Erro'}`);
+    }
   };
 
   const handleCreateRule = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 500));
-
-    const newRule: TriggerRule = {
-      id: `rule-${Date.now()}`,
-      name: newRuleName,
-      channel: newRuleChannel,
-      delayMinutes: Number(newRuleDelay),
-      discountOffer: newRuleOffer,
-      status: 'ACTIVE',
-      sentCount: 0,
-      openedRate: 0,
-      recoveredCount: 0,
-      recoveredRevenue: 0,
-    };
-
-    setRules((prev) => [newRule, ...prev]);
-    setIsNewRuleOpen(false);
-    setSubmitting(false);
-    setToastMessage(`Nova régua de automação "${newRuleName}" ativada com sucesso!`);
-    setTimeout(() => setToastMessage(null), 5000);
+    try {
+      await remarketingApi.createRule({
+        name: newRuleName,
+        channel: newRuleChannel,
+        delayMinutes: Number(newRuleDelay),
+        discountOffer: newRuleOffer,
+      });
+      await refreshRules();
+      setIsNewRuleOpen(false);
+      setToastMessage('Régua salva no servidor. A execução dependerá de sua ativação e dos canais configurados.');
+      setTimeout(() => setToastMessage(null), 5000);
+    } catch (error) {
+      setToastMessage(`Falha ao cadastrar: ${error instanceof Error ? error.message : 'Erro'}`);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleSaveEdit = (e: React.FormEvent) => {
+  const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingRule) return;
-    setRules((prev) =>
-      prev.map((r) => (r.id === editingRule.id ? editingRule : r))
-    );
-    setEditingRule(null);
-    setToastMessage(`Configurações da régua "${editingRule.name}" salvas com sucesso!`);
-    setTimeout(() => setToastMessage(null), 4000);
+    try {
+      await remarketingApi.updateRule(editingRule.id, editingRule);
+      await refreshRules();
+      setEditingRule(null);
+      setToastMessage('Alterações persistidas no servidor.');
+      setTimeout(() => setToastMessage(null), 4000);
+    } catch (error) {
+      setToastMessage(`Falha ao salvar: ${error instanceof Error ? error.message : 'Erro'}`);
+    }
   };
 
   const handleExportCsv = () => {
-    const headers = ['Régua', 'Canal', 'Tempo de Gatilho (min)', 'Oferta', 'Disparos Enviados', 'Taxa Abertura (%)', 'Ingressos Resgatados', 'Receita Recuperada (R$)', 'Status'];
+    const headers = [
+      'Régua',
+      'Canal',
+      'Tempo de Gatilho (min)',
+      'Oferta',
+      'Disparos Enviados',
+      'Taxa Abertura (%)',
+      'Ingressos Resgatados',
+      'Receita Recuperada (R$)',
+      'Status',
+    ];
     const rows = rules.map((r) => [
       r.name,
       r.channel,
@@ -151,11 +140,23 @@ export const CampanhasDisparosPage: React.FC = () => {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  const totalRecovered = rules.reduce((acc, r) => acc + r.recoveredRevenue, 0);
-  const totalSent = rules.reduce((acc, r) => acc + r.sentCount, 0);
+  const totalRecovered = rules.reduce((acc, r) => acc + (r.recoveredRevenue || 0), 0);
+  const totalSent = rules.reduce((acc, r) => acc + (r.sentCount || 0), 0);
 
   return (
     <div className="space-y-6">
+      {requestError && (
+        <div role="alert" className="p-3 rounded-lg border border-rose-500/40 text-rose-300 text-xs flex items-center justify-between bg-rose-500/10">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+            <span>Réguas indisponíveis: {requestError}</span>
+          </div>
+          <button onClick={() => void refreshRules()} className="underline cursor-pointer">
+            Tentar novamente
+          </button>
+        </div>
+      )}
+
       {toastMessage && (
         <div className="p-3 bg-pink-500/10 border border-pink-500/20 rounded-lg text-pink-400 text-xs flex items-center justify-between animate-in fade-in">
           <div className="flex items-center gap-2">
@@ -224,7 +225,7 @@ export const CampanhasDisparosPage: React.FC = () => {
         <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-4 shadow-md">
           <span className="text-[11px] text-slate-300 font-semibold uppercase">Abertura WhatsApp</span>
           <div className="text-xl font-extrabold text-white mt-1">
-            94.2%
+            {rules.length > 0 ? (rules.reduce((a, b) => a + (b.openedRate || 0), 0) / rules.length).toFixed(1) : '0.0'}%
           </div>
           <span className="text-[10px] text-slate-400">Taxa de visualização</span>
         </div>
@@ -240,89 +241,100 @@ export const CampanhasDisparosPage: React.FC = () => {
 
       {/* Rules List */}
       <div className="space-y-4">
-        {rules.map((rule) => (
-          <div
-            key={rule.id}
-            className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-5 shadow-md space-y-4"
-          >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#37393e]">
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    rule.channel === 'WHATSAPP'
-                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                      : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                  }`}
-                >
-                  {rule.channel === 'WHATSAPP' ? (
-                    <MessageCircle className="w-5 h-5" />
-                  ) : (
-                    <Mail className="w-5 h-5" />
-                  )}
+        {rules.length === 0 ? (
+          <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-8 text-center text-slate-400 text-xs">
+            Nenhuma régua de automação configurada. Clique em "Criar Nova Régua" acima para registrar sua primeira automação.
+          </div>
+        ) : (
+          rules.map((rule) => (
+            <div
+              key={rule.id}
+              className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-5 shadow-md space-y-4"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#37393e]">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      rule.channel === 'WHATSAPP'
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                        : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                    }`}
+                  >
+                    {rule.channel === 'WHATSAPP' ? (
+                      <MessageCircle className="w-5 h-5" />
+                    ) : (
+                      <Mail className="w-5 h-5" />
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white">{rule.name}</h3>
+                    <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
+                      <span>
+                        Gatilho:{' '}
+                        {rule.delayMinutes < 60
+                          ? `${rule.delayMinutes} minutos após abandono`
+                          : `${rule.delayMinutes / 60} horas após abandono`}
+                      </span>
+                      <span>•</span>
+                      <span className="text-amber-400 font-medium">{rule.discountOffer}</span>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white">{rule.name}</h3>
-                  <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
-                    <span>Gatilho: {rule.delayMinutes < 60 ? `${rule.delayMinutes} minutos após abandono` : `${rule.delayMinutes / 60} horas após abandono`}</span>
-                    <span>•</span>
-                    <span className="text-amber-400 font-medium">{rule.discountOffer}</span>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => toggleStatus(rule.id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      rule.status === 'ACTIVE'
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20'
+                        : 'bg-[#202124] text-slate-400 hover:text-white border border-[#37393e]'
+                    }`}
+                  >
+                    {rule.status === 'ACTIVE' ? 'Ativa' : 'Pausada'}
+                  </button>
+                  <button
+                    onClick={() => setEditingRule(rule)}
+                    className="p-1.5 rounded-lg bg-[#202124] hover:bg-[#25262c] text-slate-300 hover:text-white border border-[#37393e] transition cursor-pointer"
+                    title="Configurar Mensagem"
+                  >
+                    <Settings2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Performance Indicators */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <div className="p-3 bg-[#232429] rounded-lg border border-[#37393e]">
+                  <span className="text-slate-400">Total Enviado:</span>
+                  <div className="text-sm font-bold text-white mt-0.5">
+                    {(rule.sentCount || 0).toLocaleString()} disparos
+                  </div>
+                </div>
+
+                <div className="p-3 bg-[#232429] rounded-lg border border-[#37393e]">
+                  <span className="text-slate-400">Taxa de Abertura:</span>
+                  <div className="text-sm font-bold text-teal-400 mt-0.5">
+                    {rule.openedRate || 0}%
+                  </div>
+                </div>
+
+                <div className="p-3 bg-[#232429] rounded-lg border border-[#37393e]">
+                  <span className="text-slate-400">Ingressos Resgatados:</span>
+                  <div className="text-sm font-bold text-blue-400 mt-0.5">
+                    {rule.recoveredCount || 0} ingressos
+                  </div>
+                </div>
+
+                <div className="p-3 bg-emerald-950/20 rounded-lg border border-emerald-500/30">
+                  <span className="text-emerald-400 font-semibold">Receita Resgatada:</span>
+                  <div className="text-base font-extrabold text-emerald-400 mt-0.5">
+                    {formatCurrency(rule.recoveredRevenue || 0)}
                   </div>
                 </div>
               </div>
-
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => toggleStatus(rule.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-                    rule.status === 'ACTIVE'
-                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20'
-                      : 'bg-[#202124] text-slate-400 hover:text-white border border-[#37393e]'
-                  }`}
-                >
-                  {rule.status === 'ACTIVE' ? 'Ativa' : 'Pausada'}
-                </button>
-                <button
-                  onClick={() => setEditingRule(rule)}
-                  className="p-1.5 rounded-lg bg-[#202124] hover:bg-[#25262c] text-slate-300 hover:text-white border border-[#37393e] transition cursor-pointer"
-                  title="Configurar Mensagem"
-                >
-                  <Settings2 className="w-4 h-4" />
-                </button>
-              </div>
             </div>
-
-            {/* Performance Indicators */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-              <div className="p-3 bg-[#232429] rounded-lg border border-[#37393e]">
-                <span className="text-slate-400">Total Enviado:</span>
-                <div className="text-sm font-bold text-white mt-0.5">
-                  {rule.sentCount.toLocaleString()} disparos
-                </div>
-              </div>
-
-              <div className="p-3 bg-[#232429] rounded-lg border border-[#37393e]">
-                <span className="text-slate-400">Taxa de Abertura:</span>
-                <div className="text-sm font-bold text-teal-400 mt-0.5">
-                  {rule.openedRate}%
-                </div>
-              </div>
-
-              <div className="p-3 bg-[#232429] rounded-lg border border-[#37393e]">
-                <span className="text-slate-400">Ingressos Resgatados:</span>
-                <div className="text-sm font-bold text-blue-400 mt-0.5">
-                  {rule.recoveredCount} ingressos
-                </div>
-              </div>
-
-              <div className="p-3 bg-emerald-950/20 rounded-lg border border-emerald-500/30">
-                <span className="text-emerald-400 font-semibold">Receita Resgatada:</span>
-                <div className="text-base font-extrabold text-emerald-400 mt-0.5">
-                  {formatCurrency(rule.recoveredRevenue)}
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {/* Modal Nova Régua */}
@@ -516,3 +528,4 @@ export const CampanhasDisparosPage: React.FC = () => {
     </div>
   );
 };
+export default CampanhasDisparosPage;
