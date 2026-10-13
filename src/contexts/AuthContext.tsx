@@ -1,6 +1,19 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Producer, UserProfile } from '@/types/producer';
-import { mockProducer } from '@/services/api/mockSeedData';
+import {
+  Producer,
+  UserProfile,
+  AppEnvironment,
+  CreditAdvanceRequest,
+  PlatformOverviewKPIs,
+} from '@/types/producer';
+import {
+  mockProducer,
+  mockProducersList,
+  mockAdminUser,
+  mockProducerUser,
+  mockCreditRequests,
+  mockPlatformKPIs,
+} from '@/services/api/mockSeedData';
 import {
   getKeeperApiUrl,
   getAuthToken,
@@ -8,22 +21,25 @@ import {
   clearAuthSession,
 } from '@/services/api/client';
 
-export const defaultUserProfile: UserProfile = {
-  id: 'usr-01',
-  name: 'Vinicius Casagrande',
-  email: 'vinicius@diskingressos.com.br',
-  role: 'PRODUCER_ADMIN',
-  producerId: 'prod-01',
-  producerName: 'ABC Produções & Eventos Ltda',
-  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
-};
+export const defaultUserProfile: UserProfile = mockProducerUser;
 
 interface AuthContextType {
   producer: Producer | null;
   user: UserProfile | null;
+  currentProfile: AppEnvironment;
+  isAdmin: boolean;
+  isProducer: boolean;
+  availableProducers: Producer[];
+  creditRequests: CreditAdvanceRequest[];
+  platformKpis: PlatformOverviewKPIs;
   isAuthenticated: boolean;
   isLoading: boolean;
   isKeeperConnected: boolean;
+  switchProfile: (profile: AppEnvironment) => void;
+  switchProducer: (producerId: string) => void;
+  approveCreditRequest: (requestId: string, notes?: string) => void;
+  rejectCreditRequest: (requestId: string, reason: string) => void;
+  updateProducerContract: (producerId: string, updates: Partial<Producer>) => void;
   setProducerId: (id: string) => void;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
@@ -33,12 +49,98 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Modo de acesso direto temporário: inicia autenticado com dados de sessão padrão
+  const [currentProfile, setCurrentProfile] = useState<AppEnvironment>(() => {
+    const saved = localStorage.getItem('eagle_active_profile');
+    return saved === 'ADMIN' ? 'ADMIN' : 'PRODUCER';
+  });
+
+  const [producersList, setProducersList] = useState<Producer[]>(mockProducersList);
+  const [creditRequests, setCreditRequests] = useState<CreditAdvanceRequest[]>(mockCreditRequests);
+  const [platformKpis, setPlatformKpis] = useState<PlatformOverviewKPIs>(mockPlatformKPIs);
+
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
-  const [user, setUser] = useState<UserProfile | null>(defaultUserProfile);
   const [producer, setProducer] = useState<Producer | null>(mockProducer);
+  const [user, setUser] = useState<UserProfile | null>(() => {
+    const saved = localStorage.getItem('eagle_active_profile');
+    return saved === 'ADMIN' ? mockAdminUser : mockProducerUser;
+  });
   const [isKeeperConnected, setIsKeeperConnected] = useState<boolean>(true);
+
+  const isAdmin = currentProfile === 'ADMIN';
+  const isProducer = currentProfile === 'PRODUCER';
+
+  const switchProfile = (profile: AppEnvironment) => {
+    setCurrentProfile(profile);
+    localStorage.setItem('eagle_active_profile', profile);
+    if (profile === 'ADMIN') {
+      setUser(mockAdminUser);
+    } else {
+      setUser({
+        ...mockProducerUser,
+        producerId: producer?.id || 'prod-01',
+        producerName: producer?.name || 'ABC Produções & Eventos Ltda',
+      });
+    }
+  };
+
+  const switchProducer = (producerId: string) => {
+    const found = producersList.find((p) => p.id === producerId);
+    if (found) {
+      setProducer(found);
+      localStorage.setItem('eagle_active_producer_id', producerId);
+      if (currentProfile === 'PRODUCER') {
+        setUser((prev) =>
+          prev
+            ? {
+                ...prev,
+                producerId: found.id,
+                producerName: found.name,
+              }
+            : null
+        );
+      }
+    }
+  };
+
+  const approveCreditRequest = (requestId: string, notes?: string) => {
+    setCreditRequests((prev) =>
+      prev.map((req) => {
+        if (req.id === requestId) {
+          return {
+            ...req,
+            status: 'APPROVED',
+            analystNotes: notes || req.analystNotes || 'Aprovado pelo Comitê de Crédito DiskIngressos.',
+          };
+        }
+        return req;
+      })
+    );
+  };
+
+  const rejectCreditRequest = (requestId: string, reason: string) => {
+    setCreditRequests((prev) =>
+      prev.map((req) => {
+        if (req.id === requestId) {
+          return {
+            ...req,
+            status: 'REJECTED',
+            analystNotes: `Recusado: ${reason}`,
+          };
+        }
+        return req;
+      })
+    );
+  };
+
+  const updateProducerContract = (producerId: string, updates: Partial<Producer>) => {
+    setProducersList((prev) =>
+      prev.map((p) => (p.id === producerId ? { ...p, ...updates } : p))
+    );
+    if (producer?.id === producerId) {
+      setProducer((prev) => (prev ? { ...prev, ...updates } : prev));
+    }
+  };
 
   const checkKeeperConnection = async (): Promise<boolean> => {
     try {
@@ -150,9 +252,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         producer,
         user,
+        currentProfile,
+        isAdmin,
+        isProducer,
+        availableProducers: producersList,
+        creditRequests,
+        platformKpis,
         isAuthenticated,
         isLoading,
         isKeeperConnected,
+        switchProfile,
+        switchProducer,
+        approveCreditRequest,
+        rejectCreditRequest,
+        updateProducerContract,
         setProducerId,
         login,
         logout,

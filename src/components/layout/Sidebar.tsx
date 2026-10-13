@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { useEventContext } from '@/contexts/EventContext';
 import {
   LayoutDashboard,
@@ -26,6 +27,10 @@ import {
   Percent,
   Tv,
   ScanLine,
+  Building2,
+  ShieldAlert,
+  Send,
+  ExternalLink,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -39,6 +44,9 @@ export const Sidebar: React.FC = () => {
     eventMarketing: true,
     eventRemarketing: false,
   });
+
+  const { isAdmin, switchProfile, creditRequests } = useAuth();
+  const pendingCreditCount = creditRequests.filter((r) => r.status === 'PENDING_APPROVAL').length;
 
   const { selectedEvent, clearSelectedEvent, selectEventById } = useEventContext();
   const location = useLocation();
@@ -495,6 +503,160 @@ export const Sidebar: React.FC = () => {
             <Settings className="w-4 h-4 flex-shrink-0 text-slate-400" />
             {!collapsed && <span>Configurações</span>}
           </NavLink>
+        </nav>
+
+        {/* Collapse toggle */}
+        <div className="p-2 border-t border-slate-800 flex justify-end">
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition"
+          >
+            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
+        </div>
+      </aside>
+    );
+  }
+
+  // Level 1-B Menu: Master Platform Administrator
+  if (isAdmin && !selectedEvent) {
+    return (
+      <aside
+        className={`${
+          collapsed ? 'w-20' : 'w-64'
+        } transition-all duration-300 ease-in-out border-r border-[#2b2c31] bg-[#151515] flex flex-col h-[calc(100vh-4rem)] sticky top-16 z-30 select-none`}
+      >
+        <div className="p-3 border-b border-purple-500/20 bg-purple-950/20">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+            <span className="text-[10px] font-bold text-purple-300 uppercase tracking-wider">
+              Supervisão DiskIngressos
+            </span>
+          </div>
+        </div>
+
+        <nav className="flex-1 overflow-y-auto p-2 space-y-1">
+          {/* 1. Dashboard Master */}
+          <NavLink
+            to="/admin/dashboard"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition ${
+                isActive
+                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                  : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
+              }`
+            }
+          >
+            <LayoutDashboard className="w-4 h-4 flex-shrink-0 text-purple-400" />
+            {!collapsed && <span>Dashboard Master</span>}
+          </NavLink>
+
+          {/* 2. Gestão de Produtoras */}
+          <NavLink
+            to="/admin/produtoras"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition ${
+                isActive
+                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                  : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
+              }`
+            }
+          >
+            <Building2 className="w-4 h-4 flex-shrink-0 text-blue-400" />
+            {!collapsed && <span>Gestão de Produtoras</span>}
+          </NavLink>
+
+          {/* 3. Eventos da Rede */}
+          <NavLink
+            to="/admin/eventos"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition ${
+                isActive
+                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                  : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
+              }`
+            }
+          >
+            <Calendar className="w-4 h-4 flex-shrink-0 text-indigo-400" />
+            {!collapsed && <span>Eventos da Rede</span>}
+          </NavLink>
+
+          {/* 4. Comitê de Crédito */}
+          <NavLink
+            to="/admin/antecipacoes"
+            className={({ isActive }) =>
+              `flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition ${
+                isActive
+                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                  : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
+              }`
+            }
+          >
+            <div className="flex items-center gap-3">
+              <ShieldAlert className="w-4 h-4 flex-shrink-0 text-amber-400" />
+              {!collapsed && <span>Comitê de Crédito</span>}
+            </div>
+            {!collapsed && pendingCreditCount > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-black">
+                {pendingCreditCount}
+              </span>
+            )}
+          </NavLink>
+
+          {/* 5. Repasses & Keeper */}
+          <NavLink
+            to="/admin/repasses"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition ${
+                isActive
+                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                  : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
+              }`
+            }
+          >
+            <Send className="w-4 h-4 flex-shrink-0 text-emerald-400" />
+            {!collapsed && <span>Repasses Globais</span>}
+          </NavLink>
+
+          {/* 6. Configurações da Plataforma */}
+          <NavLink
+            to="/admin/configuracoes"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition ${
+                isActive
+                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                  : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
+              }`
+            }
+          >
+            <Settings className="w-4 h-4 flex-shrink-0 text-slate-400" />
+            {!collapsed && <span>Configurações Plataforma</span>}
+          </NavLink>
+
+          {/* Quick Impersonate Switcher Box */}
+          {!collapsed && (
+            <div className="pt-4 mt-4 border-t border-slate-800">
+              <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                <span className="text-[10px] uppercase font-bold text-slate-400">
+                  Visão Segregada
+                </span>
+                <p className="text-[11px] text-slate-300 mt-0.5">
+                  Deseja operar como produtor de eventos?
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    switchProfile('PRODUCER');
+                    navigate('/dashboard');
+                  }}
+                  className="w-full mt-2.5 py-1.5 px-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-md shadow-blue-600/20 cursor-pointer"
+                >
+                  <span>Ir para Portal do Produtor</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
         </nav>
 
         {/* Collapse toggle */}

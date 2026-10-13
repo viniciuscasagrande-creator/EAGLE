@@ -77,6 +77,14 @@ import { RelatoriosConsolidadosPage } from '@/modules/relatorios/RelatoriosConso
 import { SuporteChamadosPage } from '@/modules/suporte/SuporteChamadosPage';
 import { ConfiguracoesProdutorPage } from '@/modules/configuracoes/ConfiguracoesProdutorPage';
 
+// Module Admin Master: Plataforma DiskIngressos
+import { DashboardAdminMasterPage } from '@/modules/admin/DashboardAdminMasterPage';
+import { GestaoProdutorasPage } from '@/modules/admin/GestaoProdutorasPage';
+import { EventosRedePage } from '@/modules/admin/EventosRedePage';
+import { ComiteCreditoAntecipacoesPage } from '@/modules/admin/ComiteCreditoAntecipacoesPage';
+import { RepassesGlobaisPage } from '@/modules/admin/RepassesGlobaisPage';
+import { ConfiguracoesPlataformaPage } from '@/modules/admin/ConfiguracoesPlataformaPage';
+
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
@@ -86,7 +94,17 @@ export const AppRoutes: React.FC = () => {
       {/* Rotas Protegidas por Autenticação Real */}
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
-          {/* Raiz & Dashboard Geral */}
+          {/* Rotas de Administração Master DiskIngressos */}
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="/admin/dashboard" element={<DashboardAdminMasterPage />} />
+          <Route path="/admin/produtoras" element={<GestaoProdutorasPage />} />
+          <Route path="/admin/eventos" element={<EventosRedePage />} />
+          <Route path="/admin/antecipacoes" element={<ComiteCreditoAntecipacoesPage />} />
+          <Route path="/admin/repasses" element={<RepassesGlobaisPage />} />
+          <Route path="/admin/relatorios" element={<RelatoriosConsolidadosPage />} />
+          <Route path="/admin/configuracoes" element={<ConfiguracoesPlataformaPage />} />
+
+          {/* Raiz & Dashboard Geral do Produtor */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardGeralPage />} />
 

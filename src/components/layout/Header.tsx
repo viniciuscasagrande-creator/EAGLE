@@ -17,7 +17,18 @@ import {
 import { NotificationsPopover } from './NotificationsPopover';
 
 export const Header: React.FC = () => {
-  const { user, producer, isKeeperConnected, logout } = useAuth();
+  const {
+    user,
+    producer,
+    isKeeperConnected,
+    logout,
+    currentProfile,
+    isAdmin,
+    isProducer,
+    switchProfile,
+    switchProducer,
+    availableProducers,
+  } = useAuth();
   const { selectedEvent, allEvents, selectEvent, clearSelectedEvent } = useEventContext();
   const navigate = useNavigate();
 
@@ -40,15 +51,25 @@ export const Header: React.FC = () => {
   return (
     <header className="h-16 border-b border-[#2b2c31] bg-[#151515] px-4 md:px-6 flex items-center justify-between sticky top-0 z-40">
       {/* Brand & Context */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3 lg:gap-4">
         <div
           onClick={() => {
             clearSelectedEvent();
-            navigate('/dashboard');
+            if (isAdmin) {
+              navigate('/admin/dashboard');
+            } else {
+              navigate('/dashboard');
+            }
           }}
           className="flex items-center gap-3 cursor-pointer group"
         >
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-tr from-blue-700 to-blue-500 flex items-center justify-center font-extrabold text-white text-lg shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
+          <div
+            className={`w-9 h-9 rounded-lg flex items-center justify-center font-extrabold text-white text-lg shadow-lg group-hover:scale-105 transition-transform ${
+              isAdmin
+                ? 'bg-gradient-to-tr from-purple-700 to-indigo-500 shadow-purple-500/25'
+                : 'bg-gradient-to-tr from-blue-700 to-blue-500 shadow-blue-500/20'
+            }`}
+          >
             D
           </div>
           <div className="hidden sm:block">
@@ -56,18 +77,74 @@ export const Header: React.FC = () => {
               <span className="font-bold text-slate-100 tracking-tight text-base font-sans">
                 DiskIngressos
               </span>
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                PRODUTOR
+              <span
+                className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                  isAdmin
+                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                    : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                }`}
+              >
+                {isAdmin ? 'ADMIN MASTER' : 'PRODUTOR'}
               </span>
             </div>
             <p className="text-[11px] text-slate-400 font-medium">
-              Portal Operacional & Comercial
+              {isAdmin ? 'Supervisão Geral da Plataforma' : 'Portal Operacional & Comercial'}
             </p>
           </div>
         </div>
 
+        {/* Profile Switcher Pill */}
+        <div className="flex items-center bg-slate-900/90 p-0.5 rounded-xl border border-slate-700/80 shadow-inner">
+          <button
+            type="button"
+            onClick={() => {
+              switchProfile('ADMIN');
+              navigate('/admin/dashboard');
+            }}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+              isAdmin
+                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+            }`}
+          >
+            <span>🛡️ Admin Master</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              switchProfile('PRODUCER');
+              navigate('/dashboard');
+            }}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+              isProducer
+                ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+            }`}
+          >
+            <span>🎭 Produtor</span>
+          </button>
+        </div>
+
+        {/* Multi-Producer Auditor Selector (Admin only) */}
+        {isAdmin && (
+          <div className="hidden xl:flex items-center gap-1.5 bg-slate-900/80 px-2.5 py-1 rounded-lg border border-purple-500/20 text-xs">
+            <span className="text-slate-400 text-[11px]">Auditando:</span>
+            <select
+              value={producer?.id || 'prod-01'}
+              onChange={(e) => switchProducer(e.target.value)}
+              className="bg-transparent text-xs text-purple-300 font-bold focus:outline-none cursor-pointer"
+            >
+              {availableProducers.map((p) => (
+                <option key={p.id} value={p.id} className="bg-slate-900 text-slate-200">
+                  {p.tradeName || p.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {/* Core connection status */}
-        <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800">
+        <div className="hidden 2xl:flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800">
           <span
             className={`w-2 h-2 rounded-full ${
               isKeeperConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
@@ -217,38 +294,116 @@ export const Header: React.FC = () => {
           </button>
 
           {showUserDropdown && (
-            <div className="absolute right-0 top-full mt-2 w-64 bg-[#141b2d] border border-slate-700/80 rounded-xl shadow-2xl p-2 z-50">
+            <div className="absolute right-0 top-full mt-2 w-72 bg-[#141b2d] border border-slate-700/80 rounded-xl shadow-2xl p-2 z-50">
               <div className="px-3 py-2 border-b border-slate-800">
-                <div className="text-xs font-semibold text-slate-200">{producer?.name || 'Produtor DiskIngressos'}</div>
-                <div className="text-[11px] text-slate-400 font-mono mt-0.5">
-                  CNPJ: {producer?.cnpj || 'Não informado'}
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-bold text-slate-100">
+                    {isAdmin ? 'Diretoria DiskIngressos' : producer?.tradeName || producer?.name}
+                  </div>
+                  <span
+                    className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                      isAdmin
+                        ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                        : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                    }`}
+                  >
+                    {isAdmin ? 'ADMIN' : 'PRODUTOR'}
+                  </span>
                 </div>
-                <div className="text-[11px] text-blue-400 mt-1 flex items-center gap-1">
+                <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                  {isAdmin ? 'admin@diskingressos.com.br' : `CNPJ: ${producer?.cnpj || '12.345.678/0001-90'}`}
+                </div>
+                <div className="text-[11px] text-purple-400 mt-1 flex items-center gap-1 font-semibold">
                   <Building2 className="w-3 h-3" />
-                  Conta Oficial DiskIngressos
+                  {isAdmin ? 'Gestão Master da Plataforma' : 'Conta Oficial Produtor'}
                 </div>
               </div>
 
-              <div className="py-1">
-                <button
-                  onClick={() => {
-                    setShowUserDropdown(false);
-                    navigate('/configuracoes');
-                  }}
-                  className="w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 rounded-lg transition"
-                >
-                  Configurações e Dados Cadastrais
-                </button>
-                <button
-                  onClick={() => {
-                    setShowUserDropdown(false);
-                    navigate('/financeiro/dados-bancarios');
-                  }}
-                  className="w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 rounded-lg transition"
-                >
-                  Dados Bancários & PIX
-                </button>
-              </div>
+              {isAdmin ? (
+                <div className="py-1">
+                  <button
+                    onClick={() => {
+                      setShowUserDropdown(false);
+                      navigate('/admin/dashboard');
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 rounded-lg transition"
+                  >
+                    Dashboard Master Global
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowUserDropdown(false);
+                      navigate('/admin/produtoras');
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 rounded-lg transition"
+                  >
+                    Gestão de Produtoras & Taxas
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowUserDropdown(false);
+                      navigate('/admin/antecipacoes');
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 rounded-lg transition"
+                  >
+                    Comitê de Crédito & Antecipações
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowUserDropdown(false);
+                      navigate('/admin/configuracoes');
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 rounded-lg transition"
+                  >
+                    Configurações da Plataforma
+                  </button>
+                  <div className="pt-1 border-t border-slate-800">
+                    <button
+                      onClick={() => {
+                        setShowUserDropdown(false);
+                        switchProfile('PRODUCER');
+                        navigate('/dashboard');
+                      }}
+                      className="w-full text-left px-3 py-2 text-xs font-semibold text-blue-400 hover:bg-blue-500/10 rounded-lg transition"
+                    >
+                      🎭 Alternar para Visão de Produtor
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-1">
+                  <button
+                    onClick={() => {
+                      setShowUserDropdown(false);
+                      navigate('/configuracoes');
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 rounded-lg transition"
+                  >
+                    Configurações e Dados Cadastrais
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowUserDropdown(false);
+                      navigate('/financeiro/dados-bancarios');
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 rounded-lg transition"
+                  >
+                    Dados Bancários & PIX
+                  </button>
+                  <div className="pt-1 border-t border-slate-800">
+                    <button
+                      onClick={() => {
+                        setShowUserDropdown(false);
+                        switchProfile('ADMIN');
+                        navigate('/admin/dashboard');
+                      }}
+                      className="w-full text-left px-3 py-2 text-xs font-semibold text-purple-400 hover:bg-purple-500/10 rounded-lg transition"
+                    >
+                      🛡️ Alternar para Visão de Administrador
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="pt-1 border-t border-slate-800">
                 <button
@@ -256,7 +411,7 @@ export const Header: React.FC = () => {
                   className="w-full flex items-center gap-2 px-3 py-2 text-xs text-rose-400 hover:bg-rose-500/10 rounded-lg transition"
                 >
                   <LogOut className="w-3.5 h-3.5" />
-                  Sair do Portal
+                  Sair da Sessão
                 </button>
               </div>
             </div>
