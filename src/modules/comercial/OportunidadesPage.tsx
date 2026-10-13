@@ -15,6 +15,8 @@ import {
   User,
   MoreVertical,
   TrendingUp,
+  ThumbsDown,
+  RotateCcw,
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import { downloadCsv } from '@/utils/csvExport';
@@ -22,6 +24,7 @@ import { keeperAdapter } from '@/services/api/keeperAdapter';
 import { NovaOportunidadeModal } from '@/components/modals/NovaOportunidadeModal';
 import { OportunidadeDetalhesModal } from '@/components/modals/OportunidadeDetalhesModal';
 import { NovaPropostaModal } from '@/components/modals/NovaPropostaModal';
+import { MotivoPerdaModal } from '@/components/modals/MotivoPerdaModal';
 
 const STAGES: { id: CommercialOpportunity['stage']; label: string; dotColor: string }[] = [
   { id: 'PROSPECCAO', label: 'Prospecção', dotColor: 'bg-blue-400' },
@@ -42,6 +45,7 @@ export const OportunidadesPage: React.FC = () => {
   const [selectedOpp, setSelectedOpp] = useState<CommercialOpportunity | null>(null);
   const [isProposalModalOpen, setIsProposalModalOpen] = useState(false);
   const [oppForProposal, setOppForProposal] = useState<CommercialOpportunity | null>(null);
+  const [oppForLoss, setOppForLoss] = useState<CommercialOpportunity | null>(null);
 
   useEffect(() => {
     keeperAdapter.getCommercialOpportunities().then(setOpportunities);
@@ -275,6 +279,25 @@ export const OportunidadesPage: React.FC = () => {
                       </span>
 
                       <div className="flex items-center gap-1">
+                        {/* Step Back Action */}
+                        {stage.id !== 'PROSPECCAO' && stage.id !== 'FECHADO_PERDIDO' && (
+                          <button
+                            onClick={() => {
+                              const prevStage =
+                                stage.id === 'FECHADO_GANHO'
+                                  ? 'NEGOCIACAO'
+                                  : stage.id === 'NEGOCIACAO'
+                                  ? 'PROPOSTA_ENVIADA'
+                                  : 'PROSPECCAO';
+                              handleMoveStage(opp.id, prevStage);
+                            }}
+                            className="p-1 rounded hover:bg-[#35363c] text-slate-400 hover:text-white transition cursor-pointer"
+                            title="Voltar etapa anterior"
+                          >
+                            <RotateCcw className="w-3 h-3" />
+                          </button>
+                        )}
+
                         {/* Quick Proposal Action */}
                         {stage.id !== 'FECHADO_PERDIDO' && (
                           <button
@@ -286,6 +309,17 @@ export const OportunidadesPage: React.FC = () => {
                             title="Emitir Proposta Formal"
                           >
                             <FileText className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+
+                        {/* Mark as Lost Action */}
+                        {stage.id !== 'FECHADO_GANHO' && stage.id !== 'FECHADO_PERDIDO' && (
+                          <button
+                            onClick={() => setOppForLoss(opp)}
+                            className="p-1 rounded hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 transition cursor-pointer"
+                            title="Marcar Oportunidade como Perdida"
+                          >
+                            <ThumbsDown className="w-3.5 h-3.5" />
                           </button>
                         )}
 
@@ -346,6 +380,16 @@ export const OportunidadesPage: React.FC = () => {
 
       <NovaPropostaModal
         isOpen={isProposalModalOpen}
+        initialData={
+          oppForProposal
+            ? {
+                clientName: oppForProposal.clientName,
+                eventName: oppForProposal.eventName,
+                totalAmount: oppForProposal.estimatedValue,
+                totalTickets: oppForProposal.ticketsQuantity || 50,
+              }
+            : undefined
+        }
         onClose={() => {
           setIsProposalModalOpen(false);
           setOppForProposal(null);
@@ -360,6 +404,15 @@ export const OportunidadesPage: React.FC = () => {
           });
           setIsProposalModalOpen(false);
           setOppForProposal(null);
+        }}
+      />
+
+      <MotivoPerdaModal
+        opportunity={oppForLoss}
+        isOpen={Boolean(oppForLoss)}
+        onClose={() => setOppForLoss(null)}
+        onConfirm={async (oppId, reason) => {
+          await handleMoveStage(oppId, 'FECHADO_PERDIDO', reason);
         }}
       />
     </div>

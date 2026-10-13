@@ -6,20 +6,33 @@ interface NovaPropostaModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (proposal: Partial<CommercialProposal>) => Promise<void>;
+  initialData?: Partial<CommercialProposal>;
 }
 
 export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
   isOpen,
   onClose,
   onConfirm,
+  initialData,
 }) => {
-  const [clientName, setClientName] = useState('');
-  const [eventName, setEventName] = useState('Festival de Verão Curitiba 2026');
-  const [totalTickets, setTotalTickets] = useState(100);
-  const [totalAmount, setTotalAmount] = useState(35000);
-  const [discountRate, setDiscountRate] = useState(10);
-  const [validUntil, setValidUntil] = useState('2026-11-30');
+  const [clientName, setClientName] = useState(initialData?.clientName || '');
+  const [eventName, setEventName] = useState(initialData?.eventName || 'Festival de Verão Curitiba 2026');
+  const [totalTickets, setTotalTickets] = useState(initialData?.totalTickets || 100);
+  const [totalAmount, setTotalAmount] = useState(initialData?.totalAmount || 35000);
+  const [discountRate, setDiscountRate] = useState(initialData?.discountRate || 10);
+  const [validUntil, setValidUntil] = useState(initialData?.validUntil || '2026-11-30');
   const [submitting, setSubmitting] = useState(false);
+
+  React.useEffect(() => {
+    if (initialData) {
+      if (initialData.clientName) setClientName(initialData.clientName);
+      if (initialData.eventName) setEventName(initialData.eventName);
+      if (initialData.totalTickets) setTotalTickets(initialData.totalTickets);
+      if (initialData.totalAmount) setTotalAmount(initialData.totalAmount);
+      if (initialData.discountRate !== undefined) setDiscountRate(initialData.discountRate);
+      if (initialData.validUntil) setValidUntil(initialData.validUntil);
+    }
+  }, [initialData, isOpen]);
 
   if (!isOpen) return null;
 

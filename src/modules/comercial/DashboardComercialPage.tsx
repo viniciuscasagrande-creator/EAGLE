@@ -25,6 +25,8 @@ import { useNavigate } from 'react-router-dom';
 import { NovaOportunidadeModal } from '@/components/modals/NovaOportunidadeModal';
 import { NovaPropostaModal } from '@/components/modals/NovaPropostaModal';
 import { PropostaDetalhesModal } from '@/components/modals/PropostaDetalhesModal';
+import { PipelineFunnelChart } from '@/components/charts/PipelineFunnelChart';
+import { CommercialRevenueChart } from '@/components/charts/CommercialRevenueChart';
 
 export const DashboardComercialPage: React.FC = () => {
   const navigate = useNavigate();
@@ -77,6 +79,61 @@ export const DashboardComercialPage: React.FC = () => {
     FECHADO_GANHO: filteredOpps.filter((o) => o.stage === 'FECHADO_GANHO'),
     FECHADO_PERDIDO: filteredOpps.filter((o) => o.stage === 'FECHADO_PERDIDO'),
   };
+
+  const weightedPipeline = filteredOpps
+    .filter((o) => o.stage !== 'FECHADO_PERDIDO' && o.stage !== 'FECHADO_GANHO')
+    .reduce((acc, curr) => acc + (curr.estimatedValue * (curr.probability || 50)) / 100, 0);
+
+  const totalDecided = stagesCount.FECHADO_GANHO.length + stagesCount.FECHADO_PERDIDO.length;
+  const winRate = totalDecided > 0 ? Math.round((stagesCount.FECHADO_GANHO.length / totalDecided) * 100) : 66;
+  const avgTicketB2b = totalClosed / Math.max(1, stagesCount.FECHADO_GANHO.length + corporateOrders.length);
+
+  const funnelChartData = [
+    {
+      stage: 'PROSPECCAO',
+      label: '1. Prospecção',
+      amount: stagesCount.PROSPECCAO.reduce((acc, o) => acc + o.estimatedValue, 0),
+      count: stagesCount.PROSPECCAO.length,
+      color: '#60a5fa',
+    },
+    {
+      stage: 'PROPOSTA_ENVIADA',
+      label: '2. Proposta Enviada',
+      amount: stagesCount.PROPOSTA_ENVIADA.reduce((acc, o) => acc + o.estimatedValue, 0),
+      count: stagesCount.PROPOSTA_ENVIADA.length,
+      color: '#818cf8',
+    },
+    {
+      stage: 'NEGOCIACAO',
+      label: '3. Negociação',
+      amount: stagesCount.NEGOCIACAO.reduce((acc, o) => acc + o.estimatedValue, 0),
+      count: stagesCount.NEGOCIACAO.length,
+      color: '#fbbf24',
+    },
+    {
+      stage: 'FECHADO_GANHO',
+      label: '4. Ganho / Fechado',
+      amount: stagesCount.FECHADO_GANHO.reduce((acc, o) => acc + o.estimatedValue, 0),
+      count: stagesCount.FECHADO_GANHO.length,
+      color: '#34d399',
+    },
+    {
+      stage: 'FECHADO_PERDIDO',
+      label: '5. Perdido',
+      amount: stagesCount.FECHADO_PERDIDO.reduce((acc, o) => acc + o.estimatedValue, 0),
+      count: stagesCount.FECHADO_PERDIDO.length,
+      color: '#f87171',
+    },
+  ];
+
+  const revenueMonthlyHistory = [
+    { month: 'Mai/26', realized: 180000, target: 250000 },
+    { month: 'Jun/26', realized: 240000, target: 280000 },
+    { month: 'Jul/26', realized: 310000, target: 300000 },
+    { month: 'Ago/26', realized: 290000, target: 320000 },
+    { month: 'Set/26', realized: 340000, target: 330000 },
+    { month: 'Out/26 (Atual)', realized: totalClosed, target: targetMonthly },
+  ];
 
   const handleExportConsolidatedReport = () => {
     downloadCsv(
@@ -274,11 +331,79 @@ export const DashboardComercialPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Visual Analytics & Forecast Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Funnel Bar Chart */}
+        <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-5 shadow-md flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <Target className="w-4 h-4 text-amber-400" />
+                <span>Funil Visual de Conversão B2B</span>
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Volume financeiro consolidado por etapa do pipeline comercial
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/comercial/oportunidades')}
+              className="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1 cursor-pointer"
+            >
+              <span>Kanban</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <PipelineFunnelChart data={funnelChartData} />
+
+          <div className="pt-3 border-t border-[#37393e] flex items-center justify-between text-[11px] text-slate-400 font-mono">
+            <span>Pipeline Total Bruto: <strong className="text-white">{formatCurrency(pipelineTotal)}</strong></span>
+            <span className="text-emerald-400">Ganhos: {formatCurrency(closedWonTotal)}</span>
+          </div>
+        </div>
+
+        {/* Revenue vs Target Trend & Forecast */}
+        <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-5 shadow-md flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-emerald-400" />
+                <span>Evolução do Faturamento & Forecast</span>
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Realizado nos últimos meses vs Meta oficial de R$ 350k
+              </p>
+            </div>
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+              Safra 2026
+            </span>
+          </div>
+
+          <CommercialRevenueChart data={revenueMonthlyHistory} targetValue={targetMonthly} />
+
+          {/* Forecast Indicators */}
+          <div className="pt-3 border-t border-[#37393e] grid grid-cols-3 gap-2 text-center text-xs">
+            <div className="bg-[#202124] p-2 rounded border border-[#37393e]">
+              <span className="text-[10px] text-slate-400 uppercase block">Pipeline Ponderado</span>
+              <span className="text-emerald-400 font-extrabold font-mono text-xs">{formatCurrency(weightedPipeline)}</span>
+            </div>
+            <div className="bg-[#202124] p-2 rounded border border-[#37393e]">
+              <span className="text-[10px] text-slate-400 uppercase block">Taxa de Conversão</span>
+              <span className="text-blue-400 font-extrabold font-mono text-xs">{winRate}%</span>
+            </div>
+            <div className="bg-[#202124] p-2 rounded border border-[#37393e]">
+              <span className="text-[10px] text-slate-400 uppercase block">Ticket Médio B2B</span>
+              <span className="text-amber-400 font-extrabold font-mono text-xs">{formatCurrency(avgTicketB2b)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Funnel Pipeline Visual Breakdown */}
       <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-5 shadow-md space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-base font-bold text-white">Distribuição do Funil de Vendas</h3>
+            <h3 className="text-base font-bold text-white">Etapas Detalhadas do Ciclo de Vendas</h3>
             <p className="text-xs text-slate-400">Visão consolidada por etapa do ciclo de vendas</p>
           </div>
           <button

@@ -15,6 +15,8 @@ import {
   QrCode,
   FileSpreadsheet,
   AlertTriangle,
+  Send,
+  MailCheck,
 } from 'lucide-react';
 import { CorporateOrder, CorporateAttendee } from '@/types/commercial';
 import { formatCurrency, formatDateTime, formatDate } from '@/utils/formatters';
@@ -41,6 +43,7 @@ export const PedidoCorporativoDetalhesModal: React.FC<PedidoCorporativoDetalhesM
   const [copiedPix, setCopiedPix] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [dispatchedSuccess, setDispatchedSuccess] = useState(false);
 
   if (!isOpen || !order) return null;
 
@@ -272,19 +275,33 @@ export const PedidoCorporativoDetalhesModal: React.FC<PedidoCorporativoDetalhesM
 
                 <div className="flex items-center gap-2">
                   {attendeesCount > 0 && (
-                    <button
-                      onClick={() => {
-                        downloadCsv(
-                          `participantes-${order.orderNumber.toLowerCase()}`,
-                          ['Nome', 'Documento', 'E-mail', 'Setor', 'Código Ingresso'],
-                          (order.attendees || []).map((a) => [a.name, a.document, a.email, a.sector, a.ticketCode || ''])
-                        );
-                      }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-[#202124] hover:bg-[#35363c] text-slate-300 text-xs font-semibold rounded-lg border border-[#37393e] transition cursor-pointer"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>Exportar CSV</span>
-                    </button>
+                    <>
+                      <button
+                        onClick={() => {
+                          setDispatchedSuccess(true);
+                          setTimeout(() => setDispatchedSuccess(false), 5000);
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow transition cursor-pointer"
+                        title="Disparar e-tickets nominais para os e-mails corporativos cadastrados"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>Disparar E-tickets</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          downloadCsv(
+                            `participantes-${order.orderNumber.toLowerCase()}`,
+                            ['Nome', 'Documento', 'E-mail', 'Setor', 'Código Ingresso'],
+                            (order.attendees || []).map((a) => [a.name, a.document, a.email, a.sector, a.ticketCode || ''])
+                          );
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#202124] hover:bg-[#35363c] text-slate-300 text-xs font-semibold rounded-lg border border-[#37393e] transition cursor-pointer"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Exportar CSV</span>
+                      </button>
+                    </>
                   )}
 
                   <button
@@ -296,6 +313,13 @@ export const PedidoCorporativoDetalhesModal: React.FC<PedidoCorporativoDetalhesM
                   </button>
                 </div>
               </div>
+
+              {dispatchedSuccess && (
+                <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-400 text-xs flex items-center gap-2 animate-in fade-in">
+                  <MailCheck className="w-4 h-4 flex-shrink-0" />
+                  <span>{attendeesCount} e-tickets nominais com QR Code individual foram disparados com sucesso para os colaboradores!</span>
+                </div>
+              )}
 
               {attendeesCount === 0 ? (
                 <div className="text-center py-8 bg-[#202124] border border-[#37393e] rounded-lg space-y-2">
