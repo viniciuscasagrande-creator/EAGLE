@@ -80,8 +80,8 @@ import { ConfiguracoesProdutorPage } from '@/modules/configuracoes/Configuracoes
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      {/* Rota Pública de Autenticação */}
-      <Route path="/login" element={<LoginPage />} />
+      {/* Rota de Autenticação (Redirecionando temporariamente direto ao Dashboard enquanto criamos os ambientes segregados de Admin e Produtor) */}
+      <Route path="/login" element={<Navigate to="/dashboard" replace />} />
 
       {/* Rotas Protegidas por Autenticação Real */}
       <Route element={<ProtectedRoute />}>
