@@ -23,6 +23,7 @@ import { PortariaCheckinPage } from '@/modules/eventos/PortariaCheckinPage';
 
 // Module 3: Comercial & CRM
 import { DashboardComercialPage } from '@/modules/comercial/DashboardComercialPage';
+import { RadarProdutoresComercialPage } from '@/modules/comercial/RadarProdutoresComercialPage';
 import { ClientesPage } from '@/modules/comercial/ClientesPage';
 import { OportunidadesPage } from '@/modules/comercial/OportunidadesPage';
 import { PropostasPage } from '@/modules/comercial/PropostasPage';
@@ -165,6 +166,8 @@ export const AppRoutes: React.FC = () => {
 
           {/* Módulo 3: Comercial & CRM */}
           <Route path="/comercial" element={<DashboardComercialPage />} />
+          <Route path="/comercial/produtores" element={<RadarProdutoresComercialPage />} />
+          <Route path="/comercial/radar-produtores" element={<RadarProdutoresComercialPage />} />
           <Route path="/comercial/clientes" element={<ClientesPage />} />
           <Route path="/comercial/oportunidades" element={<OportunidadesPage />} />
           <Route path="/comercial/propostas" element={<PropostasPage />} />

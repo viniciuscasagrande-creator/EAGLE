@@ -808,6 +808,12 @@ export const Sidebar: React.FC = () => {
                 Dashboard Comercial
               </NavLink>
               <NavLink
+                to="/comercial/produtores"
+                className={({ isActive }) => getSubmenuLinkClass(isActive)}
+              >
+                Radar de Produtores & ERP
+              </NavLink>
+              <NavLink
                 to="/comercial/clientes"
                 className={({ isActive }) => getSubmenuLinkClass(isActive)}
               >

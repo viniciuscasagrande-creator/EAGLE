@@ -132,3 +132,51 @@ export interface CorporateOrder {
   proposalId?: string;
   attendees?: CorporateAttendee[];
 }
+
+export interface ProducerMarketingActivity {
+  metaAdsActive: boolean;
+  metaAdsCampaignsCount: number;
+  metaAdsRoas: number;
+  metaAdsSpend30d: number;
+  ga4Connected: boolean;
+  tiktokAdsActive: boolean;
+  whatsappAutomationsActive: boolean;
+  activeCoupons: string[];
+}
+
+export interface ProducerErpUsage {
+  keeperAdvanceActive: boolean;
+  keeperAdvanceTotal: number;
+  keeperAdvanceLimit: number;
+  splitRulesConfigured: boolean;
+  automatedBordereauEnabled: boolean;
+  nfeAutomatedDispatch: boolean;
+  pixImmediateDisbursement: boolean;
+  lastLedgerSync: string;
+}
+
+export interface ProducerCommercialSummary {
+  id: string;
+  name: string;
+  tradeName: string;
+  cnpj: string;
+  responsibleName: string;
+  contactEmail: string;
+  contactPhone: string;
+  accountManagerDisk: string;
+  status: 'ACTIVE' | 'HIGH_GROWTH' | 'ATTENTION' | 'STANDBY';
+  grossSalesMonth: number;
+  ticketsSoldMonth: number;
+  salesVelocityPerHour: number;
+  activeEventsCount: number;
+  topEventName: string;
+  currentLotStatus: string;
+  marketing: ProducerMarketingActivity;
+  erp: ProducerErpUsage;
+  recentActivity: {
+    timestamp: string;
+    type: 'MARKETING' | 'SALES' | 'ERP' | 'TICKETS';
+    description: string;
+  }[];
+}
+

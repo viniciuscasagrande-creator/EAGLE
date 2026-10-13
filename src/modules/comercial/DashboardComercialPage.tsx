@@ -27,6 +27,17 @@ import { NovaPropostaModal } from '@/components/modals/NovaPropostaModal';
 import { PropostaDetalhesModal } from '@/components/modals/PropostaDetalhesModal';
 import { PipelineFunnelChart } from '@/components/charts/PipelineFunnelChart';
 import { CommercialRevenueChart } from '@/components/charts/CommercialRevenueChart';
+import { mockProducerCommercialSummaries } from '@/services/api/mockSeedData';
+import {
+  Radar,
+  MessageSquare,
+  Database,
+  Megaphone,
+  Zap,
+  Clock,
+  Sparkles,
+  ArrowUpRight,
+} from 'lucide-react';
 
 export const DashboardComercialPage: React.FC = () => {
   const navigate = useNavigate();
@@ -196,6 +207,14 @@ export const DashboardComercialPage: React.FC = () => {
           >
             <Download className="w-4 h-4 text-slate-400" />
             <span>Relatório Consolidado (CSV)</span>
+          </button>
+
+          <button
+            onClick={() => navigate('/comercial/produtores')}
+            className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold rounded-lg shadow-md shadow-purple-600/20 transition cursor-pointer"
+          >
+            <Radar className="w-4 h-4" />
+            <span>Radar de Produtores & ERP</span>
           </button>
 
           <button
@@ -396,6 +415,136 @@ export const DashboardComercialPage: React.FC = () => {
               <span className="text-amber-400 font-extrabold font-mono text-xs">{formatCurrency(avgTicketB2b)}</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Radar 360º de Produtores & Atualizações Mais Recentes (Marketing, Vendas & ERP) */}
+      <div className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-5 shadow-md space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#37393e]">
+          <div>
+            <div className="flex items-center gap-2">
+              <Radar className="w-4 h-4 text-purple-400" />
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                Radar 360º: Atualizações Mais Recentes dos Produtores (Marketing, Vendas & ERP)
+              </h3>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                TEMPO REAL
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Supervisão de campanhas ativas, status dos lotes e módulos em uso do Keeper ERP para apoio proativo do time comercial.
+            </p>
+          </div>
+
+          <button
+            onClick={() => navigate('/comercial/produtores')}
+            className="text-xs text-purple-400 hover:text-purple-300 font-bold flex items-center gap-1 cursor-pointer self-start sm:self-auto"
+          >
+            <span>Ver Radar Completo ({mockProducerCommercialSummaries.length} contas)</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Producers Strip Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-[#202124] text-slate-400 uppercase text-[10px] font-bold">
+              <tr>
+                <th className="py-2.5 px-3">Produtora / Responsável</th>
+                <th className="py-2.5 px-3">Evento & Status do Lote</th>
+                <th className="py-2.5 px-3">Campanhas de Marketing</th>
+                <th className="py-2.5 px-3">O que usa do Keeper ERP</th>
+                <th className="py-2.5 px-3">Última Atualização</th>
+                <th className="py-2.5 px-3 text-right">Contato Comercial</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#37393e]/60 text-slate-300">
+              {mockProducerCommercialSummaries.map((prod) => (
+                <tr key={prod.id} className="hover:bg-[#35363c]/50 transition">
+                  <td className="py-3 px-3">
+                    <div className="font-bold text-white">{prod.tradeName}</div>
+                    <div className="text-[11px] text-slate-400">{prod.responsibleName}</div>
+                  </td>
+
+                  <td className="py-3 px-3">
+                    <div className="font-semibold text-purple-300">{prod.topEventName}</div>
+                    <div className="text-[11px] text-amber-300">{prod.currentLotStatus}</div>
+                  </td>
+
+                  <td className="py-3 px-3">
+                    <div className="flex flex-wrap gap-1">
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                        prod.marketing.metaAdsActive
+                          ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                          : 'bg-slate-800 text-slate-500'
+                      }`}>
+                        Meta ({prod.marketing.metaAdsCampaignsCount})
+                      </span>
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                        prod.marketing.ga4Connected
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                          : 'bg-slate-800 text-slate-500'
+                      }`}>
+                        GA4
+                      </span>
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                        prod.marketing.whatsappAutomationsActive
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                          : 'bg-slate-800 text-slate-500'
+                      }`}>
+                        WhatsApp
+                      </span>
+                    </div>
+                  </td>
+
+                  <td className="py-3 px-3">
+                    <div className="flex flex-wrap gap-1">
+                      {prod.erp.keeperAdvanceActive && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                          Antecipação (R$ {(prod.erp.keeperAdvanceTotal / 1000).toFixed(0)}k)
+                        </span>
+                      )}
+                      {prod.erp.automatedBordereauEnabled && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                          Borderô Auto
+                        </span>
+                      )}
+                      {prod.erp.splitRulesConfigured && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                          Split
+                        </span>
+                      )}
+                      {!prod.erp.keeperAdvanceActive && !prod.erp.automatedBordereauEnabled && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                          Apenas Vendas (Oferecer ERP)
+                        </span>
+                      )}
+                    </div>
+                  </td>
+
+                  <td className="py-3 px-3">
+                    <div className="text-[11px] text-slate-300 max-w-xs truncate">
+                      <span className="font-bold text-amber-400">{prod.recentActivity[0]?.timestamp}:</span>{' '}
+                      {prod.recentActivity[0]?.description}
+                    </div>
+                  </td>
+
+                  <td className="py-3 px-3 text-right">
+                    <button
+                      onClick={() => {
+                        const cleanPhone = prod.contactPhone.replace(/\D/g, '');
+                        window.open(`https://wa.me/55${cleanPhone}`, '_blank');
+                      }}
+                      className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold transition inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <MessageSquare className="w-3 h-3" />
+                      <span>WhatsApp</span>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 
