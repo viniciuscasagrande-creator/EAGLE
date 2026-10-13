@@ -17,14 +17,14 @@ export const ConfigurarCampanhaProntaModal: React.FC<ConfigurarCampanhaProntaMod
   template,
   onSuccess,
 }) => {
-  if (!isOpen || !template) return null;
-
   const [selectedEventId, setSelectedEventId] = useState(mockEvents[0]?.id || '');
-  const [budget, setBudget] = useState(template.suggestedBudgetMin);
-  const [channels, setChannels] = useState<string[]>(template.channels);
+  const [budget, setBudget] = useState(template?.suggestedBudgetMin || 500);
+  const [channels, setChannels] = useState<string[]>(template?.channels || ['META_ADS']);
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
-  const [durationDays, setDurationDays] = useState(template.expectedDurationDays);
+  const [durationDays, setDurationDays] = useState(template?.expectedDurationDays || 7);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  if (!isOpen || !template) return null;
 
   const selectedEvent = mockEvents.find((e) => e.id === selectedEventId) || mockEvents[0];
 

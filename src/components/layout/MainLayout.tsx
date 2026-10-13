@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { EventContextBar } from './EventContextBar';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
+import { RouteLoadingFallback } from '@/components/common/RouteLoadingFallback';
 
 export const MainLayout: React.FC = () => {
   return (
@@ -13,7 +15,11 @@ export const MainLayout: React.FC = () => {
         <Sidebar />
         <main className="flex-1 overflow-y-auto p-3 md:p-4 lg:p-5 bg-[#202124]">
           <div className="w-full max-w-none">
-            <Outlet />
+            <ErrorBoundary>
+              <Suspense fallback={<RouteLoadingFallback />}>
+                <Outlet />
+              </Suspense>
+            </ErrorBoundary>
           </div>
         </main>
       </div>

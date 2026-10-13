@@ -3,90 +3,93 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 
-// Auth
-import { LoginPage } from '@/modules/auth/LoginPage';
+// Lazy loader helper for typed named exports
+const lazyModule = <T extends Record<string, React.ComponentType<any>>, K extends keyof T>(
+  importer: () => Promise<T>,
+  name: K
+) => React.lazy(() => importer().then((mod) => ({ default: mod[name] })));
 
 // Module 1: Dashboard Geral
-import { DashboardGeralPage } from '@/modules/dashboard/DashboardGeralPage';
+const DashboardGeralPage = lazyModule(() => import('@/modules/dashboard/DashboardGeralPage'), 'DashboardGeralPage');
 
 // Module 2: Eventos
-import { CentralEventosPage } from '@/modules/eventos/CentralEventosPage';
-import { DashboardIndividualPage } from '@/modules/eventos/DashboardIndividualPage';
-import { IngressosPage } from '@/modules/eventos/IngressosPage';
-import { MapaOcupacaoPage } from '@/modules/eventos/MapaOcupacaoPage';
-import { VendasPedidosPage } from '@/modules/eventos/VendasPedidosPage';
-import { CortesiasPage } from '@/modules/eventos/CortesiasPage';
-import { NovoEventoPage } from '@/modules/eventos/NovoEventoPage';
-import { CompararEventosPage } from '@/modules/eventos/CompararEventosPage';
-import { ModoTelaoPage } from '@/modules/eventos/ModoTelaoPage';
-import { PortariaCheckinPage } from '@/modules/eventos/PortariaCheckinPage';
+const CentralEventosPage = lazyModule(() => import('@/modules/eventos/CentralEventosPage'), 'CentralEventosPage');
+const DashboardIndividualPage = lazyModule(() => import('@/modules/eventos/DashboardIndividualPage'), 'DashboardIndividualPage');
+const IngressosPage = lazyModule(() => import('@/modules/eventos/IngressosPage'), 'IngressosPage');
+const MapaOcupacaoPage = lazyModule(() => import('@/modules/eventos/MapaOcupacaoPage'), 'MapaOcupacaoPage');
+const VendasPedidosPage = lazyModule(() => import('@/modules/eventos/VendasPedidosPage'), 'VendasPedidosPage');
+const CortesiasPage = lazyModule(() => import('@/modules/eventos/CortesiasPage'), 'CortesiasPage');
+const NovoEventoPage = lazyModule(() => import('@/modules/eventos/NovoEventoPage'), 'NovoEventoPage');
+const CompararEventosPage = lazyModule(() => import('@/modules/eventos/CompararEventosPage'), 'CompararEventosPage');
+const ModoTelaoPage = lazyModule(() => import('@/modules/eventos/ModoTelaoPage'), 'ModoTelaoPage');
+const PortariaCheckinPage = lazyModule(() => import('@/modules/eventos/PortariaCheckinPage'), 'PortariaCheckinPage');
 
 // Module 3: Comercial & CRM
-import { DashboardComercialPage } from '@/modules/comercial/DashboardComercialPage';
-import { RadarProdutoresComercialPage } from '@/modules/comercial/RadarProdutoresComercialPage';
-import { ClientesPage } from '@/modules/comercial/ClientesPage';
-import { OportunidadesPage } from '@/modules/comercial/OportunidadesPage';
-import { PropostasPage } from '@/modules/comercial/PropostasPage';
-import { VendasCorporativasPage } from '@/modules/comercial/VendasCorporativasPage';
-import { ParceirosPage } from '@/modules/comercial/ParceirosPage';
+const DashboardComercialPage = lazyModule(() => import('@/modules/comercial/DashboardComercialPage'), 'DashboardComercialPage');
+const RadarProdutoresComercialPage = lazyModule(() => import('@/modules/comercial/RadarProdutoresComercialPage'), 'RadarProdutoresComercialPage');
+const ClientesPage = lazyModule(() => import('@/modules/comercial/ClientesPage'), 'ClientesPage');
+const OportunidadesPage = lazyModule(() => import('@/modules/comercial/OportunidadesPage'), 'OportunidadesPage');
+const PropostasPage = lazyModule(() => import('@/modules/comercial/PropostasPage'), 'PropostasPage');
+const VendasCorporativasPage = lazyModule(() => import('@/modules/comercial/VendasCorporativasPage'), 'VendasCorporativasPage');
+const ParceirosPage = lazyModule(() => import('@/modules/comercial/ParceirosPage'), 'ParceirosPage');
 
-// Module 4: Marketing & Mídia Paga (Mapeamento Completo do Vídeo)
-import { DashboardMarketingPage } from '@/modules/marketing/DashboardMarketingPage';
-import { CampanhasPage } from '@/modules/marketing/CampanhasPage';
-import { CampanhasProntasPage } from '@/modules/marketing/CampanhasProntasPage';
-import { StatusRealCampanhasPage } from '@/modules/marketing/StatusRealCampanhasPage';
-import { MetaAdsPage } from '@/modules/marketing/MetaAdsPage';
-import { GoogleAnalytics4Page } from '@/modules/marketing/GoogleAnalytics4Page';
-import { TikTokAdsPage } from '@/modules/marketing/TikTokAdsPage';
-import { SpotifyAdsPage } from '@/modules/marketing/SpotifyAdsPage';
-import { WhatsAppMarketingPage } from '@/modules/marketing/WhatsAppMarketingPage';
-import { EmailMarketingPage } from '@/modules/marketing/EmailMarketingPage';
-import { AutomacoesJornadasPage } from '@/modules/marketing/AutomacoesJornadasPage';
-import { CentralUtmConversoesPage } from '@/modules/marketing/CentralUtmConversoesPage';
-import { AnalyticsMarketingPage } from '@/modules/marketing/AnalyticsMarketingPage';
-import { CuponsMarketingPage } from '@/modules/marketing/CuponsMarketingPage';
-import { AfiliadosMarketingPage } from '@/modules/marketing/AfiliadosMarketingPage';
-import { PixelsConversoesPage } from '@/modules/marketing/PixelsConversoesPage';
-import { AtribuicaoMulticanalPage } from '@/modules/marketing/AtribuicaoMulticanalPage';
-import { RelatoriosMarketingPage } from '@/modules/marketing/RelatoriosMarketingPage';
-import { IntegracoesAdsPage } from '@/modules/marketing/IntegracoesAdsPage';
-import { PublicosCriativosPage } from '@/modules/marketing/PublicosCriativosPage';
+// Module 4: Marketing & Mídia Paga
+const DashboardMarketingPage = lazyModule(() => import('@/modules/marketing/DashboardMarketingPage'), 'DashboardMarketingPage');
+const CampanhasPage = lazyModule(() => import('@/modules/marketing/CampanhasPage'), 'CampanhasPage');
+const CampanhasProntasPage = lazyModule(() => import('@/modules/marketing/CampanhasProntasPage'), 'CampanhasProntasPage');
+const StatusRealCampanhasPage = lazyModule(() => import('@/modules/marketing/StatusRealCampanhasPage'), 'StatusRealCampanhasPage');
+const MetaAdsPage = lazyModule(() => import('@/modules/marketing/MetaAdsPage'), 'MetaAdsPage');
+const GoogleAnalytics4Page = lazyModule(() => import('@/modules/marketing/GoogleAnalytics4Page'), 'GoogleAnalytics4Page');
+const TikTokAdsPage = lazyModule(() => import('@/modules/marketing/TikTokAdsPage'), 'TikTokAdsPage');
+const SpotifyAdsPage = lazyModule(() => import('@/modules/marketing/SpotifyAdsPage'), 'SpotifyAdsPage');
+const WhatsAppMarketingPage = lazyModule(() => import('@/modules/marketing/WhatsAppMarketingPage'), 'WhatsAppMarketingPage');
+const EmailMarketingPage = lazyModule(() => import('@/modules/marketing/EmailMarketingPage'), 'EmailMarketingPage');
+const AutomacoesJornadasPage = lazyModule(() => import('@/modules/marketing/AutomacoesJornadasPage'), 'AutomacoesJornadasPage');
+const CentralUtmConversoesPage = lazyModule(() => import('@/modules/marketing/CentralUtmConversoesPage'), 'CentralUtmConversoesPage');
+const AnalyticsMarketingPage = lazyModule(() => import('@/modules/marketing/AnalyticsMarketingPage'), 'AnalyticsMarketingPage');
+const CuponsMarketingPage = lazyModule(() => import('@/modules/marketing/CuponsMarketingPage'), 'CuponsMarketingPage');
+const AfiliadosMarketingPage = lazyModule(() => import('@/modules/marketing/AfiliadosMarketingPage'), 'AfiliadosMarketingPage');
+const PixelsConversoesPage = lazyModule(() => import('@/modules/marketing/PixelsConversoesPage'), 'PixelsConversoesPage');
+const AtribuicaoMulticanalPage = lazyModule(() => import('@/modules/marketing/AtribuicaoMulticanalPage'), 'AtribuicaoMulticanalPage');
+const RelatoriosMarketingPage = lazyModule(() => import('@/modules/marketing/RelatoriosMarketingPage'), 'RelatoriosMarketingPage');
+const IntegracoesAdsPage = lazyModule(() => import('@/modules/marketing/IntegracoesAdsPage'), 'IntegracoesAdsPage');
+const PublicosCriativosPage = lazyModule(() => import('@/modules/marketing/PublicosCriativosPage'), 'PublicosCriativosPage');
 
-// Module 5: Remarketing & Recuperação (Mapeamento Completo do Vídeo)
-import { HubRemarketingPage } from '@/modules/remarketing/HubRemarketingPage';
-import { DashboardRemarketingPage } from '@/modules/remarketing/DashboardRemarketingPage';
-import { CarrinhosAbandonadosPage } from '@/modules/remarketing/CarrinhosAbandonadosPage';
-import { WhatsAppRemarketingPage } from '@/modules/remarketing/WhatsAppRemarketingPage';
-import { EmailRemarketingPage } from '@/modules/remarketing/EmailRemarketingPage';
-import { FluxosRecuperacaoPage } from '@/modules/remarketing/FluxosRecuperacaoPage';
-import { RecuperacaoPagamentoPage } from '@/modules/remarketing/RecuperacaoPagamentoPage';
-import { ClientesInativosPage } from '@/modules/remarketing/ClientesInativosPage';
-import { RelatoriosRemarketingPage } from '@/modules/remarketing/RelatoriosRemarketingPage';
-import { CampanhasDisparosPage } from '@/modules/remarketing/CampanhasDisparosPage';
-import { ConsentimentoLgpdPage } from '@/modules/remarketing/ConsentimentoLgpdPage';
+// Module 5: Remarketing & Recuperação
+const HubRemarketingPage = lazyModule(() => import('@/modules/remarketing/HubRemarketingPage'), 'HubRemarketingPage');
+const DashboardRemarketingPage = lazyModule(() => import('@/modules/remarketing/DashboardRemarketingPage'), 'DashboardRemarketingPage');
+const CarrinhosAbandonadosPage = lazyModule(() => import('@/modules/remarketing/CarrinhosAbandonadosPage'), 'CarrinhosAbandonadosPage');
+const WhatsAppRemarketingPage = lazyModule(() => import('@/modules/remarketing/WhatsAppRemarketingPage'), 'WhatsAppRemarketingPage');
+const EmailRemarketingPage = lazyModule(() => import('@/modules/remarketing/EmailRemarketingPage'), 'EmailRemarketingPage');
+const FluxosRecuperacaoPage = lazyModule(() => import('@/modules/remarketing/FluxosRecuperacaoPage'), 'FluxosRecuperacaoPage');
+const RecuperacaoPagamentoPage = lazyModule(() => import('@/modules/remarketing/RecuperacaoPagamentoPage'), 'RecuperacaoPagamentoPage');
+const ClientesInativosPage = lazyModule(() => import('@/modules/remarketing/ClientesInativosPage'), 'ClientesInativosPage');
+const RelatoriosRemarketingPage = lazyModule(() => import('@/modules/remarketing/RelatoriosRemarketingPage'), 'RelatoriosRemarketingPage');
+const CampanhasDisparosPage = lazyModule(() => import('@/modules/remarketing/CampanhasDisparosPage'), 'CampanhasDisparosPage');
+const ConsentimentoLgpdPage = lazyModule(() => import('@/modules/remarketing/ConsentimentoLgpdPage'), 'ConsentimentoLgpdPage');
 
 // Module 6: Financeiro & Keeper ERP
-import { DashboardFinanceiroPage } from '@/modules/financeiro/DashboardFinanceiroPage';
-import { CarteirasEventosPage } from '@/modules/financeiro/CarteirasEventosPage';
-import { ExtratoLedgerPage } from '@/modules/financeiro/ExtratoLedgerPage';
-import { TaxasRetencoesPage } from '@/modules/financeiro/TaxasRetencoesPage';
-import { SolicitacoesRepassePage } from '@/modules/financeiro/SolicitacoesRepassePage';
-import { AntecipacoesPage } from '@/modules/financeiro/AntecipacoesPage';
-import { BorderoOficialPage } from '@/modules/financeiro/BorderoOficialPage';
+const DashboardFinanceiroPage = lazyModule(() => import('@/modules/financeiro/DashboardFinanceiroPage'), 'DashboardFinanceiroPage');
+const CarteirasEventosPage = lazyModule(() => import('@/modules/financeiro/CarteirasEventosPage'), 'CarteirasEventosPage');
+const ExtratoLedgerPage = lazyModule(() => import('@/modules/financeiro/ExtratoLedgerPage'), 'ExtratoLedgerPage');
+const TaxasRetencoesPage = lazyModule(() => import('@/modules/financeiro/TaxasRetencoesPage'), 'TaxasRetencoesPage');
+const SolicitacoesRepassePage = lazyModule(() => import('@/modules/financeiro/SolicitacoesRepassePage'), 'SolicitacoesRepassePage');
+const AntecipacoesPage = lazyModule(() => import('@/modules/financeiro/AntecipacoesPage'), 'AntecipacoesPage');
+const BorderoOficialPage = lazyModule(() => import('@/modules/financeiro/BorderoOficialPage'), 'BorderoOficialPage');
 
 // Modules 7, 8, 9: Relatórios, Suporte, Configurações
-import { RelatoriosConsolidadosPage } from '@/modules/relatorios/RelatoriosConsolidadosPage';
-import { SuporteChamadosPage } from '@/modules/suporte/SuporteChamadosPage';
-import { ConfiguracoesProdutorPage } from '@/modules/configuracoes/ConfiguracoesProdutorPage';
+const RelatoriosConsolidadosPage = lazyModule(() => import('@/modules/relatorios/RelatoriosConsolidadosPage'), 'RelatoriosConsolidadosPage');
+const SuporteChamadosPage = lazyModule(() => import('@/modules/suporte/SuporteChamadosPage'), 'SuporteChamadosPage');
+const ConfiguracoesProdutorPage = lazyModule(() => import('@/modules/configuracoes/ConfiguracoesProdutorPage'), 'ConfiguracoesProdutorPage');
 
 // Module Admin Master: Plataforma DiskIngressos
-import { DashboardAdminMasterPage } from '@/modules/admin/DashboardAdminMasterPage';
-import { GestaoProdutorasPage } from '@/modules/admin/GestaoProdutorasPage';
-import { EventosRedePage } from '@/modules/admin/EventosRedePage';
-import { ComiteCreditoAntecipacoesPage } from '@/modules/admin/ComiteCreditoAntecipacoesPage';
-import { RepassesGlobaisPage } from '@/modules/admin/RepassesGlobaisPage';
-import { RelatoriosPlataformaMasterPage } from '@/modules/admin/RelatoriosPlataformaMasterPage';
-import { ConfiguracoesPlataformaPage } from '@/modules/admin/ConfiguracoesPlataformaPage';
+const DashboardAdminMasterPage = lazyModule(() => import('@/modules/admin/DashboardAdminMasterPage'), 'DashboardAdminMasterPage');
+const GestaoProdutorasPage = lazyModule(() => import('@/modules/admin/GestaoProdutorasPage'), 'GestaoProdutorasPage');
+const EventosRedePage = lazyModule(() => import('@/modules/admin/EventosRedePage'), 'EventosRedePage');
+const ComiteCreditoAntecipacoesPage = lazyModule(() => import('@/modules/admin/ComiteCreditoAntecipacoesPage'), 'ComiteCreditoAntecipacoesPage');
+const RepassesGlobaisPage = lazyModule(() => import('@/modules/admin/RepassesGlobaisPage'), 'RepassesGlobaisPage');
+const RelatoriosPlataformaMasterPage = lazyModule(() => import('@/modules/admin/RelatoriosPlataformaMasterPage'), 'RelatoriosPlataformaMasterPage');
+const ConfiguracoesPlataformaPage = lazyModule(() => import('@/modules/admin/ConfiguracoesPlataformaPage'), 'ConfiguracoesPlataformaPage');
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -164,20 +167,16 @@ export const AppRoutes: React.FC = () => {
           <Route path="/eventos/:id/remarketing/campanhas" element={<CampanhasDisparosPage />} />
           <Route path="/eventos/:id/remarketing/consentimento" element={<ConsentimentoLgpdPage />} />
 
-          <Route path="/eventos/:id/relatorios" element={<RelatoriosConsolidadosPage />} />
-          <Route path="/eventos/:id/configuracoes" element={<ConfiguracoesProdutorPage />} />
-
           {/* Módulo 3: Comercial & CRM */}
           <Route path="/comercial" element={<DashboardComercialPage />} />
           <Route path="/comercial/produtores" element={<RadarProdutoresComercialPage />} />
-          <Route path="/comercial/radar-produtores" element={<RadarProdutoresComercialPage />} />
           <Route path="/comercial/clientes" element={<ClientesPage />} />
           <Route path="/comercial/oportunidades" element={<OportunidadesPage />} />
           <Route path="/comercial/propostas" element={<PropostasPage />} />
           <Route path="/comercial/vendas-corporativas" element={<VendasCorporativasPage />} />
           <Route path="/comercial/parceiros" element={<ParceirosPage />} />
 
-          {/* Módulo 4: Marketing & Mídia Paga (Hierarquia do Vídeo) */}
+          {/* Módulo 4: Marketing & Mídia Paga */}
           <Route path="/marketing" element={<DashboardMarketingPage />} />
           <Route path="/marketing/campanhas" element={<CampanhasPage />} />
           <Route path="/marketing/campanhas-prontas" element={<CampanhasProntasPage />} />
@@ -199,7 +198,7 @@ export const AppRoutes: React.FC = () => {
           <Route path="/marketing/integracoes" element={<IntegracoesAdsPage />} />
           <Route path="/marketing/publicos" element={<PublicosCriativosPage />} />
 
-          {/* Módulo 5: Remarketing & Conversão (Hierarquia do Vídeo) */}
+          {/* Módulo 5: Remarketing & Conversão */}
           <Route path="/remarketing" element={<HubRemarketingPage />} />
           <Route path="/remarketing/dashboard" element={<DashboardRemarketingPage />} />
           <Route path="/remarketing/carrinhos" element={<CarrinhosAbandonadosPage />} />

@@ -14,14 +14,14 @@ export const NovaCampanhaModal: React.FC<NovaCampanhaModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  if (!isOpen) return null;
-
   const [name, setName] = useState('');
   const [selectedEventId, setSelectedEventId] = useState(mockEvents[0]?.id || '');
   const [channel, setChannel] = useState<'META_ADS' | 'GOOGLE_ADS' | 'TIKTOK_ADS' | 'SPOTIFY_ADS'>('META_ADS');
   const [budget, setBudget] = useState(1000);
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  if (!isOpen) return null;
 
   const selectedEvent = mockEvents.find((e) => e.id === selectedEventId) || mockEvents[0];
 

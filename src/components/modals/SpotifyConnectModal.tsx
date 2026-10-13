@@ -12,13 +12,13 @@ export const SpotifyConnectModal: React.FC<SpotifyConnectModalProps> = ({
   onClose,
   onConnected,
 }) => {
-  if (!isOpen) return null;
-
   const [adAccountId, setAdAccountId] = useState('');
   const [capiToken, setCapiToken] = useState('');
   const [pixelId, setPixelId] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  if (!isOpen) return null;
 
   const handleConnect = (e: React.FormEvent) => {
     e.preventDefault();

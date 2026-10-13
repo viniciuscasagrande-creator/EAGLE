@@ -18,14 +18,14 @@ export const ConfirmarVendaRecoveryModal: React.FC<ConfirmarVendaRecoveryModalPr
   opportunity,
   onConfirmed,
 }) => {
-  if (!isOpen || !opportunity) return null;
-
   const [txId, setTxId] = useState(
-    opportunity.verifiedTransactionId || `E28919022026100914${Math.floor(1000 + Math.random() * 9000)}`
+    opportunity?.verifiedTransactionId || `E28919022026100914${Math.floor(1000 + Math.random() * 9000)}`
   );
   const [isValidating, setIsValidating] = useState(false);
   const [validationSuccess, setValidationSuccess] = useState<boolean | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  if (!isOpen || !opportunity) return null;
 
   const handleValidateAndConfirm = async (e: React.FormEvent) => {
     e.preventDefault();

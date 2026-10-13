@@ -1,6 +1,14 @@
 import { keeperRequest, ApiError, checkKeeperHealth } from './client';
 import { API_ENDPOINTS } from './endpoints';
 import {
+  ProducerSchema,
+  EventWalletPositionSchema,
+  CommercialClientSchema,
+  CommercialOpportunitySchema,
+  safeValidate,
+  safeValidateArray,
+} from './schemas';
+import {
   mockProducer,
   mockEvents,
   mockWallets,
@@ -128,16 +136,17 @@ export const keeperAdapter = {
         API_ENDPOINTS.FINANCE.PRODUCER_OVERVIEW(producerId)
       );
       if (data && data.producer) {
-        const result: Producer = {
+        const rawProducer = {
           ...data.producer,
           kpis: data.consolidatedKpis || data.producer.kpis,
         };
-        saveConfirmedSnapshot(cacheKey, result);
-        return result;
+        const validated = safeValidate(ProducerSchema, rawProducer, mockProducer);
+        saveConfirmedSnapshot(cacheKey, validated);
+        return validated;
       }
     } catch {
       const cached = getCachedSnapshot<Producer>(cacheKey);
-      if (cached?.data) return cached.data;
+      if (cached?.data) return safeValidate(ProducerSchema, cached.data, mockProducer);
     }
     return mockProducer;
   },
@@ -411,7 +420,7 @@ export const keeperAdapter = {
   async getEventWallets(): Promise<EventWalletPosition[]> {
     const data = await keeperRequest<EventWalletPosition[]>(API_ENDPOINTS.FINANCE.WALLETS);
     if (!Array.isArray(data)) throw new ApiError('Carteiras indisponíveis: resposta inválida.', 502);
-    return data;
+    return safeValidateArray(EventWalletPositionSchema, data, mockWallets);
   },
 
   /**
