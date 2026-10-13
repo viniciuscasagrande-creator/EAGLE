@@ -76,6 +76,13 @@ export const API_ENDPOINTS = {
     PRODUCER_RECOVER_BATCH: '/producer/remarketing/carts/recover-batch',
     PRODUCER_RULES: '/producer/remarketing/rules',
     PRODUCER_RULE_DETAIL: (id: string) => `/producer/remarketing/rules/${encodeURIComponent(id)}`,
+    PRODUCER_WHATSAPP_OPPORTUNITIES: '/producer/remarketing/whatsapp/opportunities',
+    PRODUCER_WHATSAPP_DISPATCH: (id: string) => `/producer/remarketing/whatsapp/opportunities/${encodeURIComponent(id)}/dispatch`,
+    PRODUCER_WHATSAPP_DISPATCH_BATCH: '/producer/remarketing/whatsapp/dispatch-batch',
+    PRODUCER_PAYMENTS_FAILED: '/producer/remarketing/payments/failed',
+    PRODUCER_PAYMENT_NEW_PIX: (id: string) => `/producer/remarketing/payments/${encodeURIComponent(id)}/new-pix`,
+    PRODUCER_EMAIL_METRICS: '/producer/remarketing/email/metrics',
+    PRODUCER_EMAIL_TEMPLATES: '/producer/remarketing/email/templates',
   },
 
   // Financeiro & Keeper Core Settlement (Motor Oficial)

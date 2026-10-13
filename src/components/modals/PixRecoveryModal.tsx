@@ -14,14 +14,13 @@ export const PixRecoveryModal: React.FC<PixRecoveryModalProps> = ({
   onClose,
   opportunity,
 }) => {
-  if (!isOpen || !opportunity) return null;
-
   const [copied, setCopied] = useState(false);
-  const pixCode =
-    opportunity.pixKey ||
-    `00020126580014br.gov.bcb.pix0136${opportunity.id}-disk520400005303986540${opportunity.cartValue.toFixed(2)}5802BR5913DiskIngressos`;
+
+  if (!isOpen || !opportunity) return null;
+  const pixCode = opportunity.pixKey || '';
 
   const handleCopy = () => {
+    if (!pixCode) return;
     navigator.clipboard.writeText(pixCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -46,7 +45,7 @@ export const PixRecoveryModal: React.FC<PixRecoveryModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#37393e] transition"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#37393e] transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -76,13 +75,13 @@ export const PixRecoveryModal: React.FC<PixRecoveryModalProps> = ({
 
           <div>
             <label className="block font-semibold text-slate-200 mb-1.5">
-              Código PIX Copia-e-Cola (Gerado pelo Gateway Oficial)
+              Código PIX retornado pelo serviço oficial de pagamentos
             </label>
             <div className="relative">
               <textarea
                 readOnly
                 rows={3}
-                value={pixCode}
+                value={pixCode || 'PIX indisponível. Solicite um código válido ao serviço de pagamentos.'}
                 className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-slate-300 font-mono text-[11px] resize-none select-all focus:outline-none"
               />
             </div>
@@ -91,14 +90,17 @@ export const PixRecoveryModal: React.FC<PixRecoveryModalProps> = ({
           <div className="flex items-center justify-between gap-3 pt-2">
             <div className="flex items-center gap-1.5 text-slate-400 text-[11px]">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Validade: 30 minutos</span>
+              <span>Verifique validade no provedor</span>
             </div>
 
             <button
               type="button"
               onClick={handleCopy}
+              disabled={!pixCode}
               className={`flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-lg transition cursor-pointer ${
-                copied
+                !pixCode
+                  ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                  : copied
                   ? 'bg-emerald-600 text-white'
                   : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold shadow-md'
               }`}

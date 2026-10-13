@@ -1,84 +1,105 @@
-import React, { useState } from 'react';
-import { CreditCard, AlertTriangle, RefreshCw, CheckCircle2, Clock, Download, QrCode, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { eagleRecoveryApi } from '@/services/api/eagleRecovery';
+import type { PaymentRecoveryItem } from '@/types/remarketing';
+import { CreditCard, AlertTriangle, RefreshCw, CheckCircle2, Clock, Download, QrCode, X, AlertCircle } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
 import { PixRecoveryModal } from '@/components/modals/PixRecoveryModal';
 import { RecoveryOpportunity } from '@/types/remarketing';
 import { downloadCsv } from '@/utils/csvExport';
+
+type PaymentRow = {
+  id: string;
+  order: string;
+  customer: string;
+  phone: string;
+  email: string;
+  method: string;
+  issue: string;
+  amount: number;
+  event: string;
+  time: string;
+  status: string;
+  eventId: string;
+};
 
 export const RecuperacaoPagamentoPage: React.FC = () => {
   const [selectedOpp, setSelectedOpp] = useState<RecoveryOpportunity | null>(null);
   const [isPixModalOpen, setIsPixModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const [paymentIssues, setPaymentIssues] = useState([
-    {
-      id: 'pay-01',
-      order: 'PED-90812',
-      customer: 'Carlos Eduardo Mendes',
-      phone: '(41) 98844-3321',
-      email: 'carlos.mendes@uol.com.br',
-      method: 'Cartão de Crédito',
-      issue: 'Bloqueio Antifraude / Cartão Não Autorizado',
-      amount: 520.0,
-      event: 'Festival XYZ 2026',
-      time: 'Há 18 min',
-      status: 'Pendente',
-    },
-    {
-      id: 'pay-02',
-      order: 'PED-90760',
-      customer: 'Tatiane Cristina Prado',
-      phone: '(41) 99122-8877',
-      email: 'tatiane.prado@gmail.com',
-      method: 'PIX Copia e Cola',
-      issue: 'PIX Expirado sem Pagamento em 15 minutos',
-      amount: 260.0,
-      event: 'Festival XYZ 2026',
-      time: 'Há 42 min',
-      status: 'Em Contato',
-    },
-    {
-      id: 'pay-03',
-      order: 'PED-90510',
-      customer: 'Roberto Fagundes',
-      phone: '(41) 98455-9090',
-      email: 'roberto.f@corp.com.br',
-      method: 'Boleto Bancário',
-      issue: 'Vencimento Ultrapassado',
-      amount: 840.0,
-      event: 'Festival XYZ 2026',
-      time: 'Há 2h',
-      status: 'Pendente',
-    },
-  ]);
+  const [paymentIssues, setPaymentIssues] = useState<PaymentRow[]>([]);
+  const [loadError, setLoadError] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  const handleOpenRecovery = (p: typeof paymentIssues[0]) => {
-    const opp: RecoveryOpportunity = {
-      id: p.id,
-      customerName: p.customer,
-      customerPhone: p.phone,
-      customerEmail: p.email,
-      eventId: 'evt-xyz',
-      eventName: p.event,
-      utmSource: 'recuperacao_gateway',
-      utmCampaign: 'falha_cobranca',
-      itemsDescription: `Pedido ${p.order} (${p.method})`,
-      ticketCount: 2,
-      cartValue: p.amount,
-      timeAgo: p.time,
-      abandonedAt: new Date().toISOString(),
-      status: 'EM_RESGATE',
-      channel: 'WHATSAPP',
-    };
-    setSelectedOpp(opp);
-    setIsPixModalOpen(true);
+  const refreshPayments = async () => {
+    setLoadError('');
+    try {
+      const rows = await eagleRecoveryApi.listFailedPayments();
+      if (Array.isArray(rows)) {
+        setPaymentIssues(
+          rows.map((p) => ({
+            id: p.id,
+            order: p.orderNumber,
+            customer: p.customerName,
+            phone: p.customerPhone,
+            email: p.customerEmail,
+            method: p.paymentMethod,
+            issue: p.issueType,
+            amount: p.amount,
+            event: p.eventName,
+            eventId: p.eventId,
+            time: p.createdAt,
+            status: p.status,
+          }))
+        );
+      }
+    } catch (e) {
+      setPaymentIssues([]);
+      setLoadError(e instanceof Error ? e.message : 'API indisponível');
+    }
+  };
 
-    // Update status to "Link Enviado"
-    setPaymentIssues((prev) =>
-      prev.map((item) => (item.id === p.id ? { ...item, status: 'Link PIX Gerado' } : item))
-    );
-    setToastMessage(`Chave PIX e novo link gerados com sucesso para ${p.customer}!`);
-    setTimeout(() => setToastMessage(null), 5000);
+  useEffect(() => {
+    void refreshPayments();
+  }, []);
+
+  const handleOpenRecovery = async (p: PaymentRow) => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const pix = await eagleRecoveryApi.requestNewPix(p.id);
+      if (!pix.paymentReference || !pix.pixCopyPaste || !pix.expiresAt) {
+        throw new Error('Código PIX não confirmado pelo provedor');
+      }
+
+      const opp: RecoveryOpportunity = {
+        id: p.id,
+        customerName: p.customer,
+        customerPhone: p.phone,
+        customerEmail: p.email,
+        eventId: p.eventId,
+        eventName: p.event,
+        utmSource: '',
+        utmCampaign: '',
+        itemsDescription: `Pedido ${p.order}`,
+        ticketCount: 1,
+        cartValue: p.amount,
+        timeAgo: p.time,
+        abandonedAt: new Date().toISOString(),
+        status: 'EM_RESGATE',
+        channel: 'WHATSAPP',
+        pixKey: pix.pixCopyPaste,
+      };
+
+      setSelectedOpp(opp);
+      setIsPixModalOpen(true);
+      setToastMessage('Novo PIX retornado pelo serviço. Pagamento ainda não confirmado.');
+      setTimeout(() => setToastMessage(null), 5000);
+    } catch (e) {
+      setToastMessage(`Não foi possível gerar PIX: ${e instanceof Error ? e.message : 'erro desconhecido'}`);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleExportCsv = () => {
@@ -102,7 +123,7 @@ export const RecuperacaoPagamentoPage: React.FC = () => {
       p.event,
       p.method,
       p.issue,
-      p.amount.toFixed(2),
+      (p.amount || 0).toFixed(2),
       p.time,
       p.status,
     ]);
@@ -121,6 +142,18 @@ export const RecuperacaoPagamentoPage: React.FC = () => {
           </div>
           <button onClick={() => setToastMessage(null)} className="text-cyan-400 hover:text-white">
             <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {loadError && (
+        <div role="alert" className="border border-red-500/40 p-3 rounded-lg text-red-300 text-xs bg-red-500/10 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+            <span>Consulta indisponível: {loadError}. Nenhum pagamento fictício será exibido.</span>
+          </div>
+          <button onClick={() => void refreshPayments()} className="underline text-red-400 hover:text-white cursor-pointer ml-2">
+            Tentar novamente
           </button>
         </div>
       )}
@@ -164,46 +197,55 @@ export const RecuperacaoPagamentoPage: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-[#37393e]">
-            {paymentIssues.map((p) => (
-              <tr key={p.id} className="hover:bg-[#25262c] transition">
-                <td className="p-3.5">
-                  <div className="font-bold text-white">{p.customer}</div>
-                  <div className="font-mono text-slate-400 text-[11px]">{p.order} • {p.phone}</div>
-                </td>
-                <td className="p-3.5 text-slate-300">{p.event}</td>
-                <td className="p-3.5 font-mono text-slate-200">{p.method}</td>
-                <td className="p-3.5 text-rose-300">
-                  <div className="flex items-center gap-1.5 bg-rose-500/10 px-2 py-1 rounded border border-rose-500/20">
-                    <AlertTriangle className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" />
-                    <span>{p.issue}</span>
-                  </div>
-                </td>
-                <td className="p-3.5 font-extrabold text-white text-sm">{formatCurrency(p.amount)}</td>
-                <td className="p-3.5 text-slate-400 font-mono text-[11px]">{p.time}</td>
-                <td className="p-3.5 text-center">
-                  <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold ${
-                      p.status === 'Link PIX Gerado'
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                        : p.status === 'Em Contato'
-                        ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                        : 'bg-slate-700/50 text-slate-300 border border-slate-600'
-                    }`}
-                  >
-                    {p.status}
-                  </span>
-                </td>
-                <td className="p-3.5 text-right">
-                  <button
-                    onClick={() => handleOpenRecovery(p)}
-                    className="flex items-center gap-1.5 ml-auto px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-lg transition cursor-pointer text-xs shadow"
-                  >
-                    <QrCode className="w-3.5 h-3.5" />
-                    <span>Novo Link PIX</span>
-                  </button>
+            {paymentIssues.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="p-8 text-center text-slate-400">
+                  Nenhuma transação recusada pendente de recuperação.
                 </td>
               </tr>
-            ))}
+            ) : (
+              paymentIssues.map((p) => (
+                <tr key={p.id} className="hover:bg-[#25262c] transition">
+                  <td className="p-3.5">
+                    <div className="font-bold text-white">{p.customer}</div>
+                    <div className="font-mono text-slate-400 text-[11px]">{p.order} • {p.phone}</div>
+                  </td>
+                  <td className="p-3.5 text-slate-300">{p.event}</td>
+                  <td className="p-3.5 font-mono text-slate-200">{p.method}</td>
+                  <td className="p-3.5 text-rose-300">
+                    <div className="flex items-center gap-1.5 bg-rose-500/10 px-2 py-1 rounded border border-rose-500/20">
+                      <AlertTriangle className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" />
+                      <span>{p.issue}</span>
+                    </div>
+                  </td>
+                  <td className="p-3.5 font-extrabold text-white text-sm">{formatCurrency(p.amount || 0)}</td>
+                  <td className="p-3.5 text-slate-400 font-mono text-[11px]">{p.time}</td>
+                  <td className="p-3.5 text-center">
+                    <span
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold ${
+                        p.status === 'Link PIX Gerado' || p.status === 'RECOVERED'
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          : p.status === 'Em Contato' || p.status === 'RETRIEVING'
+                          ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                          : 'bg-slate-700/50 text-slate-300 border border-slate-600'
+                      }`}
+                    >
+                      {p.status}
+                    </span>
+                  </td>
+                  <td className="p-3.5 text-right">
+                    <button
+                      onClick={() => void handleOpenRecovery(p)}
+                      disabled={busy}
+                      className="flex items-center gap-1.5 ml-auto px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-lg transition cursor-pointer text-xs shadow"
+                    >
+                      <QrCode className="w-3.5 h-3.5" />
+                      <span>Novo Link PIX</span>
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -216,3 +258,4 @@ export const RecuperacaoPagamentoPage: React.FC = () => {
     </div>
   );
 };
+export default RecuperacaoPagamentoPage;
