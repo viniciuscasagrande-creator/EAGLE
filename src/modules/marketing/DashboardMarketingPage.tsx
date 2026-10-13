@@ -21,10 +21,16 @@ import {
   FileSpreadsheet,
 } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/utils/formatters';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useEventContext } from '@/contexts/EventContext';
 
 export const DashboardMarketingPage: React.FC = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id?: string }>();
+  const { selectedEvent } = useEventContext();
+  const activeEventId = id || selectedEvent?.id;
+  const basePath = activeEventId ? `/eventos/${activeEventId}/marketing` : '/marketing';
+
   const [campaigns, setCampaigns] = useState<MarketingCampaign[]>([]);
   const [isNovaCampanhaModalOpen, setIsNovaCampanhaModalOpen] = useState(false);
 
@@ -70,7 +76,7 @@ export const DashboardMarketingPage: React.FC = () => {
           </button>
 
           <button
-            onClick={() => navigate('/marketing/whatsapp')}
+            onClick={() => navigate(basePath + '/whatsapp')}
             className="flex items-center gap-1.5 bg-[#2c2d33] hover:bg-[#37393e] text-slate-200 hover:text-white border border-[#37393e] text-xs font-bold px-3 py-2 rounded-lg transition cursor-pointer"
           >
             <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
@@ -78,7 +84,7 @@ export const DashboardMarketingPage: React.FC = () => {
           </button>
 
           <button
-            onClick={() => navigate('/marketing/email')}
+            onClick={() => navigate(basePath + '/email')}
             className="flex items-center gap-1.5 bg-[#2c2d33] hover:bg-[#37393e] text-slate-200 hover:text-white border border-[#37393e] text-xs font-bold px-3 py-2 rounded-lg transition cursor-pointer"
           >
             <Mail className="w-3.5 h-3.5 text-blue-400" />
@@ -86,7 +92,7 @@ export const DashboardMarketingPage: React.FC = () => {
           </button>
 
           <button
-            onClick={() => navigate('/marketing/campanhas-prontas')}
+            onClick={() => navigate(basePath + '/campanhas-prontas')}
             className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg shadow-md transition cursor-pointer"
           >
             <Sparkles className="w-3.5 h-3.5" />
@@ -94,7 +100,15 @@ export const DashboardMarketingPage: React.FC = () => {
           </button>
 
           <button
-            onClick={() => navigate('/marketing/relatorios')}
+            onClick={() => navigate(basePath + '/integracoes')}
+            className="flex items-center gap-1.5 bg-[#2c2d33] hover:bg-[#37393e] text-slate-200 hover:text-white border border-[#37393e] text-xs font-bold px-3 py-2 rounded-lg transition cursor-pointer"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+            <span>Tokens Ads</span>
+          </button>
+
+          <button
+            onClick={() => navigate(basePath + '/relatorios')}
             className="flex items-center gap-1.5 bg-[#2c2d33] hover:bg-[#37393e] text-slate-200 hover:text-white border border-[#37393e] text-xs font-bold px-3 py-2 rounded-lg transition cursor-pointer"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-purple-400" />
@@ -123,7 +137,7 @@ export const DashboardMarketingPage: React.FC = () => {
         </div>
 
         <button
-          onClick={() => navigate('/marketing/spotify-ads')}
+          onClick={() => navigate(basePath + '/spotify-ads')}
           className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition flex-shrink-0 cursor-pointer shadow-md"
         >
           <span>Acessar Painel Spotify</span>

@@ -97,6 +97,12 @@ export interface UtmLinkItem {
   utmMedium: string;
   utmCampaign: string;
   utmContent?: string;
+  utmTerm?: string;
+  adPlatform?: 'meta' | 'google' | 'tiktok' | 'spotify' | 'whatsapp' | 'email' | 'influencer' | 'organic';
+  adSpend?: number;
+  roas?: number;
+  shortUrl?: string;
+  coupon?: string;
   clicks: number;
   visitors: number;
   conversions: number;

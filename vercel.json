@@ -2,6 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/api/v1/producer/marketing/(.*)",
+      "destination": "/api/producer-marketing?path=$1"
+    },
+    {
       "source": "/api/v1/(.*)",
       "destination": "https://keeper-tng6.vercel.app/api/v1/$1"
     },

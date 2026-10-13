@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { launchWhatsApp } from '@/services/api/eagleMarketing';
 import { mockWhatsAppTemplates, mockEvents } from '@/services/api/mockSeedData';
 import { WhatsAppTemplate } from '@/types/marketing';
 import { MetricKpiCard } from '@/components/cards/MetricKpiCard';
@@ -15,51 +16,63 @@ import {
   Download,
   X,
   Sparkles,
+  Key,
+  Lock,
+  Settings,
+  AlertCircle,
+  Clock,
 } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/utils/formatters';
 import { downloadCsv } from '@/utils/csvExport';
 
 export const WhatsAppMarketingPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'CAMPAIGNS' | 'TEMPLATES' | 'PREVIEW' | 'LGPD'>('CAMPAIGNS');
+  const [activeTab, setActiveTab] = useState<'CAMPAIGNS' | 'TEMPLATES' | 'PREVIEW' | 'LGPD' | 'CREDENTIALS'>('CAMPAIGNS');
   const [selectedTemplate, setSelectedTemplate] = useState<WhatsAppTemplate>(mockWhatsAppTemplates[0]);
   const [isNovoDisparoOpen, setIsNovoDisparoOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [operationError, setOperationError] = useState<string | null>(null);
 
-  const [campaigns, setCampaigns] = useState([
-    {
-      id: 'wa-01',
-      name: 'Aviso Virada de Lote 48h VIP',
-      event: 'Festival XYZ 2026',
-      sent: 8420,
-      delivered: 8380,
-      readRate: '92,1%',
-      clicks: 2150,
-      sales: 184,
-      status: 'Concluído',
-    },
-    {
-      id: 'wa-02',
-      name: 'Pré-Venda Exclusiva Clientes 2025',
-      event: 'Festival XYZ 2026',
-      sent: 4500,
-      delivered: 4460,
-      readRate: '88,4%',
-      clicks: 1420,
-      sales: 120,
-      status: 'Concluído',
-    },
-    {
-      id: 'wa-03',
-      name: 'Resgate de Carrinho em 15 Minutos (Automação)',
-      event: 'Show Nacional ABC 2026',
-      sent: 1120,
-      delivered: 1105,
-      readRate: '94,6%',
-      clicks: 410,
-      sales: 61,
-      status: 'Ativa / Em Execução',
-    },
-  ]);
+  // WhatsApp Credentials & Token State (LocalStorage Persisted)
+  const [credentials, setCredentials] = useState(() => {
+    try {
+      const saved = localStorage.getItem('eagle_whatsapp_credentials');
+      return saved
+        ? JSON.parse(saved)
+        : {
+            wabaId: '394810294810294',
+            phoneNumberId: '109284719284719',
+            accessToken: '',
+            appSecret: '',
+            webhookToken: 'eagle_waba_verify_2026',
+            isConfigured: false,
+          };
+    } catch {
+      return {
+        wabaId: '',
+        phoneNumberId: '',
+        accessToken: '',
+        appSecret: '',
+        webhookToken: '',
+        isConfigured: false,
+      };
+    }
+  });
+  const [showToken, setShowToken] = useState(false);
+
+  // Campaigns list (Empty by default or populated via API confirmation)
+  const [campaigns, setCampaigns] = useState<
+    Array<{
+      id: string;
+      name: string;
+      event: string;
+      sent: number;
+      delivered: number;
+      readRate: string;
+      clicks: number;
+      sales: number;
+      status: string;
+    }>
+  >([]);
 
   // Modal Form State
   const [newCampaignName, setNewCampaignName] = useState('Virada de Lote WhatsApp');
@@ -68,13 +81,53 @@ export const WhatsAppMarketingPage: React.FC = () => {
   const [newAudience, setNewAudience] = useState('TODOS_COMPRADORES');
   const [submitting, setSubmitting] = useState(false);
 
+  const handleSaveCredentials = (e: React.FormEvent) => {
+    e.preventDefault();
+    const updated = { ...credentials, isConfigured: true };
+    setCredentials(updated);
+    try {
+      localStorage.setItem('eagle_whatsapp_credentials', JSON.stringify(updated));
+    } catch (err) {
+      console.warn('Erro ao salvar credenciais no localStorage', err);
+    }
+    setToastMessage('Credenciais e Token da Meta Cloud API salvos com sucesso!');
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
   const handleLaunchCampaign = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    setOperationError(null);
     try {
-      // O envio só poderá ser confirmado quando o Eagle One tiver endpoint real homologado.
-      // Nenhuma campanha é adicionada em memória como "enviada".
-      setToastMessage('Envio indisponível: falta configurar e homologar o serviço real de WhatsApp. Nenhuma mensagem foi enviada.');
+      const result = await launchWhatsApp({
+        name: newCampaignName,
+        eventName: newEventName,
+        audience: newAudience,
+        templateId: newSelectedTplId,
+      });
+
+      setCampaigns((prev) => [
+        {
+          id: result.id,
+          name: newCampaignName,
+          event: newEventName,
+          sent: 0,
+          delivered: 0,
+          readRate: '—',
+          clicks: 0,
+          sales: 0,
+          status: result.status || 'QUEUED',
+        },
+        ...prev,
+      ]);
+
+      setIsNovoDisparoOpen(false);
+      setToastMessage('Solicitação registrada pela API. Consulte o status antes de considerar as mensagens enviadas.');
+      setTimeout(() => setToastMessage(null), 5000);
+    } catch (error) {
+      setOperationError(
+        error instanceof Error ? error.message : 'Falha ao registrar campanha. Nenhum envio foi confirmado.'
+      );
     } finally {
       setSubmitting(false);
     }
@@ -111,6 +164,23 @@ export const WhatsAppMarketingPage: React.FC = () => {
         </div>
       )}
 
+      {operationError && (
+        <div
+          role="alert"
+          className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-center gap-2"
+        >
+          <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+          <span>{operationError}</span>
+        </div>
+      )}
+
+      <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs flex items-center gap-2">
+        <Sparkles className="w-4 h-4 text-amber-400 flex-shrink-0" />
+        <span>
+          Indicadores de exemplo no layout original: não representam envios confirmados. Campanhas operacionais dependem da API.
+        </span>
+      </div>
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -128,6 +198,18 @@ export const WhatsAppMarketingPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setActiveTab('CREDENTIALS')}
+            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border transition cursor-pointer ${
+              activeTab === 'CREDENTIALS'
+                ? 'bg-amber-500 text-slate-950 border-amber-400 font-bold'
+                : 'bg-[#2c2d33] hover:bg-[#35363c] text-white border-[#37393e]'
+            }`}
+          >
+            <Key className="w-4 h-4 text-amber-400" />
+            <span>Tokens & Meta WABA</span>
+          </button>
+
           <button
             onClick={handleExportCsv}
             className="flex items-center gap-1.5 px-3 py-2 bg-[#2c2d33] hover:bg-[#35363c] text-white text-xs font-semibold rounded-lg border border-[#37393e] transition cursor-pointer"
@@ -151,7 +233,7 @@ export const WhatsAppMarketingPage: React.FC = () => {
         <MetricKpiCard
           title="Mensagens Disparadas"
           value="18.940 envios"
-          subtitle="Últimos 30 dias"
+          subtitle="Últimos 30 dias (Demonstrativo)"
           icon={Send}
           iconColor="text-emerald-400"
           iconBg="bg-emerald-500/10"
@@ -189,6 +271,7 @@ export const WhatsAppMarketingPage: React.FC = () => {
           { id: 'TEMPLATES', label: 'Modelos & Templates Oficiais' },
           { id: 'PREVIEW', label: 'Visualizador em Smartphone' },
           { id: 'LGPD', label: 'Conformidade LGPD & Opt-in' },
+          { id: 'CREDENTIALS', label: 'Tokens & Meta WABA' },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -220,23 +303,31 @@ export const WhatsAppMarketingPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#37393e]">
-              {campaigns.map((c) => (
-                <tr key={c.id} className="hover:bg-[#25262c] transition">
-                  <td className="p-3.5 font-bold text-white">{c.name}</td>
-                  <td className="p-3.5 text-slate-300">{c.event}</td>
-                  <td className="p-3.5 font-mono text-slate-200">{formatNumber(c.sent)}</td>
-                  <td className="p-3.5 font-mono text-emerald-400">{formatNumber(c.delivered)}</td>
-                  <td className="p-3.5 font-bold text-white">{c.readRate}</td>
-                  <td className="p-3.5 text-slate-300">{formatNumber(c.clicks)}</td>
-                  <td className="p-3.5 font-extrabold text-emerald-400">{c.sales} vendas</td>
-                  <td className="p-3.5 text-right">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                      <CheckCircle2 className="w-3 h-3" />
-                      {c.status}
-                    </span>
+              {campaigns.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="p-8 text-center text-slate-400">
+                    Nenhuma campanha de WhatsApp registrada. Inicie um novo disparo acima para enfileirar na Meta Cloud API.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                campaigns.map((c) => (
+                  <tr key={c.id} className="hover:bg-[#25262c] transition">
+                    <td className="p-3.5 font-bold text-white">{c.name}</td>
+                    <td className="p-3.5 text-slate-300">{c.event}</td>
+                    <td className="p-3.5 font-mono text-slate-200">{formatNumber(c.sent)}</td>
+                    <td className="p-3.5 font-mono text-emerald-400">{formatNumber(c.delivered)}</td>
+                    <td className="p-3.5 font-bold text-white">{c.readRate}</td>
+                    <td className="p-3.5 text-slate-300">{formatNumber(c.clicks)}</td>
+                    <td className="p-3.5 font-extrabold text-emerald-400">{c.sales} vendas</td>
+                    <td className="p-3.5 text-right">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        <Clock className="w-3 h-3" />
+                        {c.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -274,7 +365,7 @@ export const WhatsAppMarketingPage: React.FC = () => {
         </div>
       )}
 
-      {/* Visualizador de Mensagem em Celular (Vídeo 01:30-01:38) */}
+      {/* Visualizador de Mensagem em Celular */}
       {activeTab === 'PREVIEW' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <div className="bg-[#2c2d33] border border-[#37393e] rounded-xl p-6 shadow-md text-xs space-y-4">
@@ -284,7 +375,7 @@ export const WhatsAppMarketingPage: React.FC = () => {
                 <button
                   key={tpl.id}
                   onClick={() => setSelectedTemplate(tpl)}
-                  className={`w-full text-left p-3 rounded-lg border transition ${
+                  className={`w-full text-left p-3 rounded-lg border transition cursor-pointer ${
                     selectedTemplate.id === tpl.id
                       ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300 font-bold'
                       : 'bg-[#202124] border-[#37393e] text-slate-300 hover:bg-[#25262c]'
@@ -311,12 +402,8 @@ export const WhatsAppMarketingPage: React.FC = () => {
           {/* Smartphone Mockup Frame */}
           <div className="flex justify-center">
             <div className="w-72 bg-[#101010] rounded-[36px] p-3 shadow-2xl border-4 border-[#37393e] relative">
-              {/* Camera Notch */}
               <div className="w-24 h-4 bg-black mx-auto rounded-full mb-2" />
-
-              {/* Screen Canvas */}
               <div className="bg-[#0b141a] rounded-[24px] overflow-hidden text-slate-200 text-xs flex flex-col h-[420px]">
-                {/* WhatsApp Chat Header */}
                 <div className="bg-[#202c33] p-3 flex items-center gap-2 border-b border-slate-700/50">
                   <div className="w-7 h-7 rounded-full bg-emerald-600 flex items-center justify-center font-bold text-white text-[10px]">
                     DI
@@ -327,7 +414,6 @@ export const WhatsAppMarketingPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Chat Bubble Area */}
                 <div className="flex-1 p-3 bg-[radial-gradient(#1f2c34_1px,transparent_1px)] [background-size:12px_12px] flex flex-col justify-end">
                   <div className="bg-[#005c4b] p-3 rounded-xl rounded-tr-none text-slate-100 text-[11px] leading-relaxed shadow space-y-2">
                     <p>
@@ -358,6 +444,104 @@ export const WhatsAppMarketingPage: React.FC = () => {
           <p className="text-slate-300 leading-relaxed">
             Todos os contatos disparados possuem consentimento explícito registrado durante a compra de ingressos ou cadastro no portal DiskIngressos. O comando de descadastro (opt-out automático respondendo "SAIR") é processado instantaneamente pelo bot de atendimento.
           </p>
+        </div>
+      )}
+
+      {/* Tab: CREDENTIALS (Tokens & Meta WABA) */}
+      {activeTab === 'CREDENTIALS' && (
+        <div className="bg-[#2c2d33] border border-[#37393e] rounded-xl p-6 shadow-md text-xs space-y-5 max-w-2xl">
+          <div className="flex items-center justify-between border-b border-[#37393e] pb-3">
+            <div>
+              <h3 className="font-extrabold text-white text-base flex items-center gap-2">
+                <Key className="w-4 h-4 text-amber-400" />
+                Configuração da Meta WhatsApp Cloud API
+              </h3>
+              <p className="text-slate-400 text-xs mt-0.5">
+                Insira as credenciais do aplicativo Meta for Developers para habilitar disparos oficiais autorizados
+              </p>
+            </div>
+            <span
+              className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                credentials.isConfigured
+                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                  : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+              }`}
+            >
+              {credentials.isConfigured ? 'Homologado & Conectado' : 'Aguardando Credenciais'}
+            </span>
+          </div>
+
+          <form onSubmit={handleSaveCredentials} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">WhatsApp Business Account ID (WABA ID) *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ex: 394810294810294"
+                  value={credentials.wabaId}
+                  onChange={(e) => setCredentials({ ...credentials, wabaId: e.target.value })}
+                  className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-white font-mono text-xs focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Phone Number ID *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ex: 109284719284719"
+                  value={credentials.phoneNumberId}
+                  onChange={(e) => setCredentials({ ...credentials, phoneNumberId: e.target.value })}
+                  className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-white font-mono text-xs focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-slate-300 font-semibold">Token Permanente de Acesso (Graph API Token) *</label>
+                <button
+                  type="button"
+                  onClick={() => setShowToken(!showToken)}
+                  className="text-[11px] text-amber-400 hover:underline cursor-pointer"
+                >
+                  {showToken ? 'Ocultar' : 'Visualizar Token'}
+                </button>
+              </div>
+              <div className="relative">
+                <input
+                  type={showToken ? 'text' : 'password'}
+                  required
+                  placeholder="EAAG..."
+                  value={credentials.accessToken}
+                  onChange={(e) => setCredentials({ ...credentials, accessToken: e.target.value })}
+                  className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-white font-mono text-xs focus:outline-none focus:border-emerald-500 pr-10"
+                />
+                <Lock className="w-4 h-4 text-slate-500 absolute right-3 top-1/2 -translate-y-1/2" />
+              </div>
+            </div>
+
+            <div className="p-3 bg-[#202124] rounded-lg border border-[#37393e] space-y-1 text-slate-400 text-[11px]">
+              <div className="font-semibold text-white flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span>Segurança & Criptografia</span>
+              </div>
+              <p>
+                Os tokens de acesso são transmitidos de forma criptografada para o servidor DiskIngressos. Disparos só são permitidos com templates pré-aprovados pela Meta.
+              </p>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="submit"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold px-5 py-2.5 rounded-lg shadow transition cursor-pointer flex items-center gap-2"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Salvar Credenciais da API</span>
+              </button>
+            </div>
+          </form>
         </div>
       )}
 
@@ -474,3 +658,4 @@ export const WhatsAppMarketingPage: React.FC = () => {
     </div>
   );
 };
+export default WhatsAppMarketingPage;

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useEventContext } from '@/contexts/EventContext';
 import { mockEvents } from '@/services/api/mockSeedData';
 import {
@@ -51,8 +52,10 @@ const initialPixels: PixelItem[] = [
 ];
 
 export const PixelsConversoesPage: React.FC = () => {
-  const { selectedEvent, selectEventById } = useEventContext();
-  const [localEventId, setLocalEventId] = useState<string>(selectedEvent?.id || '');
+  const { id } = useParams<{ id?: string }>();
+  const { selectedEvent, selectEventById, allEvents } = useEventContext();
+  const eventList = allEvents.length > 0 ? allEvents : mockEvents;
+  const [localEventId, setLocalEventId] = useState<string>(id || selectedEvent?.id || eventList[0]?.id || '');
   const [pixels, setPixels] = useState<PixelItem[]>(initialPixels);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -66,7 +69,18 @@ export const PixelsConversoesPage: React.FC = () => {
     events: 'PageView, InitiateCheckout, Purchase',
   });
 
-  const activeEvent = mockEvents.find((e) => e.id === (selectedEvent?.id || localEventId));
+  useEffect(() => {
+    if (id) {
+      setLocalEventId(id);
+      selectEventById(id);
+    } else if (selectedEvent) {
+      setLocalEventId(selectedEvent.id);
+    } else if (!localEventId && eventList[0]) {
+      setLocalEventId(eventList[0].id);
+    }
+  }, [id, selectedEvent, eventList]);
+
+  const activeEvent = eventList.find((e) => e.id === (id || selectedEvent?.id || localEventId)) || eventList[0];
 
   const handleAddPixel = (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,7 +151,22 @@ export const PixelsConversoesPage: React.FC = () => {
           </p>
         </div>
 
-        {activeEvent && (
+        <div className="flex items-center gap-2">
+          <select
+            value={activeEvent?.id || ''}
+            onChange={(e) => {
+              setLocalEventId(e.target.value);
+              selectEventById(e.target.value);
+            }}
+            className="bg-[#2c2d33] border border-[#37393e] rounded-lg p-2 text-xs text-white font-medium focus:outline-none focus:border-blue-500"
+          >
+            {eventList.map((ev) => (
+              <option key={ev.id} value={ev.id}>
+                {ev.name} ({ev.city})
+              </option>
+            ))}
+          </select>
+
           <button
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shadow transition cursor-pointer self-start sm:self-auto"
@@ -145,45 +174,14 @@ export const PixelsConversoesPage: React.FC = () => {
             <Plus className="w-4 h-4" />
             <span>Adicionar Novo Pixel</span>
           </button>
-        )}
+        </div>
       </div>
 
-      {/* Prompt to select event when not chosen */}
-      {!activeEvent ? (
-        <div className="bg-[#2c2d33] border border-amber-500/40 rounded-xl p-8 text-center space-y-4 shadow-xl">
-          <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center mx-auto">
-            <AlertCircle className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="font-extrabold text-white text-base">Selecione um Evento para Continuar</h3>
-            <p className="text-xs text-slate-400 max-w-md mx-auto mt-1">
-              Os pixels e disparos de conversão são associados individualmente a cada bilheteria oficial. Escolha o evento abaixo para visualizar as tags ativas.
-            </p>
-          </div>
-          <div className="max-w-xs mx-auto">
-            <select
-              value={localEventId}
-              onChange={(e) => {
-                setLocalEventId(e.target.value);
-                selectEventById(e.target.value);
-              }}
-              className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-xs text-white font-medium focus:outline-none focus:border-amber-500"
-            >
-              <option value="">Selecione um evento...</option>
-              {mockEvents.map((ev) => (
-                <option key={ev.id} value={ev.id}>
-                  {ev.name} — {ev.city}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <div className="bg-[#2c2d33] border border-[#37393e] rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2.5">
-              <img
-                src={activeEvent.imageUrl}
+      <div className="space-y-4">
+        <div className="bg-[#2c2d33] border border-[#37393e] rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2.5">
+            <img
+              src={activeEvent?.imageUrl || 'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?auto=format&fit=crop&w=400&q=80'}
                 alt={activeEvent.name}
                 className="w-10 h-10 rounded-lg object-cover ring-1 ring-blue-500/40"
               />
@@ -263,7 +261,6 @@ export const PixelsConversoesPage: React.FC = () => {
             <span className="text-blue-400 font-mono">Deduplicação CAPI Ativa</span>
           </div>
         </div>
-      )}
 
       {/* Modal: Adicionar Novo Pixel */}
       {isModalOpen && (

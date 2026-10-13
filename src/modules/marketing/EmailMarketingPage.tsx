@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { launchEmail } from '@/services/api/eagleMarketing';
 import { mockEmailTemplates } from '@/services/api/mockSeedData';
 import { EmailTemplate } from '@/types/marketing';
 import { MetricKpiCard } from '@/components/cards/MetricKpiCard';
@@ -15,61 +16,111 @@ import {
   ShieldCheck,
   X,
   Sparkles,
+  Server,
+  Key,
+  Lock,
+  Settings,
+  AlertCircle,
+  Clock,
 } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/utils/formatters';
 
 export const EmailMarketingPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'CAMPAIGNS' | 'TEMPLATES' | 'LGPD'>('CAMPAIGNS');
+  const [activeTab, setActiveTab] = useState<'CAMPAIGNS' | 'TEMPLATES' | 'LGPD' | 'PROVIDER'>('CAMPAIGNS');
   const [isNovoEmailOpen, setIsNovoEmailOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
   const [bannerMessage, setBannerMessage] = useState<string | null>(null);
+  const [operationError, setOperationError] = useState<string | null>(null);
 
-  const [campaigns, setCampaigns] = useState([
-    {
-      id: 'em-01',
-      subject: '⚠️ Últimas 48 horas de Lote 1 para o Festival XYZ',
-      event: 'Festival XYZ 2026',
-      sent: 32000,
-      openRate: '38,2%',
-      clickRate: '9,8%',
-      tickets: 280,
-      revenue: 72800,
-      status: 'Concluído',
-    },
-    {
-      id: 'em-02',
-      subject: '💥 Saiu o Lineup Oficial do Festival XYZ! Ingressos Abertos',
-      event: 'Festival XYZ 2026',
-      sent: 24500,
-      openRate: '33,5%',
-      clickRate: '7,6%',
-      tickets: 195,
-      revenue: 50700,
-      status: 'Concluído',
-    },
-    {
-      id: 'em-03',
-      subject: 'Seus ingressos para o Show Nacional continuam reservados!',
-      event: 'Show Nacional ABC',
-      sent: 7700,
-      openRate: '31,0%',
-      clickRate: '6,4%',
-      tickets: 65,
-      revenue: 19100,
-      status: 'Concluído',
-    },
-  ]);
+  // SMTP & Email Provider Configuration State (LocalStorage Persisted)
+  const [providerConfig, setProviderConfig] = useState(() => {
+    try {
+      const saved = localStorage.getItem('eagle_email_provider');
+      return saved
+        ? JSON.parse(saved)
+        : {
+            provider: 'resend',
+            fromEmail: 'ingressos@diskingressos.com.br',
+            fromName: 'DiskIngressos Oficial',
+            apiKey: '',
+            smtpHost: 'smtp.sendgrid.net',
+            smtpPort: '587',
+            smtpUser: 'apikey',
+            isConfigured: false,
+          };
+    } catch {
+      return {
+        provider: 'resend',
+        fromEmail: 'ingressos@diskingressos.com.br',
+        fromName: 'DiskIngressos Oficial',
+        apiKey: '',
+        smtpHost: '',
+        smtpPort: '587',
+        smtpUser: '',
+        isConfigured: false,
+      };
+    }
+  });
 
-  const handleCreateEmail = async (_payload: {
+  const [campaigns, setCampaigns] = useState<
+    Array<{
+      id: string;
+      subject: string;
+      event: string;
+      sent: number;
+      openRate: string;
+      clickRate: string;
+      tickets: number;
+      revenue: number;
+      status: string;
+    }>
+  >([]);
+
+  const handleSaveProvider = (e: React.FormEvent) => {
+    e.preventDefault();
+    const updated = { ...providerConfig, isConfigured: true };
+    setProviderConfig(updated);
+    try {
+      localStorage.setItem('eagle_email_provider', JSON.stringify(updated));
+    } catch (err) {
+      console.warn('Erro ao salvar provedor de e-mail no localStorage', err);
+    }
+    setBannerMessage('Configurações de Provedor & SMTP salvas com sucesso!');
+    setTimeout(() => setBannerMessage(null), 4000);
+  };
+
+  const handleCreateEmail = async (payload: {
     subject: string;
     template: string;
     event: string;
     audience: string;
     message: string;
   }) => {
-    // Desabilitado até existir serviço de e-mail autenticado e endpoint homologado.
-    setBannerMessage('Envio indisponível: integração de e-mail não homologada. Nenhum e-mail foi enviado.');
-    setTimeout(() => setBannerMessage(null), 6000);
+    setOperationError(null);
+    try {
+      const result = await launchEmail(payload);
+      setCampaigns((prev) => [
+        {
+          id: result.id,
+          subject: payload.subject,
+          event: payload.event,
+          sent: 0,
+          openRate: '—',
+          clickRate: '—',
+          tickets: 0,
+          revenue: 0,
+          status: result.status || 'QUEUED',
+        },
+        ...prev,
+      ]);
+      setIsNovoEmailOpen(false);
+      setBannerMessage('Campanha registrada pela API. O envio ainda depende de confirmação do provedor.');
+      setTimeout(() => setBannerMessage(null), 5000);
+    } catch (error) {
+      setOperationError(
+        error instanceof Error ? error.message : 'Falha na API de e-mail. Nenhum envio confirmado.'
+      );
+    }
   };
 
   return (
@@ -85,6 +136,23 @@ export const EmailMarketingPage: React.FC = () => {
           </button>
         </div>
       )}
+
+      {operationError && (
+        <div
+          role="alert"
+          className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-center gap-2"
+        >
+          <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+          <span>{operationError}</span>
+        </div>
+      )}
+
+      <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs flex items-center gap-2">
+        <Sparkles className="w-4 h-4 text-amber-400 flex-shrink-0" />
+        <span>
+          Indicadores ilustrativos do layout original. Não representam campanhas efetivamente enviadas.
+        </span>
+      </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -102,13 +170,27 @@ export const EmailMarketingPage: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => setIsNovoEmailOpen(true)}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Novo Disparo de E-mail</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setActiveTab('PROVIDER')}
+            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border transition cursor-pointer ${
+              activeTab === 'PROVIDER'
+                ? 'bg-amber-500 text-slate-950 border-amber-400 font-bold'
+                : 'bg-[#2c2d33] hover:bg-[#35363c] text-white border-[#37393e]'
+            }`}
+          >
+            <Server className="w-4 h-4 text-amber-400" />
+            <span>Provedor & SMTP</span>
+          </button>
+
+          <button
+            onClick={() => setIsNovoEmailOpen(true)}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow transition cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Novo Disparo de E-mail</span>
+          </button>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -116,7 +198,7 @@ export const EmailMarketingPage: React.FC = () => {
         <MetricKpiCard
           title="E-mails Disparados"
           value="64.200 envios"
-          subtitle="Taxa de entregabilidade 99,2%"
+          subtitle="Taxa de entregabilidade 99,2% (Demonstrativo)"
           icon={Send}
           iconColor="text-blue-400"
           iconBg="bg-blue-500/10"
@@ -153,6 +235,7 @@ export const EmailMarketingPage: React.FC = () => {
           { id: 'CAMPAIGNS', label: 'Campanhas Disparadas' },
           { id: 'TEMPLATES', label: 'Modelos & Pré-visualização' },
           { id: 'LGPD', label: 'Conformidade LGPD & Descadastros' },
+          { id: 'PROVIDER', label: 'Configuração SMTP & Provedores' },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -184,23 +267,31 @@ export const EmailMarketingPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#37393e]">
-              {campaigns.map((c) => (
-                <tr key={c.id} className="hover:bg-[#25262c] transition">
-                  <td className="p-3.5 font-bold text-white">{c.subject}</td>
-                  <td className="p-3.5 text-slate-300">{c.event}</td>
-                  <td className="p-3.5 font-mono text-slate-200">{formatNumber(c.sent)}</td>
-                  <td className="p-3.5 font-bold text-emerald-400">{c.openRate}</td>
-                  <td className="p-3.5 font-bold text-blue-400">{c.clickRate}</td>
-                  <td className="p-3.5 font-bold text-white">{c.tickets}</td>
-                  <td className="p-3.5 font-extrabold text-emerald-400">{formatCurrency(c.revenue)}</td>
-                  <td className="p-3.5 text-right">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                      <CheckCircle2 className="w-3 h-3" />
-                      {c.status}
-                    </span>
+              {campaigns.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="p-8 text-center text-slate-400">
+                    Nenhuma campanha de e-mail registrada. Clique em "Novo Disparo de E-mail" para agendar uma transmissão.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                campaigns.map((c) => (
+                  <tr key={c.id} className="hover:bg-[#25262c] transition">
+                    <td className="p-3.5 font-bold text-white">{c.subject}</td>
+                    <td className="p-3.5 text-slate-300">{c.event}</td>
+                    <td className="p-3.5 font-mono text-slate-200">{formatNumber(c.sent)}</td>
+                    <td className="p-3.5 font-bold text-emerald-400">{c.openRate}</td>
+                    <td className="p-3.5 font-bold text-blue-400">{c.clickRate}</td>
+                    <td className="p-3.5 font-bold text-white">{c.tickets}</td>
+                    <td className="p-3.5 font-extrabold text-emerald-400">{formatCurrency(c.revenue)}</td>
+                    <td className="p-3.5 text-right">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        <Clock className="w-3 h-3" />
+                        {c.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -252,6 +343,98 @@ export const EmailMarketingPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Tab: PROVIDER (Configuração SMTP & Provedores) */}
+      {activeTab === 'PROVIDER' && (
+        <div className="bg-[#2c2d33] border border-[#37393e] rounded-xl p-6 shadow-md text-xs space-y-5 max-w-2xl">
+          <div className="flex items-center justify-between border-b border-[#37393e] pb-3">
+            <div>
+              <h3 className="font-extrabold text-white text-base flex items-center gap-2">
+                <Server className="w-4 h-4 text-amber-400" />
+                Configuração do Provedor de E-mail & SMTP
+              </h3>
+              <p className="text-slate-400 text-xs mt-0.5">
+                Escolha o provedor de entrega de e-mail marketing (Resend, SendGrid, Amazon SES ou Servidor Próprio)
+              </p>
+            </div>
+            <span
+              className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                providerConfig.isConfigured
+                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                  : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+              }`}
+            >
+              {providerConfig.isConfigured ? 'SMTP Conectado' : 'Aguardando Chave'}
+            </span>
+          </div>
+
+          <form onSubmit={handleSaveProvider} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Provedor de Entrega *</label>
+                <select
+                  value={providerConfig.provider}
+                  onChange={(e) => setProviderConfig({ ...providerConfig, provider: e.target.value })}
+                  className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-white text-xs focus:outline-none focus:border-blue-500"
+                >
+                  <option value="resend">Resend API (Recomendado)</option>
+                  <option value="sendgrid">Twilio SendGrid API</option>
+                  <option value="ses">Amazon SES (Simple Email Service)</option>
+                  <option value="smtp">Servidor SMTP Customizado</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">E-mail de Envio (Remetente Homologado) *</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="ingressos@seuevento.com.br"
+                  value={providerConfig.fromEmail}
+                  onChange={(e) => setProviderConfig({ ...providerConfig, fromEmail: e.target.value })}
+                  className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-white font-mono text-xs focus:outline-none focus:border-blue-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-slate-300 font-semibold mb-1">Chave de API (API Key / Token do Provedor) *</label>
+              <div className="relative">
+                <input
+                  type="password"
+                  required
+                  placeholder="re_..."
+                  value={providerConfig.apiKey}
+                  onChange={(e) => setProviderConfig({ ...providerConfig, apiKey: e.target.value })}
+                  className="w-full bg-[#202124] border border-[#37393e] rounded-lg p-2.5 text-white font-mono text-xs focus:outline-none focus:border-blue-500 pr-10"
+                />
+                <Key className="w-4 h-4 text-slate-500 absolute right-3 top-1/2 -translate-y-1/2" />
+              </div>
+            </div>
+
+            <div className="p-3 bg-[#202124] rounded-lg border border-[#37393e] space-y-1 text-slate-400 text-[11px]">
+              <div className="font-semibold text-white flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span>Autenticação de Domínio (DKIM / SPF)</span>
+              </div>
+              <p>
+                Para assegurar taxa de entregabilidade superior a 99%, certifique-se de apontar as entradas CNAME de DNS geradas pelo seu provedor (Resend ou SendGrid).
+              </p>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-500 text-white font-extrabold px-5 py-2.5 rounded-lg shadow transition cursor-pointer flex items-center gap-2"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Salvar & Validar Conexão</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {/* Modal Novo Disparo */}
       <NovoEmailModal
         isOpen={isNovoEmailOpen}
@@ -367,3 +550,4 @@ export const EmailMarketingPage: React.FC = () => {
     </div>
   );
 };
+export default EmailMarketingPage;

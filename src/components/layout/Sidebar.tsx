@@ -40,13 +40,20 @@ export const Sidebar: React.FC = () => {
     eventRemarketing: false,
   });
 
-  const { selectedEvent, clearSelectedEvent } = useEventContext();
+  const { selectedEvent, clearSelectedEvent, selectEventById } = useEventContext();
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Auto-expand the active section based on current URL path
+  // Auto-expand the active section based on current URL path and sync selectedEvent
   useEffect(() => {
     const path = location.pathname;
+    const match = path.match(/\/eventos\/([^/]+)/);
+    if (match && match[1] && match[1] !== 'novo' && match[1] !== 'comparar' && match[1] !== 'telao' && match[1] !== 'portaria') {
+      if (!selectedEvent || selectedEvent.id !== match[1]) {
+        selectEventById(match[1]);
+      }
+    }
+
     if (path.includes('/marketing')) {
       setOpenSubmenus((prev) => ({ ...prev, marketing: true, eventMarketing: true }));
     } else if (path.includes('/remarketing')) {
@@ -60,7 +67,7 @@ export const Sidebar: React.FC = () => {
     } else if (path.startsWith('/financeiro')) {
       setOpenSubmenus((prev) => ({ ...prev, financeiro: true }));
     }
-  }, [location.pathname]);
+  }, [location.pathname, selectedEvent, selectEventById]);
 
   const toggleSubmenu = (key: string) => {
     setOpenSubmenus((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -225,29 +232,39 @@ export const Sidebar: React.FC = () => {
 
           {/* Marketing do Evento com Submenus */}
           <div>
-            <button
-              onClick={() => toggleSubmenu('eventMarketing')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                location.pathname.includes(`/eventos/${selectedEvent.id}/marketing`)
-                  ? 'text-indigo-300 bg-indigo-500/10 border border-indigo-500/20'
-                  : 'text-slate-300 hover:bg-[#25262c] hover:text-white'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Megaphone className="w-4 h-4 flex-shrink-0 text-indigo-400" />
+            <div className="flex items-center justify-between">
+              <NavLink
+                to={`/eventos/${selectedEvent.id}/marketing`}
+                end
+                className={({ isActive }) =>
+                  `flex-1 flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                    location.pathname.includes(`/eventos/${selectedEvent.id}/marketing`)
+                      ? 'text-amber-400 bg-amber-500/10 border border-amber-500/20'
+                      : 'text-slate-300 hover:bg-[#25262c] hover:text-white'
+                  }`
+                }
+              >
+                <Megaphone className="w-4 h-4 flex-shrink-0 text-amber-400" />
                 {!collapsed && <span>Marketing do Evento</span>}
-              </div>
+              </NavLink>
               {!collapsed && (
-                <ChevronDown
-                  className={`w-3.5 h-3.5 transition-transform ${
-                    openSubmenus.eventMarketing ? 'rotate-180' : ''
-                  }`}
-                />
+                <button
+                  type="button"
+                  onClick={() => toggleSubmenu('eventMarketing')}
+                  className="p-1.5 text-slate-400 hover:text-white transition cursor-pointer"
+                  title="Expandir/recolher submenus"
+                >
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 transition-transform ${
+                      openSubmenus.eventMarketing ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
               )}
-            </button>
+            </div>
 
             {openSubmenus.eventMarketing && !collapsed && (
-              <div className="ml-7 mt-1 space-y-0.5 border-l border-[#37393e] pl-2 max-h-[300px] overflow-y-auto pr-1">
+              <div className="ml-7 mt-1 space-y-0.5 border-l border-[#37393e] pl-2 max-h-[320px] overflow-y-auto pr-1">
                 <NavLink
                   to={`/eventos/${selectedEvent.id}/marketing`}
                   end
@@ -344,6 +361,18 @@ export const Sidebar: React.FC = () => {
                   className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
                 >
                   Tokens & Integrações Ads
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/marketing/publicos`}
+                  className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+                >
+                  Públicos & Criativos
+                </NavLink>
+                <NavLink
+                  to={`/eventos/${selectedEvent.id}/marketing/analytics`}
+                  className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+                >
+                  Analytics de Marketing
                 </NavLink>
                 <NavLink
                   to={`/eventos/${selectedEvent.id}/marketing/atribuicao`}
@@ -652,26 +681,36 @@ export const Sidebar: React.FC = () => {
 
         {/* 4. MARKETING (Hierarquia Integral do Vídeo) */}
         <div>
-          <button
-            onClick={() => toggleSubmenu('marketing')}
-            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition ${
-              location.pathname.startsWith('/marketing')
-                ? 'text-amber-400 bg-amber-500/10'
-                : 'text-slate-300 hover:bg-[#25262c] hover:text-white'
-            }`}
-          >
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between">
+            <NavLink
+              to="/marketing"
+              end
+              className={({ isActive }) =>
+                `flex-1 flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                  location.pathname.startsWith('/marketing')
+                    ? 'text-amber-400 bg-amber-500/10'
+                    : 'text-slate-300 hover:bg-[#25262c] hover:text-white'
+                }`
+              }
+            >
               <Megaphone className="w-4 h-4 flex-shrink-0 text-amber-400" />
               {!collapsed && <span>Marketing</span>}
-            </div>
+            </NavLink>
             {!collapsed && (
-              <ChevronDown
-                className={`w-3.5 h-3.5 transition-transform ${
-                  openSubmenus.marketing ? 'rotate-180' : ''
-                }`}
-              />
+              <button
+                type="button"
+                onClick={() => toggleSubmenu('marketing')}
+                className="p-1.5 text-slate-400 hover:text-white transition cursor-pointer"
+                title="Expandir/recolher submenus"
+              >
+                <ChevronDown
+                  className={`w-3.5 h-3.5 transition-transform ${
+                    openSubmenus.marketing ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
             )}
-          </button>
+          </div>
 
           {openSubmenus.marketing && !collapsed && (
             <div className="ml-7 mt-1 space-y-0.5 border-l border-[#37393e] pl-2 max-h-[360px] overflow-y-auto pr-1">
@@ -765,6 +804,24 @@ export const Sidebar: React.FC = () => {
                 className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
               >
                 Pixels & Conversões
+              </NavLink>
+              <NavLink
+                to="/marketing/integracoes"
+                className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+              >
+                Tokens & Integrações Ads
+              </NavLink>
+              <NavLink
+                to="/marketing/publicos"
+                className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+              >
+                Públicos & Criativos
+              </NavLink>
+              <NavLink
+                to="/marketing/analytics"
+                className={({ isActive }) => getMarketingSubmenuLinkClass(isActive)}
+              >
+                Analytics de Marketing
               </NavLink>
               <NavLink
                 to="/marketing/atribuicao"

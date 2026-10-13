@@ -56,6 +56,10 @@ export const API_ENDPOINTS = {
     },
     EMAIL: '/marketing/email',
     WHATSAPP: '/marketing/whatsapp',
+    PRODUCER_CAMPAIGNS: '/producer/marketing/campaigns',
+    PRODUCER_CAMPAIGN_STATUS: (id: string) => `/producer/marketing/campaigns/${encodeURIComponent(id)}/status`,
+    PRODUCER_WHATSAPP: '/producer/marketing/whatsapp/campaigns',
+    PRODUCER_EMAIL: '/producer/marketing/email/campaigns',
   },
 
   // Remarketing & Recuperação de Vendas

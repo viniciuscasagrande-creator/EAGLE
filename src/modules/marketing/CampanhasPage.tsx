@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { mockMarketingCampaigns } from '@/services/api/mockSeedData';
+import React, { useState, useEffect } from 'react';
+import { createPaidCampaign, updatePaidCampaign, getPaidCampaigns } from '@/services/api/eagleMarketing';
 import { MarketingCampaign } from '@/types/marketing';
 import {
   Megaphone,
@@ -12,16 +12,18 @@ import {
   CheckCircle2,
   X,
   Sparkles,
+  AlertCircle,
 } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/utils/formatters';
 import { downloadCsv } from '@/utils/csvExport';
 
 export const CampanhasPage: React.FC = () => {
-  const [campaigns, setCampaigns] = useState<MarketingCampaign[]>(mockMarketingCampaigns);
+  const [campaigns, setCampaigns] = useState<MarketingCampaign[]>([]);
   const [channelFilter, setChannelFilter] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [operationError, setOperationError] = useState<string | null>(null);
 
   // Form State
   const [name, setName] = useState('Conversão Feed & Reels');
@@ -30,62 +32,94 @@ export const CampanhasPage: React.FC = () => {
   const [dailyBudget, setDailyBudget] = useState('150.00');
   const [submitting, setSubmitting] = useState(false);
 
-  const toggleCampaignStatus = (id: string) => {
-    setCampaigns((prev) =>
-      prev.map((c) => {
-        if (c.id === id) {
-          const newStatus = c.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
-          setToastMessage(`Campanha "${c.name}" foi ${newStatus === 'ACTIVE' ? 'ativada' : 'pausada'} com sucesso.`);
-          setTimeout(() => setToastMessage(null), 4000);
-          return { ...c, status: newStatus as any };
-        }
-        return c;
-      })
-    );
+  // Carregar campanhas do backend se disponíveis
+  useEffect(() => {
+    getPaidCampaigns().then((data) => {
+      if (Array.isArray(data) && data.length > 0) {
+        setCampaigns(data);
+      }
+    });
+  }, []);
+
+  const toggleCampaignStatus = async (id: string) => {
+    setOperationError(null);
+    const current = campaigns.find((c) => c.id === id);
+    if (!current) return;
+    const target = current.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
+    try {
+      await updatePaidCampaign(id, target);
+      setCampaigns((prev) => prev.map((c) => (c.id === id ? { ...c, status: target } : c)));
+      setToastMessage('Status confirmado pela API.');
+      setTimeout(() => setToastMessage(null), 4000);
+    } catch (error) {
+      setOperationError(error instanceof Error ? error.message : 'Falha ao atualizar a campanha.');
+    }
   };
 
   const handleCreateCampaign = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 600));
+    setOperationError(null);
+    try {
+      const result = await createPaidCampaign({
+        name,
+        channel,
+        eventName,
+        dailyBudget: Number(dailyBudget),
+      });
 
-    const newCamp: MarketingCampaign = {
-      id: `camp-${Date.now()}`,
-      name,
-      channel,
-      eventName,
-      eventId: 'evt-xyz',
-      budgetSpent: 0,
-      impressions: 0,
-      clicks: 0,
-      ctr: 0,
-      conversions: 0,
-      attributedRevenue: 0,
-      roas: 0,
-      status: 'ACTIVE',
-      startDate: new Date().toISOString().slice(0, 10),
-      endDate: '2026-12-31',
-    };
+      const newCamp: MarketingCampaign = {
+        id: result.id,
+        name,
+        channel,
+        eventName,
+        eventId: '',
+        budgetSpent: 0,
+        impressions: 0,
+        clicks: 0,
+        ctr: 0,
+        conversions: 0,
+        attributedRevenue: 0,
+        roas: 0,
+        status: result.status === 'ACTIVE' || result.status === 'PAUSED' ? result.status : 'PAUSED',
+        startDate: new Date().toISOString().slice(0, 10),
+        endDate: '',
+      };
 
-    setCampaigns((prev) => [newCamp, ...prev]);
-    setIsModalOpen(false);
-    setSubmitting(false);
-    setToastMessage(`Nova campanha "${name}" criada e sincronizada com sucesso no canal ${channel}!`);
-    setTimeout(() => setToastMessage(null), 5000);
+      setCampaigns((prev) => [newCamp, ...prev]);
+      setIsModalOpen(false);
+      setToastMessage('Campanha registrada na API. Publicação no canal não confirmada.');
+      setTimeout(() => setToastMessage(null), 5000);
+    } catch (error) {
+      setOperationError(error instanceof Error ? error.message : 'Falha na criação. Nada publicado.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleExportCsv = () => {
-    const headers = ['Campanha', 'Evento', 'Canal', 'Investimento (R$)', 'Cliques', 'CTR (%)', 'Conversões', 'Receita Atribuída (R$)', 'ROAS', 'Status'];
+    const headers = [
+      'Campanha',
+      'Evento',
+      'Canal',
+      'Investimento (R$)',
+      'Cliques',
+      'CTR (%)',
+      'Conversões',
+      'Receita Atribuída (R$)',
+      'ROAS',
+      'Status',
+    ];
     const rows = filteredCampaigns.map((c) => [
       c.name,
       c.eventName,
       c.channel,
-      c.budgetSpent.toFixed(2),
-      c.clicks,
-      `${c.ctr}%`,
-      c.conversions,
-      c.attributedRevenue.toFixed(2),
-      `${c.roas}x`,
+      (c.budgetSpent || 0).toFixed(2),
+      c.clicks || 0,
+      `${c.ctr || 0}%`,
+      c.conversions || 0,
+      (c.attributedRevenue || 0).toFixed(2),
+      `${c.roas || 0}x`,
       c.status === 'ACTIVE' ? 'Ativa' : 'Pausada',
     ]);
     downloadCsv(headers, rows, `campanhas-midia-trafego-${new Date().toISOString().slice(0, 10)}.csv`);
@@ -101,9 +135,9 @@ export const CampanhasPage: React.FC = () => {
     return matchesSearch && matchesChannel;
   });
 
-  const totalSpent = campaigns.reduce((acc, c) => acc + c.budgetSpent, 0);
-  const totalRevenue = campaigns.reduce((acc, c) => acc + c.attributedRevenue, 0);
-  const totalConversions = campaigns.reduce((acc, c) => acc + c.conversions, 0);
+  const totalSpent = campaigns.reduce((acc, c) => acc + (c.budgetSpent || 0), 0);
+  const totalRevenue = campaigns.reduce((acc, c) => acc + (c.attributedRevenue || 0), 0);
+  const totalConversions = campaigns.reduce((acc, c) => acc + (c.conversions || 0), 0);
   const overallRoas = totalSpent > 0 ? (totalRevenue / totalSpent).toFixed(2) : '0';
 
   return (
@@ -119,6 +153,23 @@ export const CampanhasPage: React.FC = () => {
           </button>
         </div>
       )}
+
+      {operationError && (
+        <div
+          role="alert"
+          className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-center gap-2"
+        >
+          <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+          <span>{operationError}</span>
+        </div>
+      )}
+
+      <div className="p-3 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-xs flex items-center gap-2">
+        <Sparkles className="w-4 h-4 text-amber-400 flex-shrink-0" />
+        <span>
+          Dados de campanhas só serão exibidos após confirmação da API. Sem sincronização configurada, a listagem permanece vazia.
+        </span>
+      </div>
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -212,6 +263,7 @@ export const CampanhasPage: React.FC = () => {
           <option value="META_ADS">Meta Ads (Instagram / Facebook)</option>
           <option value="GOOGLE_ADS">Google Ads (Search & YouTube)</option>
           <option value="TIKTOK_ADS">TikTok Ads</option>
+          <option value="SPOTIFY_ADS">Spotify Ads</option>
         </select>
       </div>
 
@@ -232,57 +284,65 @@ export const CampanhasPage: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-[#37393e]">
-            {filteredCampaigns.map((camp) => {
-              const cpa = camp.conversions > 0 ? camp.budgetSpent / camp.conversions : 0;
-              return (
-                <tr key={camp.id} className="hover:bg-[#25262c] transition">
-                  <td className="p-3.5">
-                    <div className="font-bold text-white">{camp.name}</div>
-                    <div className="text-[11px] text-slate-400 mt-0.5">{camp.eventName}</div>
-                  </td>
-                  <td className="p-3.5">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#232429] text-cyan-400 border border-[#37393e]">
-                      {camp.channel.replace('_', ' ')}
-                    </span>
-                  </td>
-                  <td className="p-3.5 text-right font-bold text-white">
-                    {formatCurrency(camp.budgetSpent)}
-                  </td>
-                  <td className="p-3.5 text-center text-slate-300">
-                    <div>{formatNumber(camp.clicks)} clks</div>
-                    <div className="text-[10px] text-slate-400 font-mono">{camp.ctr}% CTR</div>
-                  </td>
-                  <td className="p-3.5 text-center font-bold text-blue-400">
-                    {camp.conversions} un
-                  </td>
-                  <td className="p-3.5 text-right text-slate-300 font-mono">
-                    {formatCurrency(cpa)}
-                  </td>
-                  <td className="p-3.5 text-right font-extrabold text-emerald-400">
-                    {formatCurrency(camp.attributedRevenue)}
-                  </td>
-                  <td className="p-3.5 text-center">
-                    <span className="font-extrabold text-teal-400 font-mono text-sm">
-                      {camp.roas}x
-                    </span>
-                  </td>
-                  <td className="p-3.5 text-right">
-                    <button
-                      onClick={() => toggleCampaignStatus(camp.id)}
-                      title="Clique para alternar status (Ativar / Pausar)"
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold cursor-pointer transition ${
-                        camp.status === 'ACTIVE'
-                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
-                          : 'bg-slate-700/40 text-slate-400 hover:bg-slate-700/70 border border-slate-600'
-                      }`}
-                    >
-                      {camp.status === 'ACTIVE' ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3 text-emerald-400" />}
-                      <span>{camp.status === 'ACTIVE' ? 'Ativa' : 'Pausada'}</span>
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
+            {filteredCampaigns.length === 0 ? (
+              <tr>
+                <td colSpan={9} className="p-8 text-center text-slate-400">
+                  Nenhuma campanha encontrada. Crie uma nova campanha acima para sincronizar com a API.
+                </td>
+              </tr>
+            ) : (
+              filteredCampaigns.map((camp) => {
+                const cpa = camp.conversions > 0 ? camp.budgetSpent / camp.conversions : 0;
+                return (
+                  <tr key={camp.id} className="hover:bg-[#25262c] transition">
+                    <td className="p-3.5">
+                      <div className="font-bold text-white">{camp.name}</div>
+                      <div className="text-[11px] text-slate-400 mt-0.5">{camp.eventName}</div>
+                    </td>
+                    <td className="p-3.5">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#232429] text-cyan-400 border border-[#37393e]">
+                        {camp.channel.replace('_', ' ')}
+                      </span>
+                    </td>
+                    <td className="p-3.5 text-right font-bold text-white">
+                      {formatCurrency(camp.budgetSpent || 0)}
+                    </td>
+                    <td className="p-3.5 text-center text-slate-300">
+                      <div>{formatNumber(camp.clicks || 0)} clks</div>
+                      <div className="text-[10px] text-slate-400 font-mono">{camp.ctr || 0}% CTR</div>
+                    </td>
+                    <td className="p-3.5 text-center font-bold text-blue-400">
+                      {camp.conversions || 0} un
+                    </td>
+                    <td className="p-3.5 text-right text-slate-300 font-mono">
+                      {formatCurrency(cpa)}
+                    </td>
+                    <td className="p-3.5 text-right font-extrabold text-emerald-400">
+                      {formatCurrency(camp.attributedRevenue || 0)}
+                    </td>
+                    <td className="p-3.5 text-center">
+                      <span className="font-extrabold text-teal-400 font-mono text-sm">
+                        {camp.roas || 0}x
+                      </span>
+                    </td>
+                    <td className="p-3.5 text-right">
+                      <button
+                        onClick={() => toggleCampaignStatus(camp.id)}
+                        title="Clique para alternar status (Ativar / Pausar)"
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold cursor-pointer transition ${
+                          camp.status === 'ACTIVE'
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
+                            : 'bg-slate-700/40 text-slate-400 hover:bg-slate-700/70 border border-slate-600'
+                        }`}
+                      >
+                        {camp.status === 'ACTIVE' ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3 text-emerald-400" />}
+                        <span>{camp.status === 'ACTIVE' ? 'Ativa' : 'Pausada'}</span>
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>
@@ -395,3 +455,4 @@ export const CampanhasPage: React.FC = () => {
     </div>
   );
 };
+export default CampanhasPage;
