@@ -10,6 +10,10 @@
       "destination": "/api/producer-remarketing?path=$1"
     },
     {
+      "source": "/api/v1/comercial/(.*)",
+      "destination": "/api/producer-commercial?path=$1"
+    },
+    {
       "source": "/api/v1/(.*)",
       "destination": "https://keeper-tng6.vercel.app/api/v1/$1"
     },
