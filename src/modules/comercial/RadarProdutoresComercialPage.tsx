@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { mockProducerCommercialSummaries } from '@/services/api/mockSeedData';
 import { ProducerCommercialSummary } from '@/types/commercial';
 import { DetalhesProdutorComercialModal } from '@/components/modals/DetalhesProdutorComercialModal';
+import { SimuladorCreditoComercialModal } from '@/components/modals/SimuladorCreditoComercialModal';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Radar,
   Building2,
@@ -26,11 +28,14 @@ import {
 } from 'lucide-react';
 
 export const RadarProdutoresComercialPage: React.FC = () => {
+  const { creditRequests, addCreditRequest } = useAuth();
   const [summaries, setSummaries] = useState<ProducerCommercialSummary[]>(mockProducerCommercialSummaries);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [selectedProducer, setSelectedProducer] = useState<ProducerCommercialSummary | null>(null);
+  const [selectedProducerForSimulador, setSelectedProducerForSimulador] = useState<ProducerCommercialSummary | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSimuladorOpen, setIsSimuladorOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const filtered = summaries.filter((p) => {
@@ -62,8 +67,13 @@ export const RadarProdutoresComercialPage: React.FC = () => {
   };
 
   const handleOfferCredit = (producer: ProducerCommercialSummary) => {
-    const pitch = `Olá ${producer.responsibleName}! Identificamos que o Lote do ${producer.topEventName} está com excelente tração. Liberamos uma linha de antecipação pré-aprovada de até R$ ${(producer.erp.keeperAdvanceLimit / 1000).toFixed(0)}k no Keeper ERP com taxa especial de 3.2% a.m. Gostaria de simular a liberação hoje?`;
-    handleOpenWhatsApp(producer.contactPhone, pitch);
+    setSelectedProducerForSimulador(producer);
+    setIsSimuladorOpen(true);
+  };
+
+  const handleSubmitCreditSimulation = (request: any) => {
+    addCreditRequest(request);
+    showToast(`Proposta de antecipação (${request.code}) enviada ao Comitê de Crédito DiskIngressos!`);
   };
 
   const handleOfferMarketing = (producer: ProducerCommercialSummary) => {
@@ -442,6 +452,15 @@ export const RadarProdutoresComercialPage: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         producer={selectedProducer}
         onOpenWhatsApp={handleOpenWhatsApp}
+      />
+
+      {/* Credit Simulator Modal */}
+      <SimuladorCreditoComercialModal
+        isOpen={isSimuladorOpen}
+        onClose={() => setIsSimuladorOpen(false)}
+        producer={selectedProducerForSimulador}
+        onSubmitToCreditCommittee={handleSubmitCreditSimulation}
+        onSendWhatsApp={handleOpenWhatsApp}
       />
     </div>
   );

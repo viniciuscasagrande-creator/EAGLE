@@ -15,6 +15,7 @@ import {
   Clock,
   Lock,
   Calculator,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '@/utils/formatters';
 import { useNavigate } from 'react-router-dom';
@@ -95,6 +96,14 @@ export const DashboardFinanceiroPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate('/financeiro/bordero')}
+            className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold shadow transition cursor-pointer"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5" />
+            <span>Borderô Oficial</span>
+          </button>
+
           <button
             onClick={() => navigate('/financeiro/antecipacoes')}
             className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold shadow transition cursor-pointer"

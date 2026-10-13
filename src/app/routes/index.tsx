@@ -72,6 +72,7 @@ import { ExtratoLedgerPage } from '@/modules/financeiro/ExtratoLedgerPage';
 import { TaxasRetencoesPage } from '@/modules/financeiro/TaxasRetencoesPage';
 import { SolicitacoesRepassePage } from '@/modules/financeiro/SolicitacoesRepassePage';
 import { AntecipacoesPage } from '@/modules/financeiro/AntecipacoesPage';
+import { BorderoOficialPage } from '@/modules/financeiro/BorderoOficialPage';
 
 // Modules 7, 8, 9: Relatórios, Suporte, Configurações
 import { RelatoriosConsolidadosPage } from '@/modules/relatorios/RelatoriosConsolidadosPage';
@@ -84,6 +85,7 @@ import { GestaoProdutorasPage } from '@/modules/admin/GestaoProdutorasPage';
 import { EventosRedePage } from '@/modules/admin/EventosRedePage';
 import { ComiteCreditoAntecipacoesPage } from '@/modules/admin/ComiteCreditoAntecipacoesPage';
 import { RepassesGlobaisPage } from '@/modules/admin/RepassesGlobaisPage';
+import { RelatoriosPlataformaMasterPage } from '@/modules/admin/RelatoriosPlataformaMasterPage';
 import { ConfiguracoesPlataformaPage } from '@/modules/admin/ConfiguracoesPlataformaPage';
 
 export const AppRoutes: React.FC = () => {
@@ -102,7 +104,7 @@ export const AppRoutes: React.FC = () => {
           <Route path="/admin/eventos" element={<EventosRedePage />} />
           <Route path="/admin/antecipacoes" element={<ComiteCreditoAntecipacoesPage />} />
           <Route path="/admin/repasses" element={<RepassesGlobaisPage />} />
-          <Route path="/admin/relatorios" element={<RelatoriosConsolidadosPage />} />
+          <Route path="/admin/relatorios" element={<RelatoriosPlataformaMasterPage />} />
           <Route path="/admin/configuracoes" element={<ConfiguracoesPlataformaPage />} />
 
           {/* Raiz & Dashboard Geral do Produtor */}
@@ -123,6 +125,7 @@ export const AppRoutes: React.FC = () => {
           <Route path="/eventos/:id/portaria" element={<PortariaCheckinPage />} />
           <Route path="/eventos/portaria" element={<PortariaCheckinPage />} />
           <Route path="/eventos/:id/financeiro" element={<DashboardFinanceiroPage />} />
+          <Route path="/eventos/:id/financeiro/bordero" element={<BorderoOficialPage />} />
           <Route path="/eventos/:id/comercial" element={<DashboardComercialPage />} />
 
           {/* Submenus de Marketing no contexto do Evento */}
@@ -217,6 +220,7 @@ export const AppRoutes: React.FC = () => {
           <Route path="/financeiro/taxas-retencoes" element={<TaxasRetencoesPage />} />
           <Route path="/financeiro/repasses" element={<SolicitacoesRepassePage />} />
           <Route path="/financeiro/antecipacoes" element={<AntecipacoesPage />} />
+          <Route path="/financeiro/bordero" element={<BorderoOficialPage />} />
           <Route path="/financeiro/dados-bancarios" element={<ConfiguracoesProdutorPage />} />
 
           {/* Módulo 7: Relatórios Consolidados */}

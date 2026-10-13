@@ -24,6 +24,7 @@ import {
   Users,
   Target,
   FileText,
+  FileSpreadsheet,
   Percent,
   Tv,
   ScanLine,
@@ -228,6 +229,14 @@ export const Sidebar: React.FC = () => {
           >
             <DollarSign className="w-4 h-4 flex-shrink-0 text-emerald-400" />
             {!collapsed && <span>Financeiro do Evento</span>}
+          </NavLink>
+
+          <NavLink
+            to={`/eventos/${selectedEvent.id}/financeiro/bordero`}
+            className={({ isActive }) => getLevel2LinkClass(isActive)}
+          >
+            <FileSpreadsheet className="w-4 h-4 flex-shrink-0 text-teal-400" />
+            {!collapsed && <span>Borderô Oficial</span>}
           </NavLink>
 
           <NavLink
@@ -1164,6 +1173,12 @@ export const Sidebar: React.FC = () => {
                 className={({ isActive }) => getSubmenuLinkClass(isActive)}
               >
                 Antecipações
+              </NavLink>
+              <NavLink
+                to="/financeiro/bordero"
+                className={({ isActive }) => getSubmenuLinkClass(isActive)}
+              >
+                Borderô Oficial do Evento
               </NavLink>
             </div>
           )}

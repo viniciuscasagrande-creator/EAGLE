@@ -39,6 +39,7 @@ interface AuthContextType {
   switchProducer: (producerId: string) => void;
   approveCreditRequest: (requestId: string, notes?: string) => void;
   rejectCreditRequest: (requestId: string, reason: string) => void;
+  addCreditRequest: (request: CreditAdvanceRequest) => void;
   updateProducerContract: (producerId: string, updates: Partial<Producer>) => void;
   setProducerId: (id: string) => void;
   login: (email: string, password: string) => Promise<boolean>;
@@ -131,6 +132,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return req;
       })
     );
+  };
+
+  const addCreditRequest = (request: CreditAdvanceRequest) => {
+    setCreditRequests((prev) => [request, ...prev]);
   };
 
   const updateProducerContract = (producerId: string, updates: Partial<Producer>) => {
@@ -265,6 +270,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         switchProducer,
         approveCreditRequest,
         rejectCreditRequest,
+        addCreditRequest,
         updateProducerContract,
         setProducerId,
         login,
