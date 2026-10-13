@@ -83,6 +83,11 @@ export const API_ENDPOINTS = {
     PRODUCER_PAYMENT_NEW_PIX: (id: string) => `/producer/remarketing/payments/${encodeURIComponent(id)}/new-pix`,
     PRODUCER_EMAIL_METRICS: '/producer/remarketing/email/metrics',
     PRODUCER_EMAIL_TEMPLATES: '/producer/remarketing/email/templates',
+    PRODUCER_JOURNEYS: '/producer/remarketing/journeys',
+    PRODUCER_JOURNEY_STATUS: (id: string) => `/producer/remarketing/journeys/${encodeURIComponent(id)}/status`,
+    PRODUCER_CONSENTS: '/producer/remarketing/consents',
+    PRODUCER_REPORTS: '/producer/remarketing/reports',
+    PRODUCER_REPORT_DETAIL: (key: string) => `/producer/remarketing/reports/${encodeURIComponent(key)}`,
   },
 
   // Financeiro & Keeper Core Settlement (Motor Oficial)

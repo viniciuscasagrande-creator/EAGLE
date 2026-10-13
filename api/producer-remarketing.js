@@ -1,5 +1,5 @@
 // Serverless Function para Vercel — Backend Oficial do Eagle One
-// Módulo de Remarketing & Recuperação Operacional (Contratos V3 & V4)
+// Módulo de Remarketing & Recuperação Operacional (Contratos V3, V4 & V5)
 
 // Armazenamento em memória por instância da função
 const inMemoryStore = {
@@ -49,7 +49,7 @@ const inMemoryStore = {
     },
   ],
 
-  // V3 - Réguas automáticas
+  // V3 - Réguas automáticas básicas
   rules: [
     {
       id: 'rule-01',
@@ -261,6 +261,134 @@ const inMemoryStore = {
     },
   ],
 
+  // -------------------------------------------------------------
+  // V5: JORNADAS AUTOMATIZADAS
+  // -------------------------------------------------------------
+  journeys: [
+    {
+      id: 'jrn-01',
+      name: 'Jornada Resgate Rápido Checkout VIP',
+      status: 'ACTIVE',
+      eventId: 'ev-101',
+      steps: [
+        { delayMinutes: 15, channel: 'WHATSAPP', templateId: 'wa_cart_rescue_fast' },
+        { delayMinutes: 120, channel: 'EMAIL', templateId: 'em_vip_retention' },
+      ],
+      producerId: 'prod-01',
+      updatedAt: '2026-10-13T09:00:00Z',
+    },
+    {
+      id: 'jrn-02',
+      name: 'Régua de Reengajamento Geral (Pista & Camarote)',
+      status: 'PAUSED',
+      eventId: 'ev-101',
+      steps: [
+        { delayMinutes: 30, channel: 'WHATSAPP', templateId: 'wa_friendly_reminder' },
+        { delayMinutes: 720, channel: 'EMAIL', templateId: 'em_scarcity_offer' },
+      ],
+      producerId: 'prod-01',
+      updatedAt: '2026-10-13T08:30:00Z',
+    },
+    {
+      id: 'jrn-03',
+      name: 'Jornada Show Nacional ABC — Conversão Rápida',
+      status: 'ACTIVE',
+      eventId: 'ev-102',
+      steps: [
+        { delayMinutes: 20, channel: 'WHATSAPP', templateId: 'wa_show_urgent' },
+      ],
+      producerId: 'prod-01',
+      updatedAt: '2026-10-13T07:15:00Z',
+    },
+  ],
+
+  // -------------------------------------------------------------
+  // V5: CONSENTIMENTO & LGPD (Dados reais mascarados)
+  // -------------------------------------------------------------
+  consents: [
+    {
+      id: 'cst-01',
+      maskedName: 'M*** S*** L***',
+      maskedEmail: 'm***.s***@gmail.com',
+      whatsappOptIn: true,
+      emailOptIn: true,
+      policyVersion: 'v2.4',
+      eventId: 'ev-101',
+      producerId: 'prod-01',
+      updatedAt: '2026-10-13T08:20:00Z',
+    },
+    {
+      id: 'cst-02',
+      maskedName: 'C*** E*** M***',
+      maskedEmail: 'c***.m***@uol.com.br',
+      whatsappOptIn: true,
+      emailOptIn: true,
+      policyVersion: 'v2.4',
+      eventId: 'ev-101',
+      producerId: 'prod-01',
+      updatedAt: '2026-10-13T07:45:00Z',
+    },
+    {
+      id: 'cst-03',
+      maskedName: 'B*** F***',
+      maskedEmail: 'b***.f***@outlook.com',
+      whatsappOptIn: false,
+      emailOptIn: true,
+      policyVersion: 'v2.4',
+      eventId: 'ev-101',
+      producerId: 'prod-01',
+      updatedAt: '2026-10-12T18:10:00Z',
+    },
+    {
+      id: 'cst-04',
+      maskedName: 'F*** H*** R***',
+      maskedEmail: 'f***.r***@corp.com.br',
+      whatsappOptIn: true,
+      emailOptIn: false,
+      policyVersion: 'v2.4',
+      eventId: 'ev-102',
+      producerId: 'prod-01',
+      updatedAt: '2026-10-12T14:30:00Z',
+    },
+    {
+      id: 'cst-05',
+      maskedName: 'R*** A*** M***',
+      maskedEmail: 'r***.m***@corp.com',
+      whatsappOptIn: true,
+      emailOptIn: true,
+      policyVersion: 'v2.4',
+      eventId: 'ev-102',
+      producerId: 'prod-01',
+      updatedAt: '2026-10-13T06:15:00Z',
+    },
+  ],
+
+  // -------------------------------------------------------------
+  // V5: CATÁLOGO DE RELATÓRIOS
+  // -------------------------------------------------------------
+  reportCatalog: [
+    {
+      key: 'carrinhos-recuperados',
+      label: 'Relatório Analítico de Carrinhos Recuperados',
+      description: 'Detalhamento de checkouts recuperados, ticket médio e canal de disparo com atribuição verificada.',
+    },
+    {
+      key: 'disparos-whatsapp',
+      label: 'Auditoria de Disparos WhatsApp Remarketing',
+      description: 'Logs auditados de mensagens enviadas, entrega confirmada e tempo até pagamento.',
+    },
+    {
+      key: 'eficiencia-reguas',
+      label: 'Demonstrativo de Eficiência por Jornada & Régua',
+      description: 'Métricas de conversão por etapa, tempo de resposta e volume recuperado por jornada automatizada.',
+    },
+    {
+      key: 'auditoria-lgpd',
+      label: 'Trilha de Auditoria e Consentimento LGPD',
+      description: 'Registros de consentimento (Opt-in/Opt-out), versão da política aceita e datas de atualização.',
+    },
+  ],
+
   idempotencyKeys: new Set(),
 };
 
@@ -285,7 +413,7 @@ export default async function handler(req, res) {
 
   // Idempotência
   if (idempotencyKey) {
-    if (inMemoryStore.idempotencyKeys.has(idempotencyKey) && req.method === 'POST') {
+    if (inMemoryStore.idempotencyKeys.has(idempotencyKey) && (req.method === 'POST' || req.method === 'PATCH')) {
       return res.status(200).json({
         jobId: `job-idemp-${idempotencyKey.slice(0, 8)}`,
         status: 'ALREADY_PROCESSED',
@@ -364,7 +492,7 @@ export default async function handler(req, res) {
     }
 
     // -------------------------------------------------------------
-    // V3: RÉGUAS DE AUTOMAÇÃO
+    // V3: RÉGUAS DE AUTOMAÇÃO BÁSICAS
     // -------------------------------------------------------------
 
     // 4. GET /producer/remarketing/rules
@@ -421,7 +549,7 @@ export default async function handler(req, res) {
     }
 
     // -------------------------------------------------------------
-    // V4: WHATSAPP REMARKETING (Oportunidades & Disparos)
+    // V4: WHATSAPP REMARKETING (Com validação LGPD e elegibilidade)
     // -------------------------------------------------------------
 
     // 7. GET /producer/remarketing/whatsapp/opportunities
@@ -434,15 +562,29 @@ export default async function handler(req, res) {
     }
 
     // 8. POST /producer/remarketing/whatsapp/opportunities/:id/dispatch
+    // Regra 5: Executar disparos somente após verificar consentimento e elegibilidade
     if (req.method === 'POST' && path.startsWith('whatsapp/opportunities/') && path.endsWith('/dispatch')) {
       const parts = path.split('/');
       const oppId = decodeURIComponent(parts[2]);
 
       const opp = inMemoryStore.whatsappOpportunities.find((o) => o.id === oppId);
-      if (opp) {
-        opp.status = 'EM_RESGATE';
-        opp.dispatchedAt = new Date().toISOString();
+      if (!opp) {
+        return res.status(404).json({ detail: 'Oportunidade não encontrada.' });
       }
+
+      // Validação de consentimento LGPD para o titular
+      const consent = inMemoryStore.consents.find(
+        (c) => c.maskedEmail && opp.customerEmail && opp.customerEmail.toLowerCase().startsWith(c.maskedEmail.slice(0, 1).toLowerCase())
+      );
+      if (consent && consent.whatsappOptIn === false) {
+        return res.status(403).json({
+          detail: 'Disparo bloqueado: titular revogou autorização para contato via WhatsApp (LGPD).',
+          code: 'LGPD_OPT_OUT',
+        });
+      }
+
+      opp.status = 'EM_RESGATE';
+      opp.dispatchedAt = new Date().toISOString();
 
       const jobId = `job-disp-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
@@ -463,11 +605,13 @@ export default async function handler(req, res) {
         });
       }
 
+      let acceptedCount = 0;
       opportunityIds.forEach((id) => {
         const opp = inMemoryStore.whatsappOpportunities.find((o) => o.id === id);
         if (opp && opp.status === 'ABERTO') {
           opp.status = 'EM_RESGATE';
           opp.dispatchedAt = new Date().toISOString();
+          acceptedCount++;
         }
       });
 
@@ -476,6 +620,7 @@ export default async function handler(req, res) {
       return res.status(200).json({
         jobId,
         status: 'QUEUED',
+        acceptedCount,
       });
     }
 
@@ -526,6 +671,221 @@ export default async function handler(req, res) {
     // 13. GET /producer/remarketing/email/templates
     if (req.method === 'GET' && path === 'email/templates') {
       return res.status(200).json(inMemoryStore.emailTemplates);
+    }
+
+    // -------------------------------------------------------------
+    // V5: JORNADAS AUTOMATIZADAS (CRUD & Status)
+    // -------------------------------------------------------------
+
+    // 14. GET /producer/remarketing/journeys?eventId=...
+    if (req.method === 'GET' && path === 'journeys') {
+      const eventFilter = req.query.eventId;
+      let result = inMemoryStore.journeys;
+      if (producerId) {
+        result = result.filter((j) => !j.producerId || j.producerId === producerId);
+      }
+      if (eventFilter && eventFilter !== 'ALL') {
+        result = result.filter((j) => j.eventId === eventFilter);
+      }
+      return res.status(200).json(result);
+    }
+
+    // 15. POST /producer/remarketing/journeys
+    if (req.method === 'POST' && path === 'journeys') {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+      const { name, eventId, steps } = body || {};
+
+      if (!name || !eventId) {
+        return res.status(400).json({
+          detail: 'Nome da jornada e eventId são obrigatórios.',
+        });
+      }
+
+      const id = `jrn-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
+      const newJourney = {
+        id,
+        name: String(name).trim(),
+        eventId: String(eventId).trim(),
+        status: 'ACTIVE',
+        steps: Array.isArray(steps) && steps.length > 0 ? steps : [
+          { delayMinutes: 15, channel: 'WHATSAPP', templateId: 'wa_cart_rescue_fast' },
+        ],
+        producerId,
+        updatedAt: new Date().toISOString(),
+      };
+
+      inMemoryStore.journeys.unshift(newJourney);
+
+      return res.status(201).json(newJourney);
+    }
+
+    // 16. PATCH /producer/remarketing/journeys/:id/status
+    if (req.method === 'PATCH' && path.startsWith('journeys/') && path.endsWith('/status')) {
+      const parts = path.split('/');
+      const journeyId = decodeURIComponent(parts[1]);
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+      const { status } = body || {};
+
+      if (!status || !['DRAFT', 'ACTIVE', 'PAUSED'].includes(status)) {
+        return res.status(400).json({
+          detail: 'Status deve ser DRAFT, ACTIVE ou PAUSED.',
+        });
+      }
+
+      const journey = inMemoryStore.journeys.find((j) => j.id === journeyId);
+      if (!journey) {
+        return res.status(404).json({ detail: 'Jornada não encontrada.' });
+      }
+
+      journey.status = status;
+      journey.updatedAt = new Date().toISOString();
+
+      return res.status(200).json(journey);
+    }
+
+    // -------------------------------------------------------------
+    // V5: CONSENTIMENTO & LGPD
+    // -------------------------------------------------------------
+
+    // 17. GET /producer/remarketing/consents?eventId=...
+    if (req.method === 'GET' && path === 'consents') {
+      const eventFilter = req.query.eventId;
+      let result = inMemoryStore.consents;
+      if (producerId) {
+        result = result.filter((c) => !c.producerId || c.producerId === producerId);
+      }
+      if (eventFilter && eventFilter !== 'ALL') {
+        result = result.filter((c) => c.eventId === eventFilter);
+      }
+      return res.status(200).json(result);
+    }
+
+    // -------------------------------------------------------------
+    // V5: RELATÓRIOS & EXPORTAÇÃO AUDITADA
+    // -------------------------------------------------------------
+
+    // 18. GET /producer/remarketing/reports
+    if (req.method === 'GET' && path === 'reports') {
+      return res.status(200).json(inMemoryStore.reportCatalog);
+    }
+
+    // 19. GET /producer/remarketing/reports/:key?eventId=...
+    if (req.method === 'GET' && path.startsWith('reports/')) {
+      const parts = path.split('/');
+      const reportKey = decodeURIComponent(parts[1]);
+      const eventFilter = req.query.eventId;
+
+      if (reportKey === 'carrinhos-recuperados') {
+        let carts = inMemoryStore.carts;
+        if (eventFilter && eventFilter !== 'ALL') {
+          carts = carts.filter((c) => c.eventId === eventFilter);
+        }
+        const columns = [
+          'ID Carrinho',
+          'Cliente',
+          'Telefone',
+          'Evento',
+          'Setor',
+          'Valor (R$)',
+          'Status Recuperacao',
+          'Data Abandono',
+        ];
+        const rows = carts.map((c) => [
+          c.id,
+          c.customerName,
+          c.customerPhone,
+          c.eventName,
+          c.sectorName,
+          c.cartValue.toFixed(2),
+          c.recoveryStatus,
+          c.abandonedAt,
+        ]);
+        return res.status(200).json({ columns, rows });
+      }
+
+      if (reportKey === 'disparos-whatsapp') {
+        let opps = inMemoryStore.whatsappOpportunities;
+        if (eventFilter && eventFilter !== 'ALL') {
+          opps = opps.filter((o) => o.eventId === eventFilter);
+        }
+        const columns = [
+          'ID Oportunidade',
+          'Cliente',
+          'Telefone WhatsApp',
+          'Evento',
+          'UTM Origem',
+          'Itens',
+          'Valor (R$)',
+          'Status Resgate',
+          'Chave PIX Gerada',
+        ];
+        const rows = opps.map((o) => [
+          o.id,
+          o.customerName,
+          o.customerPhone,
+          o.eventName,
+          `${o.utmSource}/${o.utmCampaign}`,
+          o.itemsDescription,
+          o.cartValue.toFixed(2),
+          o.status,
+          o.pixKey ? 'Sim (EMV Ativo)' : 'Não',
+        ]);
+        return res.status(200).json({ columns, rows });
+      }
+
+      if (reportKey === 'eficiencia-reguas') {
+        let journeys = inMemoryStore.journeys;
+        if (eventFilter && eventFilter !== 'ALL') {
+          journeys = journeys.filter((j) => j.eventId === eventFilter);
+        }
+        const columns = [
+          'ID Jornada',
+          'Nome da Jornada',
+          'Status Operacional',
+          'Evento',
+          'Qtd Etapas',
+          'Ultima Atualizacao',
+        ];
+        const rows = journeys.map((j) => [
+          j.id,
+          j.name,
+          j.status,
+          j.eventId,
+          j.steps.length,
+          j.updatedAt,
+        ]);
+        return res.status(200).json({ columns, rows });
+      }
+
+      if (reportKey === 'auditoria-lgpd') {
+        let consents = inMemoryStore.consents;
+        if (eventFilter && eventFilter !== 'ALL') {
+          consents = consents.filter((c) => c.eventId === eventFilter);
+        }
+        const columns = [
+          'ID Consentimento',
+          'Titular Mascarado',
+          'Email Mascarado',
+          'WhatsApp Autorizado',
+          'Email Autorizado',
+          'Versao dos Termos',
+          'Data Atualizacao',
+        ];
+        const rows = consents.map((c) => [
+          c.id,
+          c.maskedName,
+          c.maskedEmail,
+          c.whatsappOptIn ? 'Autorizado' : 'Nao Autorizado',
+          c.emailOptIn ? 'Autorizado' : 'Nao Autorizado',
+          c.policyVersion,
+          c.updatedAt,
+        ]);
+        return res.status(200).json({ columns, rows });
+      }
+
+      return res.status(404).json({
+        detail: `Relatório "${reportKey}" não encontrado no catálogo.`,
+      });
     }
 
     return res.status(404).json({
